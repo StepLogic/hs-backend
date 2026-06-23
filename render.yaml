@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: hs-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hs-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.12.7
+
+databases:
+  - name: hs-db
+    databaseName: hs_backend
+    user: hs_backend
+    plan: free
