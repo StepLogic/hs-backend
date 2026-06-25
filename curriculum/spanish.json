@@ -31,23 +31,26 @@
             { "type": "order", "text": "Estoy bien, gracias.", "items": ["Estoy", "bien", ",", "gracias", "."], "correct_answer": ["Estoy", "bien", ",", "gracias", "."] },
             { "type": "dictation", "text": "¡Hola! ¿Cómo estás?", "translation": "Hello! How are you?", "prompt": "Type what you hear" }
           ]
+        },
+        {
+          "id": "u1l3",
+          "title": "My name is",
+          "order": 3,
+          "items": [
+            { "type": "listen", "text": "Me llamo Carlos.", "translation": "My name is Carlos." },
+            { "type": "choose", "text": "Me llamo", "prompt": "What does 'Me llamo' mean?", "options": ["My name is", "I am from", "I like"], "correct_answer": "My name is", "explanation": "'Me llamo' means My name is." },
+            { "type": "repeat", "text": "Me llamo Ana.", "translation": "My name is Ana." },
+            { "type": "order", "text": "Me llamo Carlos.", "items": ["Me", "llamo", "Carlos", "."], "correct_answer": ["Me", "llamo", "Carlos", "."] },
+            { "type": "dictation", "text": "Mucho gusto.", "translation": "Nice to meet you.", "prompt": "Type what you hear" }
+          ]
         }
       ],
       "review": {
-        "poem_text": "Hola, ¿cómo estás?\n— Muy bien.\n¡Adiós!",
+        "poem_text": "Hola, ¿cómo estás?\n— Muy bien, gracias.\nMe llamo Ana, ¿y tú?\n¡Mucho gusto, adiós!",
         "questions": [
-          {
-            "prompt": "What is the first word of the poem?",
-            "options": ["Hola", "Adiós", "Muy bien"],
-            "correct_answer": "Hola",
-            "explanation": "The poem begins with 'Hola'."
-          },
-          {
-            "prompt": "What does '¿Cómo estás?' mean?",
-            "options": ["How are you?", "Goodbye", "Thank you"],
-            "correct_answer": "How are you?",
-            "explanation": "'¿Cómo estás?' means How are you?."
-          }
+          { "prompt": "What is the first word of the poem?", "options": ["Hola", "Adiós", "Muy bien"], "correct_answer": "Hola", "explanation": "The poem begins with 'Hola'." },
+          { "prompt": "What does '¿Cómo estás?' mean?", "options": ["How are you?", "Goodbye", "Thank you"], "correct_answer": "How are you?", "explanation": "'¿Cómo estás?' means How are you?." },
+          { "prompt": "What name is mentioned in the poem?", "options": ["Ana", "Carlos", "María"], "correct_answer": "Ana", "explanation": "The poem says 'Me llamo Ana'." }
         ]
       }
     },
@@ -78,29 +81,326 @@
             { "type": "order", "text": "Uno, dos, tres.", "items": ["Uno", ",", "dos", ",", "tres", "."], "correct_answer": ["Uno", ",", "dos", ",", "tres", "."] },
             { "type": "dictation", "text": "Cinco", "translation": "Five", "prompt": "Type what you hear" }
           ]
+        },
+        {
+          "id": "u2l3",
+          "title": "Excuse me and sorry",
+          "order": 3,
+          "items": [
+            { "type": "listen", "text": "Perdón", "translation": "Excuse me" },
+            { "type": "choose", "text": "Lo siento", "prompt": "What does 'Lo siento' mean?", "options": ["I'm sorry", "Thank you", "See you"], "correct_answer": "I'm sorry", "explanation": "'Lo siento' means I'm sorry." },
+            { "type": "repeat", "text": "Perdón, lo siento.", "translation": "Excuse me, I'm sorry." },
+            { "type": "order", "text": "Lo siento, perdón.", "items": ["Lo", "siento", ",", "perdón", "."], "correct_answer": ["Lo", "siento", ",", "perdón", "."] },
+            { "type": "dictation", "text": "Perdón", "translation": "Excuse me", "prompt": "Type what you hear" }
+          ]
         }
       ],
       "review": {
-        "poem_text": "Uno, dos, tres.\nHola, ¿cómo estás?\n— Muy bien, gracias.\nPor favor, de nada.\n¡Adiós!",
+        "poem_text": "Uno, dos, tres.\nHola, ¿cómo estás?\n— Muy bien, gracias.\nPor favor, de nada.\nLo siento, perdón.\n¡Adiós!",
         "questions": [
-          {
-            "prompt": "Which numbers appear in the poem?",
-            "options": ["uno, dos, tres", "uno, dos", "dos, tres"],
-            "correct_answer": "uno, dos, tres",
-            "explanation": "The poem says 'Uno, dos, tres.'"
-          },
-          {
-            "prompt": "What do you say when someone thanks you?",
-            "options": ["Gracias", "De nada", "Por favor"],
-            "correct_answer": "De nada",
-            "explanation": "'De nada' means You're welcome."
-          },
-          {
-            "prompt": "What is the last word of the poem?",
-            "options": ["Gracias", "Adiós", "De nada"],
-            "correct_answer": "Adiós",
-            "explanation": "The poem ends with '¡Adiós!'."
-          }
+          { "prompt": "Which numbers appear in the poem?", "options": ["uno, dos, tres", "uno, dos", "dos, tres"], "correct_answer": "uno, dos, tres", "explanation": "The poem says 'Uno, dos, tres.'" },
+          { "prompt": "What do you say when someone thanks you?", "options": ["Gracias", "De nada", "Por favor"], "correct_answer": "De nada", "explanation": "'De nada' means You're welcome." },
+          { "prompt": "What is the last word of the poem?", "options": ["Gracias", "Adiós", "De nada"], "correct_answer": "Adiós", "explanation": "The poem ends with '¡Adiós!'." }
+        ]
+      }
+    },
+    {
+      "id": "u3",
+      "title": "Family",
+      "lessons": [
+        {
+          "id": "u3l1",
+          "title": "Mother and father",
+          "order": 1,
+          "items": [
+            { "type": "listen", "text": "Madre", "translation": "Mother" },
+            { "type": "choose", "text": "Padre", "prompt": "What does 'Padre' mean?", "options": ["Mother", "Father", "Brother"], "correct_answer": "Father", "explanation": "'Padre' means Father." },
+            { "type": "repeat", "text": "Mi madre y mi padre.", "translation": "My mother and my father." },
+            { "type": "order", "text": "Mi madre y mi padre.", "items": ["Mi", "madre", "y", "mi", "padre", "."], "correct_answer": ["Mi", "madre", "y", "mi", "padre", "."] },
+            { "type": "dictation", "text": "Madre", "translation": "Mother", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u3l2",
+          "title": "Brothers and sisters",
+          "order": 2,
+          "items": [
+            { "type": "listen", "text": "Hermano", "translation": "Brother" },
+            { "type": "choose", "text": "Hermana", "prompt": "What does 'Hermana' mean?", "options": ["Brother", "Sister", "Cousin"], "correct_answer": "Sister", "explanation": "'Hermana' means Sister." },
+            { "type": "repeat", "text": "Tengo un hermano y una hermana.", "translation": "I have a brother and a sister." },
+            { "type": "order", "text": "Tengo un hermano.", "items": ["Tengo", "un", "hermano", "."], "correct_answer": ["Tengo", "un", "hermano", "."] },
+            { "type": "dictation", "text": "Hermana", "translation": "Sister", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u3l3",
+          "title": "The family",
+          "order": 3,
+          "items": [
+            { "type": "listen", "text": "La familia", "translation": "The family" },
+            { "type": "choose", "text": "Abuela", "prompt": "What does 'Abuela' mean?", "options": ["Grandmother", "Aunt", "Mother"], "correct_answer": "Grandmother", "explanation": "'Abuela' means Grandmother." },
+            { "type": "repeat", "text": "Mi abuela es muy buena.", "translation": "My grandmother is very kind." },
+            { "type": "order", "text": "Mi familia es grande.", "items": ["Mi", "familia", "es", "grande", "."], "correct_answer": ["Mi", "familia", "es", "grande", "."] },
+            { "type": "dictation", "text": "Familia", "translation": "Family", "prompt": "Type what you hear" }
+          ]
+        }
+      ],
+      "review": {
+        "poem_text": "Mi madre, mi padre,\nmi hermano y mi hermana.\nLa familia es muy importante.\n¡Abuela, te quiero mucho!",
+        "questions": [
+          { "prompt": "How many family members are listed in the poem?", "options": ["Three", "Four", "Five"], "correct_answer": "Four", "explanation": "The poem mentions madre, padre, hermano, and hermana." },
+          { "prompt": "What does the poem say about family?", "options": ["It is very important", "It is small", "It is far away"], "correct_answer": "It is very important", "explanation": "The poem says 'La familia es muy importante.'" },
+          { "prompt": "Who does the poem address at the end?", "options": ["Abuela (grandmother)", "Hermano (brother)", "Madre (mother)"], "correct_answer": "Abuela (grandmother)", "explanation": "The poem ends with '¡Abuela, te quiero mucho!'" }
+        ]
+      }
+    },
+    {
+      "id": "u4",
+      "title": "Colors",
+      "lessons": [
+        {
+          "id": "u4l1",
+          "title": "Red and blue",
+          "order": 1,
+          "items": [
+            { "type": "listen", "text": "Rojo", "translation": "Red" },
+            { "type": "choose", "text": "Azul", "prompt": "What does 'Azul' mean?", "options": ["Red", "Blue", "Green"], "correct_answer": "Blue", "explanation": "'Azul' means Blue." },
+            { "type": "repeat", "text": "Rojo y azul.", "translation": "Red and blue." },
+            { "type": "order", "text": "Rojo y azul.", "items": ["Rojo", "y", "azul", "."], "correct_answer": ["Rojo", "y", "azul", "."] },
+            { "type": "dictation", "text": "Azul", "translation": "Blue", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u4l2",
+          "title": "Green and yellow",
+          "order": 2,
+          "items": [
+            { "type": "listen", "text": "Verde", "translation": "Green" },
+            { "type": "choose", "text": "Amarillo", "prompt": "What does 'Amarillo' mean?", "options": ["Green", "Yellow", "White"], "correct_answer": "Yellow", "explanation": "'Amarillo' means Yellow." },
+            { "type": "repeat", "text": "Verde y amarillo.", "translation": "Green and yellow." },
+            { "type": "order", "text": "Verde y amarillo.", "items": ["Verde", "y", "amarillo", "."], "correct_answer": ["Verde", "y", "amarillo", "."] },
+            { "type": "dictation", "text": "Verde", "translation": "Green", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u4l3",
+          "title": "Describing things",
+          "order": 3,
+          "items": [
+            { "type": "listen", "text": "Blanco", "translation": "White" },
+            { "type": "choose", "text": "Negro", "prompt": "What does 'Negro' mean?", "options": ["White", "Black", "Red"], "correct_answer": "Black", "explanation": "'Negro' means Black." },
+            { "type": "repeat", "text": "Blanco y negro.", "translation": "White and black." },
+            { "type": "order", "text": "El coche es rojo.", "items": ["El", "coche", "es", "rojo", "."], "correct_answer": ["El", "coche", "es", "rojo", "."] },
+            { "type": "dictation", "text": "Negro", "translation": "Black", "prompt": "Type what you hear" }
+          ]
+        }
+      ],
+      "review": {
+        "poem_text": "Rojo como el sol,\nazul como el mar.\nVerde es la hierba,\namarillo el pan.\n¡Blanco y negro, qué bello color!",
+        "questions": [
+          { "prompt": "What is red like in the poem?", "options": ["The sun", "The sea", "The grass"], "correct_answer": "The sun", "explanation": "'Rojo como el sol' means Red like the sun." },
+          { "prompt": "What is green in the poem?", "options": ["The grass", "The sea", "The bread"], "correct_answer": "The grass", "explanation": "'Verde es la hierba' means Green is the grass." },
+          { "prompt": "What is yellow in the poem?", "options": ["The bread", "The sun", "The sea"], "correct_answer": "The bread", "explanation": "'Amarillo el pan' means Yellow the bread." }
+        ]
+      }
+    },
+    {
+      "id": "u5",
+      "title": "Food and drink",
+      "lessons": [
+        {
+          "id": "u5l1",
+          "title": "Water and bread",
+          "order": 1,
+          "items": [
+            { "type": "listen", "text": "Agua", "translation": "Water" },
+            { "type": "choose", "text": "Pan", "prompt": "What does 'Pan' mean?", "options": ["Water", "Bread", "Milk"], "correct_answer": "Bread", "explanation": "'Pan' means Bread." },
+            { "type": "repeat", "text": "Agua y pan.", "translation": "Water and bread." },
+            { "type": "order", "text": "Agua y pan.", "items": ["Agua", "y", "pan", "."], "correct_answer": ["Agua", "y", "pan", "."] },
+            { "type": "dictation", "text": "Agua", "translation": "Water", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u5l2",
+          "title": "Eating and drinking",
+          "order": 2,
+          "items": [
+            { "type": "listen", "text": "Comer", "translation": "To eat" },
+            { "type": "choose", "text": "Beber", "prompt": "What does 'Beber' mean?", "options": ["To eat", "To drink", "To cook"], "correct_answer": "To drink", "explanation": "'Beber' means To drink." },
+            { "type": "repeat", "text": "Comer y beber.", "translation": "Eat and drink." },
+            { "type": "order", "text": "Comer y beber.", "items": ["Comer", "y", "beber", "."], "correct_answer": ["Comer", "y", "beber", "."] },
+            { "type": "dictation", "text": "Beber", "translation": "To drink", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u5l3",
+          "title": "Food words",
+          "order": 3,
+          "items": [
+            { "type": "listen", "text": "Leche", "translation": "Milk" },
+            { "type": "choose", "text": "Manzana", "prompt": "What does 'Manzana' mean?", "options": ["Milk", "Apple", "Bread"], "correct_answer": "Apple", "explanation": "'Manzana' means Apple." },
+            { "type": "repeat", "text": "Una manzana y leche.", "translation": "An apple and milk." },
+            { "type": "order", "text": "Una manzana roja.", "items": ["Una", "manzana", "roja", "."], "correct_answer": ["Una", "manzana", "roja", "."] },
+            { "type": "dictation", "text": "Manzana", "translation": "Apple", "prompt": "Type what you hear" }
+          ]
+        }
+      ],
+      "review": {
+        "poem_text": "Agua fresca, pan caliente,\nleche con manzana.\nComer, beber, vivir bien,\n¡qué rica es la comida!",
+        "questions": [
+          { "prompt": "What two drinks are mentioned?", "options": ["Agua y leche", "Leche y pan", "Agua y pan"], "correct_answer": "Agua y leche", "explanation": "The poem mentions 'Agua fresca' and 'leche'." },
+          { "prompt": "What food is mentioned?", "options": ["Manzana", "Carne", "Pescado"], "correct_answer": "Manzana", "explanation": "The poem mentions 'manzana' (apple)." },
+          { "prompt": "What does the poem say about food?", "options": ["How rich the food is!", "The food is cold", "The food is bad"], "correct_answer": "How rich the food is!", "explanation": "'¡qué rica es la comida!' means How rich the food is!" }
+        ]
+      }
+    },
+    {
+      "id": "u6",
+      "title": "Days of the week",
+      "lessons": [
+        {
+          "id": "u6l1",
+          "title": "Monday to Wednesday",
+          "order": 1,
+          "items": [
+            { "type": "listen", "text": "Lunes", "translation": "Monday" },
+            { "type": "choose", "text": "Martes", "prompt": "What does 'Martes' mean?", "options": ["Monday", "Tuesday", "Wednesday"], "correct_answer": "Tuesday", "explanation": "'Martes' means Tuesday." },
+            { "type": "repeat", "text": "Lunes, martes, miércoles.", "translation": "Monday, Tuesday, Wednesday." },
+            { "type": "order", "text": "Lunes, martes, miércoles.", "items": ["Lunes", ",", "martes", ",", "miércoles", "."], "correct_answer": ["Lunes", ",", "martes", ",", "miércoles", "."] },
+            { "type": "dictation", "text": "Lunes", "translation": "Monday", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u6l2",
+          "title": "Thursday to Sunday",
+          "order": 2,
+          "items": [
+            { "type": "listen", "text": "Jueves", "translation": "Thursday" },
+            { "type": "choose", "text": "Domingo", "prompt": "What does 'Domingo' mean?", "options": ["Thursday", "Friday", "Sunday"], "correct_answer": "Sunday", "explanation": "'Domingo' means Sunday." },
+            { "type": "repeat", "text": "Jueves, viernes, sábado, domingo.", "translation": "Thursday, Friday, Saturday, Sunday." },
+            { "type": "order", "text": "Jueves, viernes, sábado, domingo.", "items": ["Jueves", ",", "viernes", ",", "sábado", ",", "domingo", "."], "correct_answer": ["Jueves", ",", "viernes", ",", "sábado", ",", "domingo", "."] },
+            { "type": "dictation", "text": "Domingo", "translation": "Sunday", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u6l3",
+          "title": "Today and tomorrow",
+          "order": 3,
+          "items": [
+            { "type": "listen", "text": "Hoy", "translation": "Today" },
+            { "type": "choose", "text": "Mañana", "prompt": "What does 'Mañana' mean?", "options": ["Today", "Tomorrow", "Yesterday"], "correct_answer": "Tomorrow", "explanation": "'Mañana' means Tomorrow." },
+            { "type": "repeat", "text": "Hoy y mañana.", "translation": "Today and tomorrow." },
+            { "type": "order", "text": "Hoy y mañana.", "items": ["Hoy", "y", "mañana", "."], "correct_answer": ["Hoy", "y", "mañana", "."] },
+            { "type": "dictation", "text": "Mañana", "translation": "Tomorrow", "prompt": "Type what you hear" }
+          ]
+        }
+      ],
+      "review": {
+        "poem_text": "Lunes, martes, miércoles,\njueves, viernes, sábado.\nEl domingo es para descansar.\n¡Hoy estudio, mañana juego!",
+        "questions": [
+          { "prompt": "Which day is for resting?", "options": ["Domingo", "Lunes", "Martes"], "correct_answer": "Domingo", "explanation": "'El domingo es para descansar' means Sunday is for resting." },
+          { "prompt": "What does the student do today?", "options": ["Studies", "Plays", "Rests"], "correct_answer": "Studies", "explanation": "'Hoy estudio' means Today I study." },
+          { "prompt": "What does the student do tomorrow?", "options": ["Plays", "Studies", "Works"], "correct_answer": "Plays", "explanation": "'Mañana juego' means Tomorrow I play." }
+        ]
+      }
+    },
+    {
+      "id": "u7",
+      "title": "Animals",
+      "lessons": [
+        {
+          "id": "u7l1",
+          "title": "Dog and cat",
+          "order": 1,
+          "items": [
+            { "type": "listen", "text": "Perro", "translation": "Dog" },
+            { "type": "choose", "text": "Gato", "prompt": "What does 'Gato' mean?", "options": ["Dog", "Cat", "Bird"], "correct_answer": "Cat", "explanation": "'Gato' means Cat." },
+            { "type": "repeat", "text": "Perro y gato.", "translation": "Dog and cat." },
+            { "type": "order", "text": "Perro y gato.", "items": ["Perro", "y", "gato", "."], "correct_answer": ["Perro", "y", "gato", "."] },
+            { "type": "dictation", "text": "Gato", "translation": "Cat", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u7l2",
+          "title": "Bird and fish",
+          "order": 2,
+          "items": [
+            { "type": "listen", "text": "Pájaro", "translation": "Bird" },
+            { "type": "choose", "text": "Pez", "prompt": "What does 'Pez' mean?", "options": ["Bird", "Fish", "Horse"], "correct_answer": "Fish", "explanation": "'Pez' means Fish." },
+            { "type": "repeat", "text": "Pájaro y pez.", "translation": "Bird and fish." },
+            { "type": "order", "text": "Pájaro y pez.", "items": ["Pájaro", "y", "pez", "."], "correct_answer": ["Pájaro", "y", "pez", "."] },
+            { "type": "dictation", "text": "Pez", "translation": "Fish", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u7l3",
+          "title": "The horse",
+          "order": 3,
+          "items": [
+            { "type": "listen", "text": "Caballo", "translation": "Horse" },
+            { "type": "choose", "text": "Caballo", "prompt": "What does 'Caballo' mean?", "options": ["Horse", "Dog", "Bird"], "correct_answer": "Horse", "explanation": "'Caballo' means Horse." },
+            { "type": "repeat", "text": "El caballo es grande.", "translation": "The horse is big." },
+            { "type": "order", "text": "El caballo es grande.", "items": ["El", "caballo", "es", "grande", "."], "correct_answer": ["El", "caballo", "es", "grande", "."] },
+            { "type": "dictation", "text": "Caballo", "translation": "Horse", "prompt": "Type what you hear" }
+          ]
+        }
+      ],
+      "review": {
+        "poem_text": "El perro corre, el gato duerme.\nEl pájaro canta, el pez nada.\n¡El caballo galopa por el campo!\nQué animales tan bonitos.",
+        "questions": [
+          { "prompt": "What does the dog do?", "options": ["Runs", "Sleeps", "Sings"], "correct_answer": "Runs", "explanation": "'El perro corre' means The dog runs." },
+          { "prompt": "What does the bird do?", "options": ["Sings", "Swims", "Sleeps"], "correct_answer": "Sings", "explanation": "'El pájaro canta' means The bird sings." },
+          { "prompt": "What does the horse do?", "options": ["Gallops", "Swims", "Sleeps"], "correct_answer": "Gallops", "explanation": "'El caballo galopa' means The horse gallops." }
+        ]
+      }
+    },
+    {
+      "id": "u8",
+      "title": "Common phrases",
+      "lessons": [
+        {
+          "id": "u8l1",
+          "title": "Yes and no",
+          "order": 1,
+          "items": [
+            { "type": "listen", "text": "Sí", "translation": "Yes" },
+            { "type": "choose", "text": "No", "prompt": "What does 'No' mean?", "options": ["Yes", "No", "Maybe"], "correct_answer": "No", "explanation": "'No' means No." },
+            { "type": "repeat", "text": "Sí y no.", "translation": "Yes and no." },
+            { "type": "order", "text": "Sí y no.", "items": ["Sí", "y", "no", "."], "correct_answer": ["Sí", "y", "no", "."] },
+            { "type": "dictation", "text": "Sí", "translation": "Yes", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u8l2",
+          "title": "Now and later",
+          "order": 2,
+          "items": [
+            { "type": "listen", "text": "Ahora", "translation": "Now" },
+            { "type": "choose", "text": "Después", "prompt": "What does 'Después' mean?", "options": ["Now", "Later", "Yesterday"], "correct_answer": "Later", "explanation": "'Después' means Later." },
+            { "type": "repeat", "text": "Ahora y después.", "translation": "Now and later." },
+            { "type": "order", "text": "Ahora y después.", "items": ["Ahora", "y", "después", "."], "correct_answer": ["Ahora", "y", "después", "."] },
+            { "type": "dictation", "text": "Ahora", "translation": "Now", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u8l3",
+          "title": "Help and where",
+          "order": 3,
+          "items": [
+            { "type": "listen", "text": "Ayuda", "translation": "Help" },
+            { "type": "choose", "text": "¿Dónde?", "prompt": "What does '¿Dónde?' mean?", "options": ["Where?", "When?", "Why?"], "correct_answer": "Where?", "explanation": "'¿Dónde?' means Where?." },
+            { "type": "repeat", "text": "¿Dónde está? Ayuda, por favor.", "translation": "Where is it? Help, please." },
+            { "type": "order", "text": "¿Dónde está?", "items": ["¿Dónde", "está", "?"], "correct_answer": ["¿Dónde", "está", "?"] },
+            { "type": "dictation", "text": "Ayuda", "translation": "Help", "prompt": "Type what you hear" }
+          ]
+        }
+      ],
+      "review": {
+        "poem_text": "Sí, quiero aprender.\nNo, no ahora, después.\n¿Dónde está el libro?\n¡Ayuda, por favor, \nque hoy leo y aprendo!",
+        "questions": [
+          { "prompt": "What does the learner want to do?", "options": ["Learn", "Play", "Sleep"], "correct_answer": "Learn", "explanation": "'Sí, quiero aprender' means Yes, I want to learn." },
+          { "prompt": "What is the learner looking for?", "options": ["A book", "A pen", "A friend"], "correct_answer": "A book", "explanation": "'¿Dónde está el libro?' means Where is the book?" },
+          { "prompt": "What does the learner do today?", "options": ["Reads and learns", "Plays and rests", "Cooks and eats"], "correct_answer": "Reads and learns", "explanation": "'Hoy leo y aprendo' means Today I read and learn." }
         ]
       }
     }
