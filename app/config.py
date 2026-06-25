@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
     DEBUG: bool = False
-    AUDIO_BASE_URL: str = "http://localhost:8000/api/v1/audio"
+    AUDIO_BASE_URL: str = "https://hs-platform.s3.us-east-005.backblazeb2.com"
     CORS_ORIGINS: str = "http://localhost:5173"
     B2_KEY_ID: str | None = None
     B2_APP_KEY: str | None = None
