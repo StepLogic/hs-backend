@@ -5,6 +5,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
     DEBUG: bool = False
+    AUDIO_BASE_URL: str = "http://localhost:8000/audio"
+    CORS_ORIGINS: str = "http://localhost:5173"
 
     class Config:
         env_file = ".env"
@@ -19,6 +21,10 @@ class Settings(BaseSettings):
             separator = "&" if "?" in url else "?"
             url = f"{url}{separator}sslmode=require"
         return url
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
 
 settings = Settings()

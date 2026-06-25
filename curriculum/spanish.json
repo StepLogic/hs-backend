@@ -1,0 +1,108 @@
+{
+  "language": "spanish",
+  "voice": "ef_dora",
+  "lang": "es",
+  "slow_speed": 0.7,
+  "units": [
+    {
+      "id": "u1",
+      "title": "Greetings",
+      "lessons": [
+        {
+          "id": "u1l1",
+          "title": "Hello and goodbye",
+          "order": 1,
+          "items": [
+            { "type": "listen", "text": "Hola", "translation": "Hello" },
+            { "type": "choose", "text": "Hola", "prompt": "What does 'Hola' mean?", "options": ["Hello", "Goodbye", "Thank you"], "correct_answer": "Hello", "explanation": "'Hola' means Hello in Spanish." },
+            { "type": "repeat", "text": "Hola, ¿cómo estás?", "translation": "Hello, how are you?" },
+            { "type": "order", "text": "Hola, ¿cómo estás?", "items": ["Hola", ",", "¿cómo", "estás", "?"], "correct_answer": ["Hola", ",", "¿cómo", "estás", "?"] },
+            { "type": "dictation", "text": "Adiós", "translation": "Goodbye", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u1l2",
+          "title": "How are you",
+          "order": 2,
+          "items": [
+            { "type": "listen", "text": "¿Cómo estás?", "translation": "How are you?" },
+            { "type": "choose", "text": "Muy bien", "prompt": "What does 'Muy bien' mean?", "options": ["Very good", "Very bad", "See you"], "correct_answer": "Very good", "explanation": "'Muy bien' means Very good." },
+            { "type": "repeat", "text": "Estoy bien, gracias.", "translation": "I'm fine, thanks." },
+            { "type": "order", "text": "Estoy bien, gracias.", "items": ["Estoy", "bien", ",", "gracias", "."], "correct_answer": ["Estoy", "bien", ",", "gracias", "."] },
+            { "type": "dictation", "text": "¡Hola! ¿Cómo estás?", "translation": "Hello! How are you?", "prompt": "Type what you hear" }
+          ]
+        }
+      ],
+      "review": {
+        "poem_text": "Hola, ¿cómo estás?\n— Muy bien.\n¡Adiós!",
+        "questions": [
+          {
+            "prompt": "What is the first word of the poem?",
+            "options": ["Hola", "Adiós", "Muy bien"],
+            "correct_answer": "Hola",
+            "explanation": "The poem begins with 'Hola'."
+          },
+          {
+            "prompt": "What does '¿Cómo estás?' mean?",
+            "options": ["How are you?", "Goodbye", "Thank you"],
+            "correct_answer": "How are you?",
+            "explanation": "'¿Cómo estás?' means How are you?."
+          }
+        ]
+      }
+    },
+    {
+      "id": "u2",
+      "title": "Polite phrases",
+      "lessons": [
+        {
+          "id": "u2l1",
+          "title": "Please and thank you",
+          "order": 1,
+          "items": [
+            { "type": "listen", "text": "Por favor", "translation": "Please" },
+            { "type": "choose", "text": "Gracias", "prompt": "What does 'Gracias' mean?", "options": ["Please", "Thank you", "Sorry"], "correct_answer": "Thank you", "explanation": "'Gracias' means Thank you." },
+            { "type": "repeat", "text": "De nada.", "translation": "You're welcome." },
+            { "type": "order", "text": "Gracias, de nada.", "items": ["Gracias", ",", "de", "nada", "."], "correct_answer": ["Gracias", ",", "de", "nada", "."] },
+            { "type": "dictation", "text": "Por favor", "translation": "Please", "prompt": "Type what you hear" }
+          ]
+        },
+        {
+          "id": "u2l2",
+          "title": "Numbers",
+          "order": 2,
+          "items": [
+            { "type": "listen", "text": "Uno, dos, tres.", "translation": "One, two, three." },
+            { "type": "choose", "text": "Tres", "prompt": "What number is 'Tres'?", "options": ["One", "Two", "Three"], "correct_answer": "Three", "explanation": "'Tres' means Three." },
+            { "type": "repeat", "text": "Uno, dos, tres, cuatro, cinco.", "translation": "One, two, three, four, five." },
+            { "type": "order", "text": "Uno, dos, tres.", "items": ["Uno", ",", "dos", ",", "tres", "."], "correct_answer": ["Uno", ",", "dos", ",", "tres", "."] },
+            { "type": "dictation", "text": "Cinco", "translation": "Five", "prompt": "Type what you hear" }
+          ]
+        }
+      ],
+      "review": {
+        "poem_text": "Uno, dos, tres.\nHola, ¿cómo estás?\n— Muy bien, gracias.\nPor favor, de nada.\n¡Adiós!",
+        "questions": [
+          {
+            "prompt": "Which numbers appear in the poem?",
+            "options": ["uno, dos, tres", "uno, dos", "dos, tres"],
+            "correct_answer": "uno, dos, tres",
+            "explanation": "The poem says 'Uno, dos, tres.'"
+          },
+          {
+            "prompt": "What do you say when someone thanks you?",
+            "options": ["Gracias", "De nada", "Por favor"],
+            "correct_answer": "De nada",
+            "explanation": "'De nada' means You're welcome."
+          },
+          {
+            "prompt": "What is the last word of the poem?",
+            "options": ["Gracias", "Adiós", "De nada"],
+            "correct_answer": "Adiós",
+            "explanation": "The poem ends with '¡Adiós!'."
+          }
+        ]
+      }
+    }
+  ]
+}

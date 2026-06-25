@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Enum, JSON, Text
+from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Enum, JSON, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -110,3 +110,96 @@ class UserAnswer(Base):
     time_spent = Column(Integer, nullable=False)
 
     test_result = relationship("TestResult", back_populates="user_answers")
+
+
+class Language(str, PyEnum):
+    SPANISH = "spanish"
+
+
+class ActivityType(str, PyEnum):
+    LISTEN = "listen"
+    CHOOSE = "choose"
+    REPEAT = "repeat"
+    ORDER = "order"
+    DICTATION = "dictation"
+
+
+class AudioAsset(Base):
+    __tablename__ = "audio_assets"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    language = Column(Enum(Language), nullable=False)
+    text = Column(Text, nullable=False)
+    voice = Column(String, nullable=False, default="ef_dora")
+    speed = Column(Float, nullable=False, default=1.0)
+    key = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (UniqueConstraint("language", "text", "voice", "speed", name="uq_audio"),)
+
+
+class Lesson(Base):
+    __tablename__ = "lessons"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    language = Column(Enum(Language), nullable=False)
+    unit = Column(String, nullable=False)
+    unit_title = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    items = relationship("LessonItem", back_populates="lesson",
+                         cascade="all, delete-orphan", order_by="LessonItem.order")
+
+
+class LessonItem(Base):
+    __tablename__ = "lesson_items"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    lesson_id = Column(String, ForeignKey("lessons.id"), nullable=False)
+    order = Column(Integer, nullable=False, default=0)
+    type = Column(Enum(ActivityType), nullable=False)
+    prompt = Column(Text, nullable=True)
+    text = Column(Text, nullable=False)
+    translation = Column(Text, nullable=True)
+    audio_id = Column(String, ForeignKey("audio_assets.id"), nullable=True)
+    audio_slow_id = Column(String, ForeignKey("audio_assets.id"), nullable=True)
+    options = Column(JSON, nullable=True)
+    items = Column(JSON, nullable=True)
+    correct_answer = Column(JSON, nullable=True)
+    explanation = Column(Text, nullable=True)
+    hint = Column(Text, nullable=True)
+    lesson = relationship("Lesson", back_populates="items")
+    audio = relationship("AudioAsset", foreign_keys=[audio_id])
+    audio_slow = relationship("AudioAsset", foreign_keys=[audio_slow_id])
+
+
+class UnitReview(Base):
+    __tablename__ = "unit_reviews"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    language = Column(Enum(Language), nullable=False)
+    unit = Column(String, nullable=False)
+    unit_title = Column(String, nullable=False)
+    poem_text = Column(Text, nullable=False)
+    poem_audio_id = Column(String, ForeignKey("audio_assets.id"), nullable=True)
+    questions = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (UniqueConstraint("language", "unit"),)
+
+
+class LessonProgress(Base):
+    __tablename__ = "lesson_progress"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    lesson_id = Column(String, ForeignKey("lessons.id"), nullable=False)
+    score = Column(Integer, nullable=False, default=0)
+    completed = Column(Boolean, nullable=False, default=True)
+    completed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (UniqueConstraint("student_id", "lesson_id", name="uq_progress"),)
+
+
+class ReviewProgress(Base):
+    __tablename__ = "review_progress"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    review_id = Column(String, ForeignKey("unit_reviews.id"), nullable=False)
+    score = Column(Integer, nullable=False, default=0)
+    completed = Column(Boolean, nullable=False, default=True)
+    completed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (UniqueConstraint("student_id", "review_id", name="uq_review_progress"),)

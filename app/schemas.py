@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum as PyEnum
 from typing import Optional, Any
 
 from pydantic import BaseModel, ConfigDict
@@ -175,4 +176,117 @@ class UserAnswerUpdate(BaseModel):
 
 class UserAnswerResponse(UserAnswerBase):
     id: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── Language-learning schemas ───
+
+class Language(str, PyEnum):
+    SPANISH = "spanish"
+
+
+class ActivityType(str, PyEnum):
+    LISTEN = "listen"
+    CHOOSE = "choose"
+    REPEAT = "repeat"
+    ORDER = "order"
+    DICTATION = "dictation"
+
+
+class LessonItemResponse(BaseModel):
+    id: str
+    order: int
+    type: ActivityType
+    prompt: Optional[str] = None
+    text: str
+    translation: Optional[str] = None
+    audio_url: Optional[str] = None
+    audio_slow_url: Optional[str] = None
+    options: Optional[list[str]] = None
+    items: Optional[list[str]] = None
+    correct_answer: Optional[Any] = None
+    explanation: Optional[str] = None
+    hint: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LessonResponse(BaseModel):
+    id: str
+    language: Language
+    unit: str
+    unit_title: str
+    title: str
+    order: int
+    items: list[LessonItemResponse]
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LessonSummaryResponse(BaseModel):
+    id: str
+    unit: str
+    unit_title: str
+    title: str
+    order: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PoemQuestion(BaseModel):
+    prompt: str
+    options: list[str]
+    correct_answer: str
+    explanation: Optional[str] = None
+
+
+class UnitReviewResponse(BaseModel):
+    id: str
+    language: Language
+    unit: str
+    unit_title: str
+    poem_text: str
+    poem_audio_url: Optional[str] = None
+    questions: list[PoemQuestion]
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudentCreateLang(BaseModel):
+    name: str
+    email: Optional[str] = None
+
+
+class StudentResponseLang(BaseModel):
+    id: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProgressCreate(BaseModel):
+    student_id: str
+    lesson_id: str
+    score: int
+    completed: bool = True
+
+
+class ProgressResponse(BaseModel):
+    id: str
+    student_id: str
+    lesson_id: str
+    score: int
+    completed: bool
+    completed_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReviewProgressCreate(BaseModel):
+    student_id: str
+    review_id: str
+    score: int
+    completed: bool = True
+
+
+class ReviewProgressResponse(BaseModel):
+    id: str
+    student_id: str
+    review_id: str
+    score: int
+    completed: bool
+    completed_at: datetime
     model_config = ConfigDict(from_attributes=True)
