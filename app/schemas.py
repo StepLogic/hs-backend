@@ -1,10 +1,52 @@
-from datetime import datetime
-from enum import Enum as PyEnum
+from datetime import date, datetime
 from typing import Optional, Any
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models import Subject, QuestionType, MasteryLevel
+from app.models import Subject, QuestionType, MasteryLevel, Role, CourseType, ReviewStatus, EnrollmentStatus, LessonProgressStatus, Difficulty, ExamType
+
+
+# ─── SkillTaxonomy schemas ───
+class SkillTaxonomyBase(BaseModel):
+    subject: Subject
+    skill: str
+    description: Optional[str] = None
+
+
+class SkillTaxonomyCreate(SkillTaxonomyBase):
+    pass
+
+
+class SkillTaxonomyResponse(SkillTaxonomyBase):
+    id: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── Auth schemas ───
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    role: Role = Role.STUDENT
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    role: Role
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    role: Role
+    user_id: str
 
 
 # ─── Question schemas ───
@@ -21,7 +63,8 @@ class QuestionBase(BaseModel):
     skill: str
     explanation: str
     hint: Optional[str] = None
-
+    review_status: Optional[ReviewStatus] = None
+    difficulty: Difficulty = Difficulty.MEDIUM
 
 class QuestionCreate(QuestionBase):
     pass
@@ -38,8 +81,9 @@ class QuestionUpdate(BaseModel):
     items: Optional[list[str]] = None
     correct_answer: Optional[Any] = None
     skill: Optional[str] = None
-    explanation: Optional[str] = None
     hint: Optional[str] = None
+    review_status: Optional[ReviewStatus] = None
+    difficulty: Optional[Difficulty] = None
 
 
 class QuestionResponse(QuestionBase):
@@ -50,6 +94,7 @@ class QuestionResponse(QuestionBase):
 # ─── Course schemas ───
 class CourseBase(BaseModel):
     subject: Subject
+    course_type: CourseType = CourseType.CORE
     title: str
     short_title: str
     description: str
@@ -73,6 +118,7 @@ class CourseCreate(CourseBase):
 
 class CourseUpdate(BaseModel):
     subject: Optional[Subject] = None
+    course_type: Optional[CourseType] = None
     title: Optional[str] = None
     short_title: Optional[str] = None
     description: Optional[str] = None
@@ -100,10 +146,9 @@ class StudentBase(BaseModel):
     name: str
     email: Optional[str] = None
     grade_level: int
-
-
 class StudentCreate(StudentBase):
-    pass
+    owner_user_id: Optional[str] = None
+
 
 
 class StudentUpdate(BaseModel):
@@ -129,6 +174,10 @@ class TestResultBase(BaseModel):
     total_questions: int
     skill_breakdown: dict[str, Any]
     mastery_level: MasteryLevel
+    exam_type: Optional[ExamType] = None
+    timed: bool = False
+    time_limit_sec: Optional[int] = None
+    section: Optional[str] = None
 
 
 class TestResultCreate(TestResultBase):
@@ -145,6 +194,10 @@ class TestResultUpdate(BaseModel):
     total_questions: Optional[int] = None
     skill_breakdown: Optional[dict[str, Any]] = None
     mastery_level: Optional[MasteryLevel] = None
+    exam_type: Optional[ExamType] = None
+    timed: Optional[bool] = None
+    time_limit_sec: Optional[int] = None
+    section: Optional[str] = None
 
 
 class TestResultResponse(TestResultBase):
@@ -179,114 +232,217 @@ class UserAnswerResponse(UserAnswerBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ─── Language-learning schemas ───
-
-class Language(str, PyEnum):
-    SPANISH = "spanish"
-
-
-class ActivityType(str, PyEnum):
-    LISTEN = "listen"
-    CHOOSE = "choose"
-    REPEAT = "repeat"
-    ORDER = "order"
-    DICTATION = "dictation"
-
-
-class LessonItemResponse(BaseModel):
-    id: str
-    order: int
-    type: ActivityType
-    prompt: Optional[str] = None
-    text: str
-    translation: Optional[str] = None
-    audio_url: Optional[str] = None
-    audio_slow_url: Optional[str] = None
-    options: Optional[list[str]] = None
-    items: Optional[list[str]] = None
-    correct_answer: Optional[Any] = None
-    explanation: Optional[str] = None
-    hint: Optional[str] = None
-    model_config = ConfigDict(from_attributes=True)
-
-
-class LessonResponse(BaseModel):
-    id: str
-    language: Language
-    unit: str
-    unit_title: str
+# ─── Unit schemas ───
+class UnitBase(BaseModel):
+    course_id: str
     title: str
-    order: int
-    items: list[LessonItemResponse]
+    slug: str
+    order_index: int = 0
+    description: Optional[str] = None
+
+
+class UnitCreate(UnitBase):
+    pass
+
+
+class UnitUpdate(BaseModel):
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    order_index: Optional[int] = None
+    description: Optional[str] = None
+
+
+class UnitResponse(UnitBase):
+    id: str
     model_config = ConfigDict(from_attributes=True)
 
 
-class LessonSummaryResponse(BaseModel):
-    id: str
-    unit: str
-    unit_title: str
+# ─── Lesson schemas ───
+class LessonBase(BaseModel):
+    unit_id: str
     title: str
-    order: int
-    model_config = ConfigDict(from_attributes=True)
+    slug: str
+    order_index: int = 0
+    content: str
+    duration_min: int = 10
+    skills: list[str] = []
+    review_status: ReviewStatus = ReviewStatus.PUBLISHED
+    prerequisite_lesson_id: Optional[str] = None
 
 
-class PoemQuestion(BaseModel):
-    prompt: str
-    options: list[str]
-    correct_answer: str
-    explanation: Optional[str] = None
+class LessonCreate(LessonBase):
+    pass
 
 
-class UnitReviewResponse(BaseModel):
-    id: str
-    language: Language
-    unit: str
-    unit_title: str
-    poem_text: str
-    poem_audio_url: Optional[str] = None
-    questions: list[PoemQuestion]
-    model_config = ConfigDict(from_attributes=True)
+class LessonUpdate(BaseModel):
+    unit_id: Optional[str] = None
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    order_index: Optional[int] = None
+    content: Optional[str] = None
+    duration_min: Optional[int] = None
+    skills: Optional[list[str]] = None
+    review_status: Optional[ReviewStatus] = None
+    prerequisite_lesson_id: Optional[str] = None
 
 
-class StudentCreateLang(BaseModel):
-    name: str
-    email: Optional[str] = None
-
-
-class StudentResponseLang(BaseModel):
+class LessonResponse(LessonBase):
     id: str
     model_config = ConfigDict(from_attributes=True)
 
 
-class ProgressCreate(BaseModel):
+# ─── Enrollment schemas ───
+class EnrollmentBase(BaseModel):
+    student_id: str
+    course_id: str
+    status: EnrollmentStatus = EnrollmentStatus.ACTIVE
+
+
+class EnrollmentCreate(EnrollmentBase):
+    pass
+
+
+class EnrollmentUpdate(BaseModel):
+    status: Optional[EnrollmentStatus] = None
+
+
+class EnrollmentResponse(EnrollmentBase):
+    id: str
+    enrolled_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── LessonProgress schemas ───
+class LessonProgressBase(BaseModel):
     student_id: str
     lesson_id: str
-    score: int
-    completed: bool = True
+    status: LessonProgressStatus = LessonProgressStatus.NOT_STARTED
+    mastery_score: int = 0
+    attempts: int = 0
 
 
-class ProgressResponse(BaseModel):
+class LessonProgressCreate(LessonProgressBase):
+    pass
+
+
+class LessonProgressUpdate(BaseModel):
+    status: Optional[LessonProgressStatus] = None
+    mastery_score: Optional[int] = None
+    attempts: Optional[int] = None
+
+
+class LessonProgressResponse(LessonProgressBase):
     id: str
-    student_id: str
-    lesson_id: str
-    score: int
-    completed: bool
-    completed_at: datetime
+    last_accessed: datetime
     model_config = ConfigDict(from_attributes=True)
 
 
-class ReviewProgressCreate(BaseModel):
+# ─── SkillMastery schemas ───
+class SkillMasteryBase(BaseModel):
     student_id: str
-    review_id: str
-    score: int
-    completed: bool = True
+    subject: Subject
+    skill: str
+    mastery_level: MasteryLevel = MasteryLevel.BEGINNER
+    mastery_score: int = 0
+    repetitions: int = 0
+    easiness: float = 2.5
+    interval_days: int = 1
+    due_date: date
+    last_practiced: Optional[datetime] = None
 
 
-class ReviewProgressResponse(BaseModel):
+class SkillMasteryCreate(SkillMasteryBase):
+    pass
+
+
+class SkillMasteryUpdate(BaseModel):
+    mastery_level: Optional[MasteryLevel] = None
+    mastery_score: Optional[int] = None
+    repetitions: Optional[int] = None
+    easiness: Optional[float] = None
+    interval_days: Optional[int] = None
+    due_date: Optional[date] = None
+    last_practiced: Optional[datetime] = None
+
+
+class SkillMasteryResponse(SkillMasteryBase):
     id: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── UserProfile schemas ───
+class UserProfileBase(BaseModel):
+    user_id: str
+    xp: int = 0
+    level: int = 1
+    streak_days: int = 0
+    last_active: Optional[date] = None
+    badges: list[str] = []
+
+
+class UserProfileCreate(UserProfileBase):
+    pass
+
+
+class UserProfileUpdate(BaseModel):
+    xp: Optional[int] = None
+    level: Optional[int] = None
+    streak_days: Optional[int] = None
+    last_active: Optional[date] = None
+    badges: Optional[list[str]] = None
+
+
+class UserProfileResponse(UserProfileBase):
+    id: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── Practice schemas ───
+class PracticeAnswer(BaseModel):
+    question_id: str
+    answer: Any
+    is_correct: bool
+    time_spent: int
+
+
+class PracticeSubmit(BaseModel):
     student_id: str
-    review_id: str
-    score: int
-    completed: bool
-    completed_at: datetime
+    subject: Subject
+    lesson_id: Optional[str] = None
+    answers: list[PracticeAnswer]
+
+
+class PracticeSubmitResponse(BaseModel):
+    test_result: TestResultResponse
+    skill_mastery: list[SkillMasteryResponse]
+    lesson_progress: Optional[LessonProgressResponse] = None
+
+
+# ─── ExamBlueprint schemas ───
+class ExamBlueprintBase(BaseModel):
+    exam_type: ExamType
+    subject: Optional[Subject] = None
+    section: Optional[str] = None
+    question_count: int = 10
+    time_limit_sec: int = 1800
+    grade_level: Optional[int] = None
+    skill_weights: dict[str, int] = {}
+
+
+class ExamBlueprintCreate(ExamBlueprintBase):
+    pass
+
+
+class ExamBlueprintUpdate(BaseModel):
+    exam_type: Optional[ExamType] = None
+    subject: Optional[Subject] = None
+    section: Optional[str] = None
+    question_count: Optional[int] = None
+    time_limit_sec: Optional[int] = None
+    grade_level: Optional[int] = None
+    skill_weights: Optional[dict[str, int]] = None
+
+
+class ExamBlueprintResponse(ExamBlueprintBase):
+    id: str
     model_config = ConfigDict(from_attributes=True)

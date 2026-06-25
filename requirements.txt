@@ -8,3 +8,8 @@ pydantic
 alembic
 python-multipart
 email-validator
+pytest
+httpx
+pyjwt
+passlib[bcrypt]
+bcrypt

@@ -1,55 +1,51 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
 from app.api.deps import get_db
-from app.config import settings
 
 router = APIRouter()
 
 
-def _build_audio_url(audio_asset: models.AudioAsset | None) -> str | None:
-    if not audio_asset:
-        return None
-    return f"{settings.AUDIO_BASE_URL}/{audio_asset.key}"
-
-
-@router.get("/", response_model=list[schemas.LessonSummaryResponse])
-def read_lessons(
-    db: Session = Depends(get_db),
-    language: str = Query("spanish"),
-) -> list[models.Lesson]:
-    return crud.get_lessons(db, language=language)
+@router.get("/unit/{unit_id}", response_model=list[schemas.LessonResponse])
+def read_lessons_by_unit(unit_id: str, db: Session = Depends(get_db)) -> list[models.Lesson]:
+    return (
+        db.query(models.Lesson)
+        .filter(models.Lesson.unit_id == unit_id)
+        .filter(models.Lesson.review_status == models.ReviewStatus.PUBLISHED)
+        .order_by(models.Lesson.order_index)
+        .all()
+    )
 
 
 @router.get("/{lesson_id}", response_model=schemas.LessonResponse)
-def read_lesson(lesson_id: str, db: Session = Depends(get_db)) -> dict:
+def read_lesson(lesson_id: str, db: Session = Depends(get_db)) -> models.Lesson:
     lesson = crud.get_lesson(db, lesson_id)
-    if lesson is None:
+    if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
-    items = []
-    for item in lesson.items:
-        items.append({
-            "id": item.id,
-            "order": item.order,
-            "type": item.type.value,
-            "prompt": item.prompt,
-            "text": item.text,
-            "translation": item.translation,
-            "audio_url": _build_audio_url(item.audio),
-            "audio_slow_url": _build_audio_url(item.audio_slow),
-            "options": item.options,
-            "items": item.items,
-            "correct_answer": item.correct_answer,
-            "explanation": item.explanation,
-            "hint": item.hint,
-        })
-    return {
-        "id": lesson.id,
-        "language": lesson.language.value,
-        "unit": lesson.unit,
-        "unit_title": lesson.unit_title,
-        "title": lesson.title,
-        "order": lesson.order,
-        "items": items,
-    }
+    return lesson
+
+
+@router.post("/", response_model=schemas.LessonResponse, status_code=201)
+def create_lesson(
+    *, db: Session = Depends(get_db), lesson_in: schemas.LessonCreate
+) -> models.Lesson:
+    return crud.create_lesson(db, lesson_in)
+
+
+@router.put("/{lesson_id}", response_model=schemas.LessonResponse)
+def update_lesson(
+    *, lesson_id: str, db: Session = Depends(get_db), lesson_in: schemas.LessonUpdate
+) -> models.Lesson:
+    lesson = crud.update_lesson(db, lesson_id, lesson_in)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    return lesson
+
+
+@router.delete("/{lesson_id}")
+def delete_lesson(lesson_id: str, db: Session = Depends(get_db)) -> dict[str, bool]:
+    success = crud.delete_lesson(db, lesson_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    return {"ok": True}

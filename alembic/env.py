@@ -18,6 +18,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 from app.database import Base, engine  # noqa: E402
 from app import models  # noqa: E402
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

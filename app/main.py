@@ -2,20 +2,26 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.api import api_router
-from app.config import settings
+from app.initial_data import init_db
 
 app = FastAPI(
     title="HS Backend",
-    description="Administration backend for hs-platform + language learning",
+    description="Administration backend for hs-platform",
     version="0.1.0",
 )
 
+@app.on_event("startup")
+def on_startup() -> None:
+    init_db()
+
+_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:4173,https://hs-platform.vercel.app")
+allow_origins = [o.strip() for o in _origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,9 +30,5 @@ app.add_middleware(
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
-
-audio_dir = os.path.join(os.path.dirname(__file__), "..", "audio")
-if os.path.isdir(audio_dir):
-    app.mount("/audio", StaticFiles(directory=audio_dir), name="audio")
 
 app.include_router(api_router, prefix="/api/v1")

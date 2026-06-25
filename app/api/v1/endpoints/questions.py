@@ -17,6 +17,7 @@ def read_questions(
     subject: Optional[str] = None,
     grade_level: Optional[int] = None,
     skill: Optional[str] = None,
+    status: Optional[str] = Query(None),
 ) -> list[models.Question]:
     query = db.query(models.Question)
     if subject is not None:
@@ -25,6 +26,10 @@ def read_questions(
         query = query.filter(models.Question.grade_level == grade_level)
     if skill is not None:
         query = query.filter(models.Question.skill == skill)
+    if status is not None:
+        query = query.filter(models.Question.review_status == status)
+    else:
+        query = query.filter(models.Question.review_status == models.ReviewStatus.PUBLISHED)
     return query.offset(skip).limit(limit).all()
 
 

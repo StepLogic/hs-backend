@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Enum, JSON, Text, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Float, Boolean, Date, DateTime, ForeignKey, Enum, JSON, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -10,9 +10,19 @@ from app.database import Base
 
 class Subject(str, PyEnum):
     MATH = "math"
-    READING = "reading"
-    COMPREHENSION = "comprehension"
-    SPANISH = "spanish"
+    ENGLISH_LANGUAGE_ARTS = "english_language_arts"
+    SCIENCE = "science"
+    SOCIAL_STUDIES = "social_studies"
+    WORLD_LANGUAGES = "world_languages"
+    TEST_PREP = "test_prep"
+    COLLEGE_READINESS = "college_readiness"
+
+
+class Role(str, PyEnum):
+    STUDENT = "student"
+    PARENT = "parent"
+    TEACHER = "teacher"
+    ADMIN = "admin"
 
 
 class QuestionType(str, PyEnum):
@@ -28,6 +38,36 @@ class MasteryLevel(str, PyEnum):
     PROFICIENT = "proficient"
     ADVANCED = "advanced"
 
+
+class CourseType(str, PyEnum):
+    CORE = "core"
+    TEST_PREP = "test_prep"
+    COLLEGE_READINESS = "college_readiness"
+
+
+class ReviewStatus(str, PyEnum):
+    DRAFT = "draft"
+    IN_REVIEW = "in_review"
+    PUBLISHED = "published"
+    REJECTED = "rejected"
+
+
+class EnrollmentStatus(str, PyEnum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    DROPPED = "dropped"
+
+
+class LessonProgressStatus(str, PyEnum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
+class Difficulty(str, PyEnum):
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
 
 class Question(Base):
     __tablename__ = "questions"
@@ -45,13 +85,15 @@ class Question(Base):
     skill = Column(String, nullable=False)
     explanation = Column(Text, nullable=False)
     hint = Column(Text, nullable=True)
-
+    review_status = Column(Enum(ReviewStatus), nullable=False, default=ReviewStatus.PUBLISHED)
+    difficulty = Column(Enum(Difficulty), nullable=False, default=Difficulty.MEDIUM)
 
 class Course(Base):
     __tablename__ = "courses"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     subject = Column(Enum(Subject), nullable=False)
+    course_type = Column(Enum(CourseType), nullable=False, default=CourseType.CORE)
     title = Column(String, nullable=False)
     short_title = Column(String, nullable=False)
     description = Column(Text, nullable=False)
@@ -68,6 +110,51 @@ class Course(Base):
     features = Column(JSON, nullable=False, default=list)
     image_emoji = Column(String, nullable=False)
 
+    units = relationship("Unit", back_populates="course", cascade="all, delete-orphan", order_by="Unit.order_index")
+
+
+class SkillTaxonomy(Base):
+    __tablename__ = "skill_taxonomy"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    subject = Column(Enum(Subject), nullable=False)
+    skill = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+
+    __table_args__ = (UniqueConstraint("subject", "skill"),)
+
+
+class Unit(Base):
+    __tablename__ = "units"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+    title = Column(String, nullable=False)
+    slug = Column(String, nullable=False)
+    order_index = Column(Integer, nullable=False, default=0)
+    description = Column(Text, nullable=True)
+
+    course = relationship("Course", back_populates="units")
+    lessons = relationship("Lesson", back_populates="unit", cascade="all, delete-orphan", order_by="Lesson.order_index")
+
+
+class Lesson(Base):
+    __tablename__ = "lessons"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    unit_id = Column(String, ForeignKey("units.id"), nullable=False)
+    title = Column(String, nullable=False)
+    slug = Column(String, nullable=False)
+    order_index = Column(Integer, nullable=False, default=0)
+    content = Column(Text, nullable=False)
+    duration_min = Column(Integer, nullable=False, default=10)
+    skills = Column(JSON, nullable=False, default=list)
+    review_status = Column(Enum(ReviewStatus), nullable=False, default=ReviewStatus.PUBLISHED)
+    prerequisite_lesson_id = Column(String, ForeignKey("lessons.id"), nullable=True)
+
+    unit = relationship("Unit", back_populates="lessons")
+    prerequisite = relationship("Lesson", remote_side="Lesson.id")
+
 
 class Student(Base):
     __tablename__ = "students"
@@ -77,8 +164,91 @@ class Student(Base):
     email = Column(String, nullable=True)
     grade_level = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    owner_user_id = Column(String, ForeignKey("users.id"), nullable=True)
 
     test_results = relationship("TestResult", back_populates="student", cascade="all, delete-orphan")
+    owner = relationship("User", back_populates="owned_students")
+    enrollments = relationship("Enrollment", back_populates="student", cascade="all, delete-orphan")
+    lesson_progress = relationship("LessonProgress", back_populates="student", cascade="all, delete-orphan")
+    skill_masteries = relationship("SkillMastery", back_populates="student", cascade="all, delete-orphan")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role = Column(Enum(Role), nullable=False, default=Role.STUDENT)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    owned_students = relationship("Student", back_populates="owner")
+
+
+class Enrollment(Base):
+    __tablename__ = "enrollments"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+    enrolled_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    status = Column(Enum(EnrollmentStatus), nullable=False, default=EnrollmentStatus.ACTIVE)
+
+    student = relationship("Student", back_populates="enrollments")
+    __table_args__ = (UniqueConstraint("student_id", "course_id"),)
+
+
+class LessonProgress(Base):
+    __tablename__ = "lesson_progress"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    lesson_id = Column(String, ForeignKey("lessons.id"), nullable=False)
+    status = Column(Enum(LessonProgressStatus), nullable=False, default=LessonProgressStatus.NOT_STARTED)
+    mastery_score = Column(Integer, nullable=False, default=0)
+    attempts = Column(Integer, nullable=False, default=0)
+    last_accessed = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student", back_populates="lesson_progress")
+    __table_args__ = (UniqueConstraint("student_id", "lesson_id"),)
+
+
+class SkillMastery(Base):
+    __tablename__ = "skill_mastery"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    subject = Column(Enum(Subject), nullable=False)
+    skill = Column(String, nullable=False)
+    mastery_level = Column(Enum(MasteryLevel), nullable=False, default=MasteryLevel.BEGINNER)
+    mastery_score = Column(Integer, nullable=False, default=0)
+    repetitions = Column(Integer, nullable=False, default=0)
+    easiness = Column(Float, nullable=False, default=2.5)
+    interval_days = Column(Integer, nullable=False, default=1)
+    due_date = Column(Date, default=datetime.utcnow, nullable=False)
+    last_practiced = Column(DateTime, nullable=True)
+    student = relationship("Student", back_populates="skill_masteries")
+    __table_args__ = (UniqueConstraint("student_id", "subject", "skill"),)
+
+
+class ExamType(str, PyEnum):
+    SAT = "sat"
+    ACT = "act"
+    AP = "ap"
+    SECTION_QUIZ = "section_quiz"
+
+
+class ExamBlueprint(Base):
+    __tablename__ = "exam_blueprints"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    exam_type = Column(Enum(ExamType), nullable=False)
+    subject = Column(Enum(Subject), nullable=True)
+    section = Column(String, nullable=True)
+    question_count = Column(Integer, nullable=False, default=10)
+    time_limit_sec = Column(Integer, nullable=False, default=1800)
+    grade_level = Column(Integer, nullable=True)
+    skill_weights = Column(JSON, nullable=False, default=dict)
 
 
 class TestResult(Base):
@@ -94,6 +264,10 @@ class TestResult(Base):
     total_questions = Column(Integer, nullable=False)
     skill_breakdown = Column(JSON, nullable=False, default=dict)
     mastery_level = Column(Enum(MasteryLevel), nullable=False)
+    exam_type = Column(Enum(ExamType), nullable=True)
+    timed = Column(Boolean, nullable=False, default=False)
+    time_limit_sec = Column(Integer, nullable=True)
+    section = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     student = relationship("Student", back_populates="test_results")
@@ -113,94 +287,15 @@ class UserAnswer(Base):
     test_result = relationship("TestResult", back_populates="user_answers")
 
 
-class Language(str, PyEnum):
-    SPANISH = "spanish"
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
 
-
-class ActivityType(str, PyEnum):
-    LISTEN = "listen"
-    CHOOSE = "choose"
-    REPEAT = "repeat"
-    ORDER = "order"
-    DICTATION = "dictation"
-
-
-class AudioAsset(Base):
-    __tablename__ = "audio_assets"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    language = Column(Enum(Language), nullable=False)
-    text = Column(Text, nullable=False)
-    voice = Column(String, nullable=False, default="ef_dora")
-    speed = Column(Float, nullable=False, default=1.0)
-    key = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    __table_args__ = (UniqueConstraint("language", "text", "voice", "speed", name="uq_audio"),)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+    xp = Column(Integer, nullable=False, default=0)
+    level = Column(Integer, nullable=False, default=1)
+    streak_days = Column(Integer, nullable=False, default=0)
+    last_active = Column(Date, nullable=True)
+    badges = Column(JSON, nullable=False, default=list)
 
-
-class Lesson(Base):
-    __tablename__ = "lessons"
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    language = Column(Enum(Language), nullable=False)
-    unit = Column(String, nullable=False)
-    unit_title = Column(String, nullable=False)
-    title = Column(String, nullable=False)
-    order = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    items = relationship("LessonItem", back_populates="lesson",
-                         cascade="all, delete-orphan", order_by="LessonItem.order")
-
-
-class LessonItem(Base):
-    __tablename__ = "lesson_items"
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    lesson_id = Column(String, ForeignKey("lessons.id"), nullable=False)
-    order = Column(Integer, nullable=False, default=0)
-    type = Column(Enum(ActivityType), nullable=False)
-    prompt = Column(Text, nullable=True)
-    text = Column(Text, nullable=False)
-    translation = Column(Text, nullable=True)
-    audio_id = Column(String, ForeignKey("audio_assets.id"), nullable=True)
-    audio_slow_id = Column(String, ForeignKey("audio_assets.id"), nullable=True)
-    options = Column(JSON, nullable=True)
-    items = Column(JSON, nullable=True)
-    correct_answer = Column(JSON, nullable=True)
-    explanation = Column(Text, nullable=True)
-    hint = Column(Text, nullable=True)
-    lesson = relationship("Lesson", back_populates="items")
-    audio = relationship("AudioAsset", foreign_keys=[audio_id])
-    audio_slow = relationship("AudioAsset", foreign_keys=[audio_slow_id])
-
-
-class UnitReview(Base):
-    __tablename__ = "unit_reviews"
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    language = Column(Enum(Language), nullable=False)
-    unit = Column(String, nullable=False)
-    unit_title = Column(String, nullable=False)
-    poem_text = Column(Text, nullable=False)
-    poem_audio_id = Column(String, ForeignKey("audio_assets.id"), nullable=True)
-    questions = Column(JSON, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    __table_args__ = (UniqueConstraint("language", "unit"),)
-
-
-class LessonProgress(Base):
-    __tablename__ = "lesson_progress"
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    student_id = Column(String, ForeignKey("students.id"), nullable=False)
-    lesson_id = Column(String, ForeignKey("lessons.id"), nullable=False)
-    score = Column(Integer, nullable=False, default=0)
-    completed = Column(Boolean, nullable=False, default=True)
-    completed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    __table_args__ = (UniqueConstraint("student_id", "lesson_id", name="uq_progress"),)
-
-
-class ReviewProgress(Base):
-    __tablename__ = "review_progress"
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    student_id = Column(String, ForeignKey("students.id"), nullable=False)
-    review_id = Column(String, ForeignKey("unit_reviews.id"), nullable=False)
-    score = Column(Integer, nullable=False, default=0)
-    completed = Column(Boolean, nullable=False, default=True)
-    completed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    __table_args__ = (UniqueConstraint("student_id", "review_id", name="uq_review_progress"),)
+    user = relationship("User", backref="profile")

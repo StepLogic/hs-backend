@@ -1,9 +1,27 @@
-from datetime import datetime
 from typing import Optional, Any
 
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+
+
+# ─── Users ───
+
+def get_user(db: Session, user_id: str) -> models.User | None:
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+
+def get_user_by_email(db: Session, email: str) -> models.User | None:
+    return db.query(models.User).filter(models.User.email == email).first()
+
+
+def create_user(db: Session, user: schemas.UserCreate, password_hash: str) -> models.User:
+    db_user = models.User(email=user.email, password_hash=password_hash, role=user.role)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
 
 
 # ─── Questions ───
@@ -252,206 +270,304 @@ def delete_user_answer(db: Session, user_answer_id: str) -> bool:
     return True
 
 
-# ─── Audio Assets ───
+# ─── SkillTaxonomy ───
 
-def get_audio_asset(db: Session, audio_id: str) -> Optional[models.AudioAsset]:
-    return db.query(models.AudioAsset).filter(models.AudioAsset.id == audio_id).first()
+def get_skill_taxonomy(db: Session, skill_id: str) -> models.SkillTaxonomy | None:
+    return db.query(models.SkillTaxonomy).filter(models.SkillTaxonomy.id == skill_id).first()
 
 
-def upsert_audio_asset(db: Session, language: str, text: str, voice: str, speed: float, key: str) -> models.AudioAsset:
-    existing = db.query(models.AudioAsset).filter(
-        models.AudioAsset.language == language,
-        models.AudioAsset.text == text,
-        models.AudioAsset.voice == voice,
-        models.AudioAsset.speed == speed,
-    ).first()
-    if existing:
-        existing.key = key
-        db.commit()
-        db.refresh(existing)
-        return existing
-    db_asset = models.AudioAsset(
-        language=models.Language(language),
-        text=text,
-        voice=voice,
-        speed=speed,
-        key=key,
-    )
-    db.add(db_asset)
+def get_skill_taxonomies(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    subject: str | None = None,
+) -> list[models.SkillTaxonomy]:
+    query = db.query(models.SkillTaxonomy)
+    if subject is not None:
+        query = query.filter(models.SkillTaxonomy.subject == subject)
+    return query.offset(skip).limit(limit).all()
+
+
+def create_skill_taxonomy(
+    db: Session, skill: schemas.SkillTaxonomyCreate
+) -> models.SkillTaxonomy:
+    db_skill = models.SkillTaxonomy(**skill.model_dump())
+    db.add(db_skill)
     db.commit()
-    db.refresh(db_asset)
-    return db_asset
+    db.refresh(db_skill)
+    return db_skill
+
+
+def delete_skill_taxonomy(db: Session, skill_id: str) -> bool:
+    db_skill = get_skill_taxonomy(db, skill_id)
+    if not db_skill:
+        return False
+    db.delete(db_skill)
+    db.commit()
+    return True
+
+
+# ─── Units ───
+
+def get_unit(db: Session, unit_id: str) -> models.Unit | None:
+    return db.query(models.Unit).filter(models.Unit.id == unit_id).first()
+
+
+def get_units_by_course(db: Session, course_id: str) -> list[models.Unit]:
+    return (
+        db.query(models.Unit)
+        .filter(models.Unit.course_id == course_id)
+        .order_by(models.Unit.order_index)
+        .all()
+    )
+
+
+def create_unit(db: Session, unit: schemas.UnitCreate) -> models.Unit:
+    db_unit = models.Unit(**unit.model_dump())
+    db.add(db_unit)
+    db.commit()
+    db.refresh(db_unit)
+    return db_unit
+
+
+def update_unit(db: Session, unit_id: str, unit: schemas.UnitUpdate) -> models.Unit | None:
+    db_unit = get_unit(db, unit_id)
+    if not db_unit:
+        return None
+    for key, value in unit.model_dump(exclude_unset=True).items():
+        setattr(db_unit, key, value)
+    db.commit()
+    db.refresh(db_unit)
+    return db_unit
+
+
+def delete_unit(db: Session, unit_id: str) -> bool:
+    db_unit = get_unit(db, unit_id)
+    if not db_unit:
+        return False
+    db.delete(db_unit)
+    db.commit()
+    return True
 
 
 # ─── Lessons ───
 
-def get_lesson(db: Session, lesson_id: str) -> Optional[models.Lesson]:
+def get_lesson(db: Session, lesson_id: str) -> models.Lesson | None:
     return db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
 
 
-def get_lessons(db: Session, language: Optional[str] = None) -> list[models.Lesson]:
-    query = db.query(models.Lesson)
-    if language:
-        query = query.filter(models.Lesson.language == language)
-    return query.order_by(models.Lesson.unit, models.Lesson.order).all()
-
-
-def create_lesson(db: Session, language: str, unit: str, unit_title: str, title: str, order: int) -> models.Lesson:
-    db_lesson = models.Lesson(
-        language=models.Language(language),
-        unit=unit,
-        unit_title=unit_title,
-        title=title,
-        order=order,
+def get_lessons_by_unit(db: Session, unit_id: str) -> list[models.Lesson]:
+    return (
+        db.query(models.Lesson)
+        .filter(models.Lesson.unit_id == unit_id)
+        .order_by(models.Lesson.order_index)
+        .all()
     )
+
+
+def create_lesson(db: Session, lesson: schemas.LessonCreate) -> models.Lesson:
+    db_lesson = models.Lesson(**lesson.model_dump())
     db.add(db_lesson)
     db.commit()
     db.refresh(db_lesson)
     return db_lesson
 
 
-def upsert_lesson(db: Session, language: str, unit: str, unit_title: str, title: str, order: int) -> models.Lesson:
-    existing = db.query(models.Lesson).filter(
-        models.Lesson.language == language,
-        models.Lesson.unit == unit,
-        models.Lesson.title == title,
-    ).first()
-    if existing:
-        existing.unit_title = unit_title
-        existing.order = order
-        db.commit()
-        db.refresh(existing)
-        return existing
-    return create_lesson(db, language, unit, unit_title, title, order)
-
-
-# ─── Lesson Items ───
-
-def create_lesson_item(db: Session, lesson_id: str, order: int, type_: str, text: str,
-                       prompt: Optional[str] = None, translation: Optional[str] = None,
-                       audio_id: Optional[str] = None, audio_slow_id: Optional[str] = None,
-                       options: Optional[Any] = None, items: Optional[Any] = None,
-                       correct_answer: Optional[Any] = None, explanation: Optional[str] = None,
-                       hint: Optional[str] = None) -> models.LessonItem:
-    db_item = models.LessonItem(
-        lesson_id=lesson_id,
-        order=order,
-        type=models.ActivityType(type_),
-        prompt=prompt,
-        text=text,
-        translation=translation,
-        audio_id=audio_id,
-        audio_slow_id=audio_slow_id,
-        options=options,
-        items=items,
-        correct_answer=correct_answer,
-        explanation=explanation,
-        hint=hint,
-    )
-    db.add(db_item)
+def update_lesson(db: Session, lesson_id: str, lesson: schemas.LessonUpdate) -> models.Lesson | None:
+    db_lesson = get_lesson(db, lesson_id)
+    if not db_lesson:
+        return None
+    for key, value in lesson.model_dump(exclude_unset=True).items():
+        setattr(db_lesson, key, value)
     db.commit()
-    db.refresh(db_item)
-    return db_item
+    db.refresh(db_lesson)
+    return db_lesson
 
 
-def get_lesson_items(db: Session, lesson_id: str) -> list[models.LessonItem]:
-    return db.query(models.LessonItem).filter(models.LessonItem.lesson_id == lesson_id).order_by(models.LessonItem.order).all()
-
-
-# ─── Unit Reviews ───
-
-def get_unit_review(db: Session, language: str, unit: str) -> Optional[models.UnitReview]:
-    return db.query(models.UnitReview).filter(
-        models.UnitReview.language == language,
-        models.UnitReview.unit == unit,
-    ).first()
-
-
-def upsert_unit_review(db: Session, language: str, unit: str, unit_title: str,
-                       poem_text: str, questions: Any,
-                       poem_audio_id: Optional[str] = None) -> models.UnitReview:
-    existing = db.query(models.UnitReview).filter(
-        models.UnitReview.language == language,
-        models.UnitReview.unit == unit,
-    ).first()
-    if existing:
-        existing.unit_title = unit_title
-        existing.poem_text = poem_text
-        existing.questions = questions
-        if poem_audio_id is not None:
-            existing.poem_audio_id = poem_audio_id
-        db.commit()
-        db.refresh(existing)
-        return existing
-    db_review = models.UnitReview(
-        language=models.Language(language),
-        unit=unit,
-        unit_title=unit_title,
-        poem_text=poem_text,
-        questions=questions,
-        poem_audio_id=poem_audio_id,
-    )
-    db.add(db_review)
+def delete_lesson(db: Session, lesson_id: str) -> bool:
+    db_lesson = get_lesson(db, lesson_id)
+    if not db_lesson:
+        return False
+    db.delete(db_lesson)
     db.commit()
-    db.refresh(db_review)
-    return db_review
+    return True
 
 
-# ─── Lesson Progress ───
+# ─── Enrollments ───
 
-def get_lesson_progress(db: Session, student_id: str) -> list[models.LessonProgress]:
-    return db.query(models.LessonProgress).filter(models.LessonProgress.student_id == student_id).all()
+def get_enrollment(db: Session, enrollment_id: str) -> models.Enrollment | None:
+    return db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
 
 
-def upsert_lesson_progress(db: Session, student_id: str, lesson_id: str, score: int, completed: bool = True) -> models.LessonProgress:
-    existing = db.query(models.LessonProgress).filter(
-        models.LessonProgress.student_id == student_id,
-        models.LessonProgress.lesson_id == lesson_id,
-    ).first()
+def get_enrollments_by_student(db: Session, student_id: str) -> list[models.Enrollment]:
+    return db.query(models.Enrollment).filter(models.Enrollment.student_id == student_id).all()
+
+
+def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> models.Enrollment:
+    db_enrollment = models.Enrollment(**enrollment.model_dump())
+    db.add(db_enrollment)
+    db.commit()
+    db.refresh(db_enrollment)
+    return db_enrollment
+
+
+def update_enrollment(
+    db: Session, enrollment_id: str, enrollment: schemas.EnrollmentUpdate
+) -> models.Enrollment | None:
+    db_enrollment = get_enrollment(db, enrollment_id)
+    if not db_enrollment:
+        return None
+    for key, value in enrollment.model_dump(exclude_unset=True).items():
+        setattr(db_enrollment, key, value)
+    db.commit()
+    db.refresh(db_enrollment)
+    return db_enrollment
+
+
+# ─── LessonProgress ───
+
+def get_lesson_progress(db: Session, progress_id: str) -> models.LessonProgress | None:
+    return db.query(models.LessonProgress).filter(models.LessonProgress.id == progress_id).first()
+
+
+def get_lesson_progress_by_student_lesson(
+    db: Session, student_id: str, lesson_id: str
+) -> models.LessonProgress | None:
+    return (
+        db.query(models.LessonProgress)
+        .filter(
+            models.LessonProgress.student_id == student_id,
+            models.LessonProgress.lesson_id == lesson_id,
+        )
+        .first()
+    )
+
+
+def create_or_update_lesson_progress(
+    db: Session, progress: schemas.LessonProgressCreate
+) -> models.LessonProgress:
+    existing = get_lesson_progress_by_student_lesson(db, progress.student_id, progress.lesson_id)
     if existing:
-        existing.score = score
-        existing.completed = completed
-        existing.completed_at = datetime.utcnow()
+        for key, value in progress.model_dump(exclude_unset=True).items():
+            setattr(existing, key, value)
         db.commit()
         db.refresh(existing)
         return existing
-    db_progress = models.LessonProgress(
-        student_id=student_id,
-        lesson_id=lesson_id,
-        score=score,
-        completed=completed,
-    )
+    db_progress = models.LessonProgress(**progress.model_dump())
     db.add(db_progress)
     db.commit()
     db.refresh(db_progress)
     return db_progress
 
 
-# ─── Review Progress ───
+# ─── SkillMastery ───
 
-def get_review_progress(db: Session, student_id: str) -> list[models.ReviewProgress]:
-    return db.query(models.ReviewProgress).filter(models.ReviewProgress.student_id == student_id).all()
+def get_skill_mastery(db: Session, mastery_id: str) -> models.SkillMastery | None:
+    return db.query(models.SkillMastery).filter(models.SkillMastery.id == mastery_id).first()
 
 
-def upsert_review_progress(db: Session, student_id: str, review_id: str, score: int, completed: bool = True) -> models.ReviewProgress:
-    existing = db.query(models.ReviewProgress).filter(
-        models.ReviewProgress.student_id == student_id,
-        models.ReviewProgress.review_id == review_id,
-    ).first()
+def get_skill_mastery_by_student_skill(
+    db: Session, student_id: str, subject: str, skill: str
+) -> models.SkillMastery | None:
+    return (
+        db.query(models.SkillMastery)
+        .filter(
+            models.SkillMastery.student_id == student_id,
+            models.SkillMastery.subject == subject,
+            models.SkillMastery.skill == skill,
+        )
+        .first()
+    )
+
+
+def get_skill_masteries_by_student(
+    db: Session, student_id: str, subject: str | None = None
+) -> list[models.SkillMastery]:
+    query = db.query(models.SkillMastery).filter(models.SkillMastery.student_id == student_id)
+    if subject is not None:
+        query = query.filter(models.SkillMastery.subject == subject)
+    return query.all()
+
+
+def create_or_update_skill_mastery(
+    db: Session, mastery: schemas.SkillMasteryCreate
+) -> models.SkillMastery:
+    existing = get_skill_mastery_by_student_skill(db, mastery.student_id, mastery.subject.value if hasattr(mastery.subject, "value") else mastery.subject, mastery.skill)
     if existing:
-        existing.score = score
-        existing.completed = completed
-        existing.completed_at = datetime.utcnow()
+        for key, value in mastery.model_dump(exclude_unset=True).items():
+            setattr(existing, key, value)
         db.commit()
         db.refresh(existing)
         return existing
-    db_progress = models.ReviewProgress(
-        student_id=student_id,
-        review_id=review_id,
-        score=score,
-        completed=completed,
-    )
-    db.add(db_progress)
+    db_mastery = models.SkillMastery(**mastery.model_dump())
+    db.add(db_mastery)
     db.commit()
-    db.refresh(db_progress)
-    return db_progress
+    db.refresh(db_mastery)
+    return db_mastery
+
+
+# ─── UserProfile ───
+
+def get_user_profile(db: Session, user_id: str) -> models.UserProfile | None:
+    return db.query(models.UserProfile).filter(models.UserProfile.user_id == user_id).first()
+
+
+def create_user_profile(db: Session, profile: schemas.UserProfileCreate) -> models.UserProfile:
+    db_profile = models.UserProfile(**profile.model_dump())
+    db.add(db_profile)
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile
+
+
+def update_user_profile(
+    db: Session, user_id: str, profile: schemas.UserProfileUpdate
+) -> models.UserProfile | None:
+    db_profile = get_user_profile(db, user_id)
+    if not db_profile:
+        return None
+    for key, value in profile.model_dump(exclude_unset=True).items():
+        setattr(db_profile, key, value)
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile
+
+
+# ─── ExamBlueprint ───
+
+def get_exam_blueprint(db: Session, blueprint_id: str) -> models.ExamBlueprint | None:
+    return db.query(models.ExamBlueprint).filter(models.ExamBlueprint.id == blueprint_id).first()
+
+
+def get_exam_blueprints(db: Session, skip: int = 0, limit: int = 100) -> list[models.ExamBlueprint]:
+    return db.query(models.ExamBlueprint).offset(skip).limit(limit).all()
+
+
+def create_exam_blueprint(db: Session, blueprint: schemas.ExamBlueprintCreate) -> models.ExamBlueprint:
+    db_bp = models.ExamBlueprint(**blueprint.model_dump())
+    db.add(db_bp)
+    db.commit()
+    db.refresh(db_bp)
+    return db_bp
+
+
+def update_exam_blueprint(
+    db: Session, blueprint_id: str, blueprint: schemas.ExamBlueprintUpdate
+) -> models.ExamBlueprint | None:
+    db_bp = get_exam_blueprint(db, blueprint_id)
+    if not db_bp:
+        return None
+    for key, value in blueprint.model_dump(exclude_unset=True).items():
+        setattr(db_bp, key, value)
+    db.commit()
+    db.refresh(db_bp)
+    return db_bp
+
+
+def delete_exam_blueprint(db: Session, blueprint_id: str) -> bool:
+    db_bp = get_exam_blueprint(db, blueprint_id)
+    if not db_bp:
+        return False
+    db.delete(db_bp)
+    db.commit()
+    return True
