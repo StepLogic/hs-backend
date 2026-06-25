@@ -1,5 +1,6 @@
 import argparse
 import hashlib
+import io
 import json
 import os
 import sys
@@ -7,11 +8,44 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database import SessionLocal
-from app import crud
+from app import crud, models
 
 
 def sha1_key(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8")).hexdigest()
+
+
+def generate_audio(text: str, voice: str, speed: float, lang: str, model_dir: str) -> bytes:
+    from kokoro_onnx import Kokoro
+    import soundfile as sf
+
+    kokoro = Kokoro(
+        os.path.join(model_dir, "kokoro-v1.0.onnx"),
+        os.path.join(model_dir, "voices-v1.0.bin"),
+    )
+    samples, sr = kokoro.create(text, voice=voice, speed=speed, lang=lang)
+    buf = io.BytesIO()
+    sf.write(buf, samples, sr, format="WAV")
+    return buf.getvalue()
+
+
+def upload_b2(key: str, data: bytes, bucket_name: str) -> None:
+    from b2sdk.v2 import B2Api, InMemoryAccountInfo
+
+    info = InMemoryAccountInfo()
+    b2 = B2Api(info)
+    b2.authorize_account(
+        "production",
+        os.environ["B2_KEY_ID"],
+        os.environ["B2_APP_KEY"],
+    )
+    bucket = b2.get_bucket_by_name(bucket_name)
+    try:
+        bucket.get_file_info_by_name(key)
+        print(f"  [skip] {key} already exists in B2")
+    except Exception:
+        bucket.upload_bytes(data, key)
+        print(f"  [upload] {key}")
 
 
 def main():
@@ -33,22 +67,49 @@ def main():
     audio_dir = os.path.join(base_dir, "audio", language)
     os.makedirs(audio_dir, exist_ok=True)
 
+    model_dir = os.environ.get("KOKORO_MODEL_DIR", os.path.join(base_dir, "models"))
+    bucket_name = os.environ.get("B2_BUCKET")
+
+    if args.storage == "b2" and not bucket_name:
+        print("ERROR: B2_BUCKET env var required for --storage b2")
+        sys.exit(1)
+
+    # Verify voice exists (fallback to first e* voice)
+    if not args.no_tts:
+        from kokoro_onnx import Kokoro
+        test_kokoro = Kokoro(
+            os.path.join(model_dir, "kokoro-v1.0.onnx"),
+            os.path.join(model_dir, "voices-v1.0.bin"),
+        )
+        voices = test_kokoro.get_voices()
+        if voice not in voices:
+            fallback = next((v for v in voices if v.startswith("e")), None)
+            if fallback:
+                print(f"Voice {voice} not found; falling back to {fallback}")
+                voice = fallback
+            else:
+                print(f"WARNING: Voice {voice} not found and no fallback available")
+
     db = SessionLocal()
     try:
+        total_generated = 0
+        total_skipped = 0
+
         for unit in manifest["units"]:
             unit_id = unit["id"]
             unit_title = unit["title"]
             for lesson in unit["lessons"]:
                 lesson_title = lesson["title"]
                 lesson_order = lesson["order"]
+
                 db_lesson = crud.upsert_lesson(
-                    db, language, unit_id, unit_title, lesson_title, lesson_order
+                    db,
+                    language=models.Language.SPANISH,
+                    unit=unit_id,
+                    unit_title=unit_title,
+                    title=lesson_title,
+                    order=lesson_order,
                 )
-                # Remove old items to rebuild idempotently
-                existing_items = crud.get_lesson_items(db, db_lesson.id)
-                for item in existing_items:
-                    db.delete(item)
-                db.commit()
 
                 for idx, item in enumerate(lesson["items"]):
                     text = item["text"]
@@ -57,23 +118,34 @@ def main():
                     audio_slow_id = None
 
                     if not args.no_tts and item_type in ("listen", "repeat", "dictation"):
-                        key = f"{language}/{sha1_key(text)}_1.0.wav"
-                        path = os.path.join(audio_dir, f"{sha1_key(text)}_1.0.wav")
-                        slow_key = f"{language}/{sha1_key(text)}_{slow_speed}.wav"
-                        slow_path = os.path.join(audio_dir, f"{sha1_key(text)}_{slow_speed}.wav")
+                        for speed in (1.0, slow_speed if item_type == "repeat" else None):
+                            if speed is None:
+                                continue
+                            key = f"{language}/{sha1_key(text)}_{speed}.wav"
+                            path = os.path.join(audio_dir, f"{sha1_key(text)}_{speed}.wav")
 
-                        # Placeholder / generate
-                        if not os.path.exists(path):
-                            with open(path, "wb") as wf:
-                                wf.write(b"")
-                        if not os.path.exists(slow_path):
-                            with open(slow_path, "wb") as wf:
-                                wf.write(b"")
+                            if args.storage == "local":
+                                if not os.path.exists(path):
+                                    wav = generate_audio(text, voice, speed, lang, model_dir)
+                                    with open(path, "wb") as wf:
+                                        wf.write(wav)
+                                    print(f"  [gen] {key}")
+                                    total_generated += 1
+                                else:
+                                    print(f"  [skip] {key}")
+                                    total_skipped += 1
+                            elif args.storage == "b2":
+                                wav = generate_audio(text, voice, speed, lang, model_dir)
+                                upload_b2(key, wav, bucket_name)
+                                total_generated += 1
 
-                        db_audio = crud.upsert_audio_asset(db, language, text, voice, 1.0, key)
-                        db_audio_slow = crud.upsert_audio_asset(db, language, text, voice, slow_speed, slow_key)
-                        audio_id = db_audio.id
-                        audio_slow_id = db_audio_slow.id
+                            db_audio = crud.upsert_audio_asset(
+                                db, models.Language.SPANISH, text, voice, speed, key
+                            )
+                            if speed == 1.0:
+                                audio_id = db_audio.id
+                            else:
+                                audio_slow_id = db_audio.id
 
                     crud.create_lesson_item(
                         db,
@@ -101,18 +173,38 @@ def main():
             if not args.no_tts:
                 key = f"{language}/{sha1_key(poem_text)}_1.0.wav"
                 path = os.path.join(audio_dir, f"{sha1_key(poem_text)}_1.0.wav")
-                if not os.path.exists(path):
-                    with open(path, "wb") as wf:
-                        wf.write(b"")
-                db_audio = crud.upsert_audio_asset(db, language, poem_text, voice, 1.0, key)
+
+                if args.storage == "local":
+                    if not os.path.exists(path):
+                        wav = generate_audio(poem_text, voice, 1.0, lang, model_dir)
+                        with open(path, "wb") as wf:
+                            wf.write(wav)
+                        print(f"  [gen] {key}")
+                        total_generated += 1
+                    else:
+                        print(f"  [skip] {key}")
+                        total_skipped += 1
+                elif args.storage == "b2":
+                    wav = generate_audio(poem_text, voice, 1.0, lang, model_dir)
+                    upload_b2(key, wav, bucket_name)
+                    total_generated += 1
+
+                db_audio = crud.upsert_audio_asset(
+                    db, models.Language.SPANISH, poem_text, voice, 1.0, key
+                )
                 poem_audio_id = db_audio.id
 
             crud.upsert_unit_review(
-                db, language, unit_id, unit_title, poem_text, questions,
+                db,
+                models.Language.SPANISH,
+                unit_id,
+                unit_title,
+                poem_text,
+                questions,
                 poem_audio_id=poem_audio_id,
             )
 
-        print("Done.")
+        print(f"Done. Generated: {total_generated}, Skipped: {total_skipped}")
     finally:
         db.close()
 
