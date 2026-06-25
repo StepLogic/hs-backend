@@ -11,3 +11,6 @@ env/
 test.db
 alembic/versions/*.py
 !alembic/versions/.gitkeep
+models/
+audio/
+*.db

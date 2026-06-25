@@ -5,9 +5,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
     DEBUG: bool = False
-    AUDIO_BASE_URL: str = "http://localhost:8000/audio"
+    AUDIO_BASE_URL: str = "http://localhost:8000/api/v1/audio"
     CORS_ORIGINS: str = "http://localhost:5173"
-
+    B2_KEY_ID: str | None = None
+    B2_APP_KEY: str | None = None
+    B2_BUCKET: str = "hs-platform"
     class Config:
         env_file = ".env"
         extra = "ignore"
