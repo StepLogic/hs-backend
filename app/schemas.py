@@ -263,13 +263,16 @@ class LessonBase(BaseModel):
     title: str
     slug: str
     order_index: int = 0
-    content: str
+    content: str = ""
+    content_blocks: list[dict] = []
+    resources: list[dict] = []
+    objectives: list[str] = []
+    homework: list[dict] = []
     duration_min: int = 10
     skills: list[str] = []
     review_status: ReviewStatus = ReviewStatus.PUBLISHED
+    difficulty: Difficulty = Difficulty.MEDIUM
     prerequisite_lesson_id: Optional[str] = None
-
-
 class LessonCreate(LessonBase):
     pass
 
@@ -280,9 +283,14 @@ class LessonUpdate(BaseModel):
     slug: Optional[str] = None
     order_index: Optional[int] = None
     content: Optional[str] = None
+    content_blocks: Optional[list[dict]] = None
+    resources: Optional[list[dict]] = None
+    objectives: Optional[list[str]] = None
+    homework: Optional[list[dict]] = None
     duration_min: Optional[int] = None
     skills: Optional[list[str]] = None
     review_status: Optional[ReviewStatus] = None
+    difficulty: Optional[Difficulty] = None
     prerequisite_lesson_id: Optional[str] = None
 
 

@@ -147,14 +147,18 @@ class Lesson(Base):
     slug = Column(String, nullable=False)
     order_index = Column(Integer, nullable=False, default=0)
     content = Column(Text, nullable=False)
+    content_blocks = Column(JSON, nullable=False, default=list)
+    resources = Column(JSON, nullable=False, default=list)
+    objectives = Column(JSON, nullable=False, default=list)
+    homework = Column(JSON, nullable=False, default=list)
     duration_min = Column(Integer, nullable=False, default=10)
     skills = Column(JSON, nullable=False, default=list)
     review_status = Column(Enum(ReviewStatus), nullable=False, default=ReviewStatus.PUBLISHED)
+    difficulty = Column(Enum(Difficulty), nullable=False, default=Difficulty.MEDIUM)
     prerequisite_lesson_id = Column(String, ForeignKey("lessons.id"), nullable=True)
 
     unit = relationship("Unit", back_populates="lessons")
     prerequisite = relationship("Lesson", remote_side="Lesson.id")
-
 
 class Student(Base):
     __tablename__ = "students"

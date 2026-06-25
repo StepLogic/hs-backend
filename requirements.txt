@@ -13,3 +13,4 @@ httpx
 pyjwt
 passlib[bcrypt]
 bcrypt
+boto3>=1.34
