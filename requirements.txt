@@ -7,4 +7,5 @@ pydantic-settings
 pydantic
 alembic
 python-multipart
+b2sdk
 email-validator
