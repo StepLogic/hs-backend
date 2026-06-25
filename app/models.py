@@ -12,6 +12,7 @@ class Subject(str, PyEnum):
     MATH = "math"
     READING = "reading"
     COMPREHENSION = "comprehension"
+    SPANISH = "spanish"
 
 
 class QuestionType(str, PyEnum):
