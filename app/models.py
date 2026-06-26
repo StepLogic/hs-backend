@@ -358,3 +358,40 @@ class UserProfile(Base):
     badges = Column(JSON, nullable=False, default=list)
 
     user = relationship("User", backref="profile")
+
+
+class DiagnosticResult(Base):
+    __tablename__ = "diagnostic_results"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    subject = Column(Enum(Subject), nullable=False)
+    grade_level_equivalent = Column(Integer, nullable=False)
+    skill_gaps = Column(JSON, nullable=False, default=list)
+    recommended_courses = Column(JSON, nullable=False, default=list)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class StudyPlan(Base):
+    __tablename__ = "study_plans"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    target_exam = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class StudyPlanItem(Base):
+    __tablename__ = "study_plan_items"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    plan_id = Column(String, ForeignKey("study_plans.id"), nullable=False)
+    lesson_id = Column(String, ForeignKey("lessons.id"), nullable=True)
+    live_session_id = Column(String, ForeignKey("live_sessions.id"), nullable=True)
+    scheduled_date = Column(Date, nullable=False)
+    duration_min = Column(Integer, nullable=False, default=30)
+    status = Column(String(20), default="scheduled")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

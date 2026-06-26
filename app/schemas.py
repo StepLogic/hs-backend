@@ -532,3 +532,20 @@ class WritingSubmissionResponse(WritingSubmissionBase):
     human_grade: Optional[dict] = None
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+# ─── DiagnosticResult schemas ───
+class DiagnosticResultBase(BaseModel):
+    student_id: str
+    subject: Subject
+    grade_level_equivalent: int
+    skill_gaps: list[dict] = []
+    recommended_courses: list[str] = []
+
+class DiagnosticResultCreate(DiagnosticResultBase):
+    pass
+
+class DiagnosticResultResponse(DiagnosticResultBase):
+    id: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)

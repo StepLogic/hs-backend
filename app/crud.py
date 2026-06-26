@@ -686,3 +686,21 @@ def update_writing_submission(
     db.commit()
     db.refresh(db_sub)
     return db_sub
+
+
+# ─── DiagnosticResult ───
+
+def get_diagnostic_result(db: Session, result_id: str) -> models.DiagnosticResult | None:
+    return db.query(models.DiagnosticResult).filter(models.DiagnosticResult.id == result_id).first()
+
+
+def get_diagnostic_results_by_student(db: Session, student_id: str) -> list[models.DiagnosticResult]:
+    return db.query(models.DiagnosticResult).filter(models.DiagnosticResult.student_id == student_id).all()
+
+
+def create_diagnostic_result(db: Session, result: schemas.DiagnosticResultCreate) -> models.DiagnosticResult:
+    db_result = models.DiagnosticResult(**result.model_dump())
+    db.add(db_result)
+    db.commit()
+    db.refresh(db_result)
+    return db_result
