@@ -549,3 +549,143 @@ class DiagnosticResultResponse(DiagnosticResultBase):
     id: str
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+# ─── College schemas ───
+
+class CollegeBase(BaseModel):
+    name: str
+    location: str
+    acceptance_rate: Optional[float] = None
+    avg_sat: Optional[int] = None
+    avg_act: Optional[int] = None
+    tuition_in_state: Optional[int] = None
+    tuition_out_state: Optional[int] = None
+    majors: list[str] = []
+    tags: list[str] = []
+
+
+class CollegeCreate(CollegeBase):
+    pass
+
+
+class CollegeUpdate(BaseModel):
+    name: Optional[str] = None
+    location: Optional[str] = None
+    acceptance_rate: Optional[float] = None
+    avg_sat: Optional[int] = None
+    avg_act: Optional[int] = None
+    tuition_in_state: Optional[int] = None
+    tuition_out_state: Optional[int] = None
+    majors: Optional[list[str]] = None
+    tags: Optional[list[str]] = None
+
+
+class CollegeResponse(CollegeBase):
+    id: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# ─── CollegeApplication schemas ───
+
+class CollegeApplicationBase(BaseModel):
+    student_id: str
+    college_id: str
+    round: str
+    deadline: date
+    status: str = "planning"
+    essays: list[dict] = []
+    requirements: dict = {}
+
+
+class CollegeApplicationCreate(BaseModel):
+    student_id: str
+    college_id: str
+    round: str
+    deadline: date
+    status: str = "planning"
+    essays: list[dict] = []
+    requirements: dict = {}
+
+
+class CollegeApplicationUpdate(BaseModel):
+    round: Optional[str] = None
+    deadline: Optional[date] = None
+    status: Optional[str] = None
+    essays: Optional[list[dict]] = None
+    requirements: Optional[dict] = None
+
+
+class CollegeApplicationStatusUpdate(BaseModel):
+    status: str
+
+
+class CollegeApplicationResponse(BaseModel):
+    id: str
+    student_id: str
+    college_id: str
+    round: str
+    deadline: date
+    status: str
+    essays: list[dict]
+    requirements: dict
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# ─── StudyPlan schemas ───
+
+class StudyPlanItemBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    due_date: Optional[date] = None
+    status: str = "scheduled"
+
+
+class StudyPlanItemCreate(StudyPlanItemBase):
+    pass
+
+
+class StudyPlanItemUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    due_date: Optional[date] = None
+    status: Optional[str] = None
+
+
+class StudyPlanItemResponse(StudyPlanItemBase):
+    id: str
+    study_plan_id: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudyPlanBase(BaseModel):
+    student_id: str
+    title: str
+    start_date: date
+    end_date: date
+    target_exam: Optional[str] = None
+
+
+class StudyPlanCreate(StudyPlanBase):
+    items: list[StudyPlanItemCreate] = []
+
+
+class StudyPlanUpdate(BaseModel):
+    title: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    target_exam: Optional[str] = None
+
+
+class StudyPlanResponse(StudyPlanBase):
+    id: str
+    created_at: datetime
+    items: list[StudyPlanItemResponse] = []
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PlanGenerateRequest(BaseModel):
+    student_id: str
+    target_exam: str
+    target_exam_date: date

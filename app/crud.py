@@ -1,4 +1,5 @@
 from typing import Optional, Any
+from datetime import date
 
 from sqlalchemy.orm import Session
 
@@ -704,3 +705,245 @@ def create_diagnostic_result(db: Session, result: schemas.DiagnosticResultCreate
     db.commit()
     db.refresh(db_result)
     return db_result
+
+
+# ─── College ───
+
+def get_college(db: Session, college_id: str) -> models.College | None:
+    return db.query(models.College).filter(models.College.id == college_id).first()
+
+
+def search_colleges(
+    db: Session,
+    q: Optional[str] = None,
+    sat_min: Optional[int] = None,
+    sat_max: Optional[int] = None,
+    major: Optional[str] = None,
+    tags: Optional[list[str]] = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> list[models.College]:
+    query = db.query(models.College)
+    if q:
+        query = query.filter(
+            (models.College.name.ilike(f"%{q}%")) | (models.College.location.ilike(f"%{q}%"))
+        )
+    if sat_min is not None:
+        query = query.filter(models.College.avg_sat >= sat_min)
+    if sat_max is not None:
+        query = query.filter(models.College.avg_sat <= sat_max)
+    if major:
+        query = query.filter(models.College.majors.like(f'%"{major}"%'))
+    if tags:
+        for tag in tags:
+            query = query.filter(models.College.tags.like(f'%"{tag}"%'))
+    return query.offset(skip).limit(limit).all()
+
+
+def create_college(db: Session, college: schemas.CollegeCreate) -> models.College:
+    db_college = models.College(**college.model_dump())
+    db.add(db_college)
+    db.commit()
+    db.refresh(db_college)
+    return db_college
+
+
+def update_college(
+    db: Session, college_id: str, college: schemas.CollegeUpdate
+) -> models.College | None:
+    db_college = get_college(db, college_id)
+    if not db_college:
+        return None
+    update_data = college.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_college, key, value)
+    db.add(db_college)
+    db.commit()
+    db.refresh(db_college)
+    return db_college
+
+
+def delete_college(db: Session, college_id: str) -> bool:
+    db_college = get_college(db, college_id)
+    if not db_college:
+        return False
+    db.delete(db_college)
+    db.commit()
+    return True
+
+# ─── CollegeApplication ───
+
+def get_application(db: Session, application_id: str) -> models.CollegeApplication | None:
+    return db.query(models.CollegeApplication).filter(models.CollegeApplication.id == application_id).first()
+
+
+def get_applications_by_student(db: Session, student_id: str) -> list[models.CollegeApplication]:
+    return db.query(models.CollegeApplication).filter(models.CollegeApplication.student_id == student_id).all()
+
+
+def create_application(db: Session, application: schemas.CollegeApplicationCreate) -> models.CollegeApplication:
+    db_app = models.CollegeApplication(**application.model_dump())
+    db.add(db_app)
+    db.commit()
+    db.refresh(db_app)
+    return db_app
+
+
+def update_application(
+    db: Session, application_id: str, application: schemas.CollegeApplicationUpdate
+) -> models.CollegeApplication | None:
+    db_app = get_application(db, application_id)
+    if not db_app:
+        return None
+    update_data = application.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_app, key, value)
+    db.add(db_app)
+    db.commit()
+    db.refresh(db_app)
+    return db_app
+
+
+def update_application_status(
+    db: Session, application_id: str, status: str
+) -> models.CollegeApplication | None:
+    db_app = get_application(db, application_id)
+    if not db_app:
+        return None
+    db_app.status = status
+    db.add(db_app)
+    db.commit()
+    db.refresh(db_app)
+    return db_app
+
+
+def delete_application(db: Session, application_id: str) -> bool:
+    db_app = get_application(db, application_id)
+    if not db_app:
+        return False
+    db.delete(db_app)
+    db.commit()
+    return True
+
+# ─── StudyPlan ───
+
+def get_study_plan(db: Session, plan_id: str) -> models.StudyPlan | None:
+    return db.query(models.StudyPlan).filter(models.StudyPlan.id == plan_id).first()
+
+
+def get_study_plans_by_student(db: Session, student_id: str) -> list[models.StudyPlan]:
+    return db.query(models.StudyPlan).filter(models.StudyPlan.student_id == student_id).all()
+
+
+def create_study_plan(db: Session, plan: schemas.StudyPlanCreate) -> models.StudyPlan:
+    items_data = plan.items if plan.items else []
+    db_plan = models.StudyPlan(
+        student_id=plan.student_id,
+        title=plan.title,
+        start_date=plan.start_date,
+        end_date=plan.end_date,
+        target_exam=plan.target_exam,
+    )
+    db.add(db_plan)
+    db.commit()
+    db.refresh(db_plan)
+    for item in items_data:
+        db_item = models.StudyPlanItem(
+            study_plan_id=db_plan.id,
+            title=item.title,
+            description=item.description,
+            due_date=item.due_date,
+            status=item.status,
+        )
+        db.add(db_item)
+    db.commit()
+    db.refresh(db_plan)
+    return db_plan
+
+
+def update_study_plan_item(
+    db: Session, plan_id: str, item_id: str, item_update: schemas.StudyPlanItemUpdate
+) -> models.StudyPlanItem | None:
+    db_item = (
+        db.query(models.StudyPlanItem)
+        .filter(models.StudyPlanItem.id == item_id, models.StudyPlanItem.study_plan_id == plan_id)
+        .first()
+    )
+    if not db_item:
+        return None
+    update_data = item_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_item, key, value)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
+def delete_study_plan(db: Session, plan_id: str) -> bool:
+    db_plan = get_study_plan(db, plan_id)
+    if not db_plan:
+        return False
+    db.delete(db_plan)
+    db.commit()
+    return True
+
+
+def generate_study_plan(
+    db: Session,
+    student_id: str,
+    target_exam: str,
+    target_exam_date: date,
+) -> models.StudyPlan | None:
+    from datetime import date as dt_date, timedelta
+    # Get latest diagnostic result for the student
+    diagnostics = (
+        db.query(models.DiagnosticResult)
+        .filter(models.DiagnosticResult.student_id == student_id)
+        .order_by(models.DiagnosticResult.created_at.desc())
+        .all()
+    )
+    skill_gaps: list[str] = []
+    if diagnostics:
+        latest = diagnostics[0]
+        for gap in latest.skill_gaps or []:
+            if isinstance(gap, dict):
+                skill_name = gap.get("skill") or gap.get("name")
+                if skill_name:
+                    skill_gaps.append(str(skill_name))
+            elif isinstance(gap, str):
+                skill_gaps.append(gap)
+    if not skill_gaps:
+        skill_gaps = ["general review"]
+
+    start_date = dt_date.today()
+    if target_exam_date < start_date:
+        target_exam_date = start_date + timedelta(days=7)
+
+    total_days = max(1, (target_exam_date - start_date).days)
+    plan_title = f"{target_exam.upper()} Study Plan"
+    db_plan = models.StudyPlan(
+        student_id=student_id,
+        title=plan_title,
+        start_date=start_date,
+        end_date=target_exam_date,
+        target_exam=target_exam,
+    )
+    db.add(db_plan)
+    db.commit()
+    db.refresh(db_plan)
+
+    # Distribute items evenly across days
+    for i, skill in enumerate(skill_gaps):
+        item_date = start_date + timedelta(days=(i * total_days // max(1, len(skill_gaps))))
+        db_item = models.StudyPlanItem(
+            study_plan_id=db_plan.id,
+            title=f"Review: {skill}",
+            description=f"Focus on {skill} based on diagnostic results.",
+            due_date=item_date,
+            status="scheduled",
+        )
+        db.add(db_item)
+    db.commit()
+    db.refresh(db_plan)
+    return db_plan

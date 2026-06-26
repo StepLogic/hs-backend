@@ -175,6 +175,8 @@ class Student(Base):
     enrollments = relationship("Enrollment", back_populates="student", cascade="all, delete-orphan")
     lesson_progress = relationship("LessonProgress", back_populates="student", cascade="all, delete-orphan")
     skill_masteries = relationship("SkillMastery", back_populates="student", cascade="all, delete-orphan")
+    applications = relationship("CollegeApplication", back_populates="student", cascade="all, delete-orphan")
+    study_plans = relationship("StudyPlan", back_populates="student", cascade="all, delete-orphan")
 
 
 class User(Base):
@@ -383,15 +385,49 @@ class StudyPlan(Base):
     target_exam = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+    items = relationship("StudyPlanItem", back_populates="plan", cascade="all, delete-orphan")
+    student = relationship("Student", back_populates="study_plans")
 
 class StudyPlanItem(Base):
     __tablename__ = "study_plan_items"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    plan_id = Column(String, ForeignKey("study_plans.id"), nullable=False)
-    lesson_id = Column(String, ForeignKey("lessons.id"), nullable=True)
-    live_session_id = Column(String, ForeignKey("live_sessions.id"), nullable=True)
-    scheduled_date = Column(Date, nullable=False)
-    duration_min = Column(Integer, nullable=False, default=30)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    study_plan_id = Column(String(36), ForeignKey("study_plans.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    due_date = Column(Date, nullable=True)
     status = Column(String(20), default="scheduled")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    plan = relationship("StudyPlan", back_populates="items")
+
+
+class College(Base):
+    __tablename__ = "colleges"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(200), nullable=False)
+    location = Column(String(200), nullable=False)
+    acceptance_rate = Column(Float, nullable=True)
+    avg_sat = Column(Integer, nullable=True)
+    avg_act = Column(Integer, nullable=True)
+    tuition_in_state = Column(Integer, nullable=True)
+    tuition_out_state = Column(Integer, nullable=True)
+    majors = Column(JSON, nullable=False, default=list)
+    tags = Column(JSON, nullable=False, default=list)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class CollegeApplication(Base):
+    __tablename__ = "college_applications"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String(36), ForeignKey("students.id"), nullable=False)
+    college_id = Column(String(36), ForeignKey("colleges.id"), nullable=False)
+    round = Column(String(50), nullable=False)
+    deadline = Column(Date, nullable=False)
+    status = Column(String(50), nullable=False, default="planning")
+    essays = Column(JSON, nullable=False, default=list)
+    requirements = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student", back_populates="applications")
+    college = relationship("College")
