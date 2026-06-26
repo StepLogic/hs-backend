@@ -175,7 +175,6 @@ class Student(Base):
     enrollments = relationship("Enrollment", back_populates="student", cascade="all, delete-orphan")
     lesson_progress = relationship("LessonProgress", back_populates="student", cascade="all, delete-orphan")
     skill_masteries = relationship("SkillMastery", back_populates="student", cascade="all, delete-orphan")
-    applications = relationship("CollegeApplication", back_populates="student", cascade="all, delete-orphan")
     study_plans = relationship("StudyPlan", back_populates="student", cascade="all, delete-orphan")
 
 
@@ -401,37 +400,6 @@ class StudyPlanItem(Base):
     plan = relationship("StudyPlan", back_populates="items")
 
 
-class College(Base):
-    __tablename__ = "colleges"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String(200), nullable=False)
-    location = Column(String(200), nullable=False)
-    acceptance_rate = Column(Float, nullable=True)
-    avg_sat = Column(Integer, nullable=True)
-    avg_act = Column(Integer, nullable=True)
-    tuition_in_state = Column(Integer, nullable=True)
-    tuition_out_state = Column(Integer, nullable=True)
-    majors = Column(JSON, nullable=False, default=list)
-    tags = Column(JSON, nullable=False, default=list)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-
-class CollegeApplication(Base):
-    __tablename__ = "college_applications"
-
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    student_id = Column(String(36), ForeignKey("students.id"), nullable=False)
-    college_id = Column(String(36), ForeignKey("colleges.id"), nullable=False)
-    round = Column(String(50), nullable=False)
-    deadline = Column(Date, nullable=False)
-    status = Column(String(50), nullable=False, default="planning")
-    essays = Column(JSON, nullable=False, default=list)
-    requirements = Column(JSON, nullable=False, default=dict)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-
-    student = relationship("Student", back_populates="applications")
-    college = relationship("College")
-
 class Subscription(Base):
     __tablename__ = "subscriptions"
 
@@ -443,7 +411,6 @@ class Subscription(Base):
     status = Column(String(50), nullable=False, default="active")  # active, cancelled, past_due
     current_period_end = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-
 
 class ForumPost(Base):
     __tablename__ = "forum_posts"

@@ -7,6 +7,28 @@ from app.api.deps import get_db
 router = APIRouter()
 
 
+@router.get("/")
+def list_all_lessons(db: Session = Depends(get_db)) -> list[dict]:
+    # ponytail: inline join returns enriched rows; avoids a separate response model
+    rows = (
+        db.query(
+            models.Lesson,
+            models.Unit.title.label("unit_title"),
+            models.Course.title.label("course_title"),
+        )
+        .join(models.Unit, models.Lesson.unit_id == models.Unit.id)
+        .join(models.Course, models.Unit.course_id == models.Course.id)
+        .order_by(models.Course.title, models.Unit.order_index, models.Lesson.order_index)
+        .all()
+    )
+    out: list[dict] = []
+    for lesson, unit_title, course_title in rows:
+        d = {c.name: getattr(lesson, c.name) for c in lesson.__table__.columns}
+        d["unit_title"] = unit_title
+        d["course_title"] = course_title
+        out.append(d)
+    return out
+
 @router.get("/unit/{unit_id}", response_model=list[schemas.LessonResponse])
 def read_lessons_by_unit(unit_id: str, db: Session = Depends(get_db)) -> list[models.Lesson]:
     return (
