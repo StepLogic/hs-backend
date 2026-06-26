@@ -486,3 +486,49 @@ class LiveSessionResponse(LiveSessionBase):
     id: str
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+# ─── ChatSession schemas ───
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatSessionCreate(BaseModel):
+    student_id: str
+    subject: Optional[Subject] = None
+    title: Optional[str] = None
+
+class ChatSessionResponse(BaseModel):
+    id: str
+    student_id: str
+    subject: Optional[Subject] = None
+    title: Optional[str] = None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class ChatHistoryResponse(BaseModel):
+    session_id: str
+    messages: list[ChatMessage]
+
+
+# ─── WritingSubmission schemas ───
+class WritingSubmissionBase(BaseModel):
+    student_id: str
+    prompt: str
+    essay_text: str
+    status: str = "submitted"
+
+class WritingSubmissionCreate(WritingSubmissionBase):
+    pass
+
+class WritingSubmissionUpdate(BaseModel):
+    ai_feedback: Optional[dict] = None
+    human_grade: Optional[dict] = None
+    status: Optional[str] = None
+
+class WritingSubmissionResponse(WritingSubmissionBase):
+    id: str
+    ai_feedback: Optional[dict] = None
+    human_grade: Optional[dict] = None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)

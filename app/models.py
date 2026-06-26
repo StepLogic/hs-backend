@@ -331,6 +331,21 @@ class ChatMessage(Base):
     role = Column(String(20), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class WritingSubmission(Base):
+    __tablename__ = "writing_submissions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    prompt = Column(Text, nullable=False)
+    essay_text = Column(Text, nullable=False)
+    ai_feedback = Column(JSON, nullable=True)
+    human_grade = Column(JSON, nullable=True)
+    status = Column(String(20), default="submitted")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class UserProfile(Base):
     __tablename__ = "user_profiles"
 

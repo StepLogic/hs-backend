@@ -618,3 +618,71 @@ def delete_live_session(db: Session, session_id: str) -> bool:
     db.delete(db_session)
     db.commit()
     return True
+
+
+# ─── ChatSession ───
+
+def get_chat_session(db: Session, session_id: str) -> models.ChatSession | None:
+    return db.query(models.ChatSession).filter(models.ChatSession.id == session_id).first()
+
+
+def get_chat_sessions_by_student(db: Session, student_id: str) -> list[models.ChatSession]:
+    return db.query(models.ChatSession).filter(models.ChatSession.student_id == student_id).all()
+
+
+def create_chat_session(db: Session, session: schemas.ChatSessionCreate) -> models.ChatSession:
+    db_session = models.ChatSession(**session.model_dump())
+    db.add(db_session)
+    db.commit()
+    db.refresh(db_session)
+    return db_session
+
+
+# ─── ChatMessage ───
+
+def create_chat_message(db: Session, session_id: str, role: str, content: str) -> models.ChatMessage:
+    db_msg = models.ChatMessage(session_id=session_id, role=role, content=content)
+    db.add(db_msg)
+    db.commit()
+    db.refresh(db_msg)
+    return db_msg
+
+
+def get_chat_messages(db: Session, session_id: str) -> list[models.ChatMessage]:
+    return (
+        db.query(models.ChatMessage)
+        .filter(models.ChatMessage.session_id == session_id)
+        .order_by(models.ChatMessage.created_at)
+        .all()
+    )
+
+
+# ─── WritingSubmission ───
+
+def get_writing_submission(db: Session, submission_id: str) -> models.WritingSubmission | None:
+    return db.query(models.WritingSubmission).filter(models.WritingSubmission.id == submission_id).first()
+
+
+def get_writing_submissions_by_student(db: Session, student_id: str) -> list[models.WritingSubmission]:
+    return db.query(models.WritingSubmission).filter(models.WritingSubmission.student_id == student_id).all()
+
+
+def create_writing_submission(db: Session, submission: schemas.WritingSubmissionCreate) -> models.WritingSubmission:
+    db_sub = models.WritingSubmission(**submission.model_dump())
+    db.add(db_sub)
+    db.commit()
+    db.refresh(db_sub)
+    return db_sub
+
+
+def update_writing_submission(
+    db: Session, submission_id: str, submission: schemas.WritingSubmissionUpdate
+) -> models.WritingSubmission | None:
+    db_sub = get_writing_submission(db, submission_id)
+    if not db_sub:
+        return None
+    for key, value in submission.model_dump(exclude_unset=True).items():
+        setattr(db_sub, key, value)
+    db.commit()
+    db.refresh(db_sub)
+    return db_sub
