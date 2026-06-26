@@ -995,6 +995,7 @@ def delete_forum_post(db: Session, post_id: str) -> bool:
 
 # ─── Leaderboard ───
 from datetime import datetime, timedelta
+from sqlalchemy import func
 
 def get_leaderboard(
     db: Session, subject: str | None = None, limit: int = 10
@@ -1004,16 +1005,16 @@ def get_leaderboard(
         db.query(
             models.Student.id.label("student_id"),
             models.Student.name,
-            models.SkillMastery.xp.label("xp_gained"),
+            func.sum(models.TestResult.correct_count).label("xp_gained"),
         )
-        .join(models.SkillMastery, models.Student.id == models.SkillMastery.student_id)
-        .filter(models.SkillMastery.last_practiced >= since)
+        .join(models.TestResult, models.Student.id == models.TestResult.student_id)
+        .filter(models.TestResult.created_at >= since)
     )
     if subject:
-        query = query.filter(models.SkillMastery.subject == subject)
+        query = query.filter(models.TestResult.subject == subject)
     rows = (
         query.group_by(models.Student.id, models.Student.name)
-        .order_by(models.SkillMastery.xp.desc())
+        .order_by(func.sum(models.TestResult.correct_count).desc())
         .limit(limit)
         .all()
     )
