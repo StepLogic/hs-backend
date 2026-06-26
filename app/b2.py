@@ -7,7 +7,6 @@ PUBLIC_BASE = "https://hs-platform.s3.us-east-005.backblazeb2.com"
 # ponytail: lazy global; authorize once on first use so app imports without B2 creds
 _bucket = None
 
-
 def get_bucket():
     global _bucket
     if _bucket is None:
