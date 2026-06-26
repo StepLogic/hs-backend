@@ -13,6 +13,12 @@ def overview(
     db: Session = Depends(get_db),
     _admin = Depends(require_roles("admin")),
 ) -> dict:
+    from app.cache import get as cache_get, set as cache_set
+    cache_key = "analytics:overview"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
+
     active_students = db.query(models.Student).count()
     total_questions = db.query(models.Question).count()
     published_questions = (
@@ -40,7 +46,7 @@ def overview(
         models.TestResult.exam_type.isnot(None)
     ).count()
 
-    return {
+    result = {
         "active_students": active_students,
         "total_questions": total_questions,
         "published_questions": published_questions,
@@ -50,3 +56,5 @@ def overview(
         },
         "exam_attempts": exam_attempts,
     }
+    cache_set(cache_key, result, ttl=60)
+    return result

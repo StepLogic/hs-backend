@@ -13,6 +13,12 @@ def learning_path(
     course_id: str,
     db: Session = Depends(get_db),
 ) -> list[dict]:
+    from app.cache import get as cache_get, set as cache_set
+    cache_key = f"learning:path:{student_id}:{course_id}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
+
     units = crud.get_units_by_course(db, course_id)
     result = []
     for unit in units:
@@ -50,11 +56,14 @@ def learning_path(
             "description": unit.description,
             "lessons": lesson_data,
         })
+    cache_set(cache_key, result, ttl=300)
     return result
-
-
 @router.post("/progress", response_model=schemas.LessonProgressResponse, status_code=201)
 def upsert_progress(
     *, db: Session = Depends(get_db), progress_in: schemas.LessonProgressCreate
 ) -> models.LessonProgress:
+    from app.cache import delete as cache_delete
+    # Invalidate learning path cache for this student
+    cache_delete(f"learning:path:{progress_in.student_id}:*")
     return crud.create_or_update_lesson_progress(db, progress_in)
+
