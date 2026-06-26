@@ -11,15 +11,27 @@ router = APIRouter()
 
 @router.get("/{language}")
 def get_curriculum(language: str):
-    bucket = get_bucket()
     file_name = f"courses/{language}.json"
+    # Try B2 first, fall back to local file
     try:
-        download = bucket.download_file_by_name(file_name)
-    except FileNotPresent:
+        bucket = get_bucket()
+        try:
+            download = bucket.download_file_by_name(file_name)
+        except FileNotPresent:
+            raise HTTPException(status_code=404, detail="Curriculum not found")
+        buf = BytesIO()
+        download.save(buf)
+        return json.loads(buf.getvalue().decode("utf-8"))
+    except HTTPException:
+        raise
+    except Exception:
+        # B2 unavailable — try local file
+        import os
+        local = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "curriculum", f"{language}.json")
+        if os.path.exists(local):
+            with open(local, "r", encoding="utf-8") as f:
+                return json.load(f)
         raise HTTPException(status_code=404, detail="Curriculum not found")
-    buf = BytesIO()
-    download.save(buf)
-    return json.loads(buf.getvalue().decode("utf-8"))
 
 
 @router.put("/{language}")
