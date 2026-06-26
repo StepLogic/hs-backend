@@ -32,3 +32,13 @@ def update_profile(
             db, schemas.UserProfileCreate(user_id=str(current_user.id), **update.model_dump(exclude_unset=True))
         )
     return profile
+
+
+@router.get("/leaderboard", response_model=list[schemas.LeaderboardEntry])
+def get_leaderboard(
+    subject: str | None = None,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> list[dict]:
+    return crud.get_leaderboard(db, subject=subject, limit=limit)

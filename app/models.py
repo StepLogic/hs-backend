@@ -431,3 +431,29 @@ class CollegeApplication(Base):
 
     student = relationship("Student", back_populates="applications")
     college = relationship("College")
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    stripe_subscription_id = Column(String(100), nullable=True, unique=True)
+    stripe_customer_id = Column(String(100), nullable=True)
+    plan = Column(String(50), nullable=False, default="monthly")  # monthly, annual, lifetime
+    status = Column(String(50), nullable=False, default="active")  # active, cancelled, past_due
+    current_period_end = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class ForumPost(Base):
+    __tablename__ = "forum_posts"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    title = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    tags = Column(JSON, nullable=False, default=list)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+    course = relationship("Course")

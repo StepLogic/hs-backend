@@ -39,6 +39,6 @@ def create_college(
     *,
     db: Session = Depends(get_db),
     college_in: schemas.CollegeCreate,
-    _admin=require_roles("admin", "parent"),
+    _admin = Depends(require_roles("admin", "parent")),
 ) -> models.College:
     return crud.create_college(db, college_in)

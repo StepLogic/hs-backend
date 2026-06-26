@@ -11,7 +11,7 @@ router = APIRouter()
 def generate_content(
     *,
     db: Session = Depends(get_db),
-    _admin: models.User = require_roles("admin"),
+    _admin = Depends(require_roles("admin")),
     subject: str,
     grade_level: int,
     skill: str = "",

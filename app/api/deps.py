@@ -55,4 +55,4 @@ def require_roles(*roles: str):
         if current_user.role.value not in roles:
             raise HTTPException(status_code=403, detail="Insufficient permissions")
         return current_user
-    return Depends(checker)
+    return checker

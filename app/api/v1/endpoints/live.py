@@ -24,7 +24,7 @@ def create_session(
     *,
     db: Session = Depends(get_db),
     session_in: schemas.LiveSessionCreate,
-    _teacher: models.User = require_roles("teacher", "admin"),
+    _teacher = Depends(require_roles("teacher", "admin")),
 ) -> models.LiveSession:
     return crud.create_live_session(db, session_in)
 
@@ -46,7 +46,7 @@ def update_session(
     session_id: str,
     session_in: schemas.LiveSessionUpdate,
     db: Session = Depends(get_db),
-    _teacher: models.User = require_roles("teacher", "admin"),
+    _teacher = Depends(require_roles("teacher", "admin")),
 ) -> models.LiveSession:
     session = crud.update_live_session(db, session_id, session_in)
     if not session:
@@ -58,7 +58,7 @@ def update_session(
 def delete_session(
     session_id: str,
     db: Session = Depends(get_db),
-    _admin: models.User = require_roles("admin"),
+    _admin = Depends(require_roles("admin")),
 ) -> None:
     deleted = crud.delete_live_session(db, session_id)
     if not deleted:
@@ -69,7 +69,7 @@ def delete_session(
 def start_session(
     session_id: str,
     db: Session = Depends(get_db),
-    _teacher: models.User = require_roles("teacher", "admin"),
+    _teacher = Depends(require_roles("teacher", "admin")),
 ) -> models.LiveSession:
     session = crud.get_live_session(db, session_id)
     if not session:
@@ -91,7 +91,7 @@ def start_session(
 def end_session(
     session_id: str,
     db: Session = Depends(get_db),
-    _teacher: models.User = require_roles("teacher", "admin"),
+    _teacher = Depends(require_roles("teacher", "admin")),
 ) -> models.LiveSession:
     session = crud.update_live_session(
         db, session_id, schemas.LiveSessionUpdate(status=models.LiveStatus.ENDED)

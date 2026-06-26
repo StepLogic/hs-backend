@@ -947,3 +947,113 @@ def generate_study_plan(
     db.commit()
     db.refresh(db_plan)
     return db_plan
+
+# ─── ForumPost ───
+
+def get_forum_post(db: Session, post_id: str) -> models.ForumPost | None:
+    return db.query(models.ForumPost).filter(models.ForumPost.id == post_id).first()
+
+
+def get_forum_posts(
+    db: Session, course_id: str | None = None, skip: int = 0, limit: int = 100
+) -> list[models.ForumPost]:
+    query = db.query(models.ForumPost)
+    if course_id:
+        query = query.filter(models.ForumPost.course_id == course_id)
+    return query.order_by(models.ForumPost.created_at.desc()).offset(skip).limit(limit).all()
+
+
+def create_forum_post(db: Session, post: schemas.ForumPostCreate) -> models.ForumPost:
+    db_post = models.ForumPost(**post.model_dump())
+    db.add(db_post)
+    db.commit()
+    db.refresh(db_post)
+    return db_post
+
+
+def update_forum_post(
+    db: Session, post_id: str, post: schemas.ForumPostUpdate
+) -> models.ForumPost | None:
+    db_post = get_forum_post(db, post_id)
+    if not db_post:
+        return None
+    for field, value in post.model_dump(exclude_unset=True).items():
+        setattr(db_post, field, value)
+    db.commit()
+    db.refresh(db_post)
+    return db_post
+
+
+def delete_forum_post(db: Session, post_id: str) -> bool:
+    db_post = get_forum_post(db, post_id)
+    if not db_post:
+        return False
+    db.delete(db_post)
+    db.commit()
+    return True
+
+
+# ─── Leaderboard ───
+from datetime import datetime, timedelta
+
+def get_leaderboard(
+    db: Session, subject: str | None = None, limit: int = 10
+) -> list[dict]:
+    since = datetime.utcnow() - timedelta(days=7)
+    query = (
+        db.query(
+            models.Student.id.label("student_id"),
+            models.Student.name,
+            models.SkillMastery.xp.label("xp_gained"),
+        )
+        .join(models.SkillMastery, models.Student.id == models.SkillMastery.student_id)
+        .filter(models.SkillMastery.last_practiced >= since)
+    )
+    if subject:
+        query = query.filter(models.SkillMastery.subject == subject)
+    rows = (
+        query.group_by(models.Student.id, models.Student.name)
+        .order_by(models.SkillMastery.xp.desc())
+        .limit(limit)
+        .all()
+    )
+    result = []
+    for rank, row in enumerate(rows, start=1):
+        result.append({
+            "student_id": row.student_id,
+            "name": row.name,
+            "xp_gained": row.xp_gained or 0,
+            "rank": rank,
+        })
+    return result
+
+
+# ─── Subscription ───
+
+def get_subscription(db: Session, subscription_id: str) -> models.Subscription | None:
+    return db.query(models.Subscription).filter(models.Subscription.id == subscription_id).first()
+
+
+def get_subscription_by_user(db: Session, user_id: str) -> models.Subscription | None:
+    return db.query(models.Subscription).filter(models.Subscription.user_id == user_id).first()
+
+
+def create_subscription(db: Session, subscription: schemas.SubscriptionCreate) -> models.Subscription:
+    db_sub = models.Subscription(**subscription.model_dump())
+    db.add(db_sub)
+    db.commit()
+    db.refresh(db_sub)
+    return db_sub
+
+
+def update_subscription(
+    db: Session, subscription_id: str, subscription: schemas.SubscriptionUpdate
+) -> models.Subscription | None:
+    db_sub = get_subscription(db, subscription_id)
+    if not db_sub:
+        return None
+    for key, value in subscription.model_dump(exclude_unset=True).items():
+        setattr(db_sub, key, value)
+    db.commit()
+    db.refresh(db_sub)
+    return db_sub

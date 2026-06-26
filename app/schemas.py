@@ -689,3 +689,57 @@ class PlanGenerateRequest(BaseModel):
     student_id: str
     target_exam: str
     target_exam_date: date
+
+# ─── ForumPost schemas ───
+
+class ForumPostBase(BaseModel):
+    course_id: str
+    student_id: str
+    title: str
+    body: str
+    tags: list[str] = []
+
+
+class ForumPostCreate(ForumPostBase):
+    pass
+
+
+class ForumPostUpdate(BaseModel):
+    title: Optional[str] = None
+    body: Optional[str] = None
+    tags: Optional[list[str]] = None
+
+
+class ForumPostResponse(ForumPostBase):
+    id: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── Leaderboard schemas ───
+class LeaderboardEntry(BaseModel):
+    student_id: str
+    name: str
+    xp_gained: int
+    rank: int
+# ─── Subscription schemas ───
+class SubscriptionBase(BaseModel):
+    user_id: str
+    plan: str = "monthly"
+    status: str = "active"
+    current_period_end: Optional[datetime] = None
+
+class SubscriptionCreate(SubscriptionBase):
+    pass
+
+class SubscriptionUpdate(BaseModel):
+    plan: Optional[str] = None
+    status: Optional[str] = None
+    current_period_end: Optional[datetime] = None
+
+class SubscriptionResponse(SubscriptionBase):
+    id: str
+    stripe_subscription_id: Optional[str] = None
+    stripe_customer_id: Optional[str] = None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)

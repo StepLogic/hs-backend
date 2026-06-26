@@ -11,7 +11,7 @@ router = APIRouter()
 @router.get("/overview")
 def overview(
     db: Session = Depends(get_db),
-    _admin = require_roles("admin"),
+    _admin = Depends(require_roles("admin")),
 ) -> dict:
     active_students = db.query(models.Student).count()
     total_questions = db.query(models.Question).count()

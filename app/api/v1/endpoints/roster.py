@@ -25,7 +25,7 @@ router = APIRouter()
 def assign_student(
     *,
     db: Session = Depends(get_db),
-    _admin: models.User = require_roles("admin"),
+    _admin = Depends(require_roles("admin")),
     payload: RosterAssignmentCreate,
 ) -> dict:
     # Simple v1: store teacher_id on student.owner_user_id if not already owned
