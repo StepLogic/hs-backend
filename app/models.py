@@ -291,6 +291,28 @@ class UserAnswer(Base):
     test_result = relationship("TestResult", back_populates="user_answers")
 
 
+class LiveStatus(str, PyEnum):
+    SCHEDULED = "scheduled"
+    LIVE = "live"
+    ENDED = "ended"
+    CANCELLED = "cancelled"
+
+
+class LiveSession(Base):
+    __tablename__ = "live_sessions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    starts_at = Column(DateTime, nullable=False)
+    duration_min = Column(Integer, nullable=False, default=60)
+    meeting_url = Column(String(500), nullable=True)
+    recording_url = Column(String(500), nullable=True)
+    status = Column(Enum(LiveStatus), nullable=False, default=LiveStatus.SCHEDULED)
+    max_students = Column(Integer, nullable=False, default=30)
+    teacher_id = Column(String, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
 class UserProfile(Base):
     __tablename__ = "user_profiles"
 

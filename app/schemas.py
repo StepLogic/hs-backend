@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models import Subject, QuestionType, MasteryLevel, Role, CourseType, ReviewStatus, EnrollmentStatus, LessonProgressStatus, Difficulty, ExamType
+from app.models import Subject, QuestionType, MasteryLevel, Role, CourseType, ReviewStatus, EnrollmentStatus, LessonProgressStatus, Difficulty, ExamType, LiveStatus
 
 
 # ─── SkillTaxonomy schemas ───
@@ -453,4 +453,36 @@ class ExamBlueprintUpdate(BaseModel):
 
 class ExamBlueprintResponse(ExamBlueprintBase):
     id: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── LiveSession schemas ───
+class LiveSessionBase(BaseModel):
+    course_id: str
+    title: str
+    starts_at: datetime
+    duration_min: int = 60
+    meeting_url: Optional[str] = None
+    recording_url: Optional[str] = None
+    status: LiveStatus = LiveStatus.SCHEDULED
+    max_students: int = 30
+    teacher_id: Optional[str] = None
+
+class LiveSessionCreate(LiveSessionBase):
+    pass
+
+class LiveSessionUpdate(BaseModel):
+    course_id: Optional[str] = None
+    title: Optional[str] = None
+    starts_at: Optional[datetime] = None
+    duration_min: Optional[int] = None
+    meeting_url: Optional[str] = None
+    recording_url: Optional[str] = None
+    status: Optional[LiveStatus] = None
+    max_students: Optional[int] = None
+    teacher_id: Optional[str] = None
+
+class LiveSessionResponse(LiveSessionBase):
+    id: str
+    created_at: datetime
     model_config = ConfigDict(from_attributes=True)

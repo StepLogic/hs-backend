@@ -571,3 +571,50 @@ def delete_exam_blueprint(db: Session, blueprint_id: str) -> bool:
     db.delete(db_bp)
     db.commit()
     return True
+
+
+# ─── LiveSession ───
+
+def get_live_session(db: Session, session_id: str) -> models.LiveSession | None:
+    return db.query(models.LiveSession).filter(models.LiveSession.id == session_id).first()
+
+
+def get_live_sessions(
+    db: Session, skip: int = 0, limit: int = 100, course_id: str | None = None, status: str | None = None
+) -> list[models.LiveSession]:
+    query = db.query(models.LiveSession)
+    if course_id:
+        query = query.filter(models.LiveSession.course_id == course_id)
+    if status:
+        query = query.filter(models.LiveSession.status == status)
+    return query.offset(skip).limit(limit).all()
+
+
+def create_live_session(db: Session, session: schemas.LiveSessionCreate) -> models.LiveSession:
+    db_session = models.LiveSession(**session.model_dump())
+    db.add(db_session)
+    db.commit()
+    db.refresh(db_session)
+    return db_session
+
+
+def update_live_session(
+    db: Session, session_id: str, session: schemas.LiveSessionUpdate
+) -> models.LiveSession | None:
+    db_session = get_live_session(db, session_id)
+    if not db_session:
+        return None
+    for key, value in session.model_dump(exclude_unset=True).items():
+        setattr(db_session, key, value)
+    db.commit()
+    db.refresh(db_session)
+    return db_session
+
+
+def delete_live_session(db: Session, session_id: str) -> bool:
+    db_session = get_live_session(db, session_id)
+    if not db_session:
+        return False
+    db.delete(db_session)
+    db.commit()
+    return True
