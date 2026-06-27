@@ -208,7 +208,7 @@ class TestResultResponse(TestResultBase):
 
 # ─── UserAnswer schemas ───
 class UserAnswerBase(BaseModel):
-    test_result_id: str
+    test_result_id: Optional[str] = None
     question_id: str
     answer: Any
     is_correct: bool

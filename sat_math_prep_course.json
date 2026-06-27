@@ -1,0 +1,322 @@
+{
+  "course": {
+    "title": "SAT Math Prep",
+    "short_title": "SAT Math",
+    "subject": "math",
+    "course_type": "test_prep",
+    "description": "Master SAT Math with adaptive lessons. Start with a 20-question assessment, then get curated lessons based on your weakest areas.",
+    "icon": "📐",
+    "color": "#4f46e5",
+    "price": 0,
+    "grade_range": "9-12",
+    "features": ["20-question diagnostic assessment", "Adaptive lesson curation", "Video + read-along + quiz per lesson", "5 SAT math areas covered"],
+    "image_emoji": "📐",
+    "rating": 4.8
+  },
+  "skill_taxonomies": [
+    {"subject": "math", "skill": "linear-equations", "description": "Solving linear equations"},
+    {"subject": "math", "skill": "systems-of-equations", "description": "Systems of equations"},
+    {"subject": "math", "skill": "inequalities", "description": "Linear inequalities"},
+    {"subject": "math", "skill": "linear-functions", "description": "Linear functions"},
+    {"subject": "math", "skill": "ratios-rates", "description": "Ratios and rates"},
+    {"subject": "math", "skill": "percentages", "description": "Percentages"},
+    {"subject": "math", "skill": "proportions", "description": "Proportions"},
+    {"subject": "math", "skill": "data-interpretation", "description": "Data interpretation"},
+    {"subject": "math", "skill": "quadratics", "description": "Quadratic equations"},
+    {"subject": "math", "skill": "polynomials", "description": "Polynomial operations"},
+    {"subject": "math", "skill": "exponentials", "description": "Exponents and exponential functions"},
+    {"subject": "math", "skill": "nonlinear-functions", "description": "Nonlinear functions"},
+    {"subject": "math", "skill": "area-volume", "description": "Area and volume"},
+    {"subject": "math", "skill": "angles-lines-triangles", "description": "Angles, lines, and triangles"},
+    {"subject": "math", "skill": "right-triangles", "description": "Right triangles"},
+    {"subject": "math", "skill": "trigonometry", "description": "Trigonometry"},
+    {"subject": "math", "skill": "expression-manipulation", "description": "Manipulating expressions"},
+    {"subject": "math", "skill": "complex-numbers", "description": "Complex numbers"},
+    {"subject": "math", "skill": "structure", "description": "Structure in expressions"},
+    {"subject": "math", "skill": "isolating-quantities", "description": "Isolating quantities"}
+  ],
+  "units": [
+    {
+      "title": "Algebra",
+      "slug": "algebra",
+      "description": "Linear equations, systems, inequalities, and functions.",
+      "video": "https://www.youtube.com/embed/BbZ9tQYCqiE",
+      "lessons": [
+        {
+          "title": "Solving Linear Equations",
+          "slug": "linear-equations",
+          "skills": ["linear-equations"],
+          "difficulty": "easy",
+          "read_along": "# Solving Linear Equations\n\nA **linear equation** is an equation where the highest power of the variable is 1. The general form is:\n\n**ax + b = c**\n\n## Steps to Solve\n\n1. **Isolate the variable term**: Move all variable terms to one side\n2. **Isolate the constant**: Move all constant terms to the other side\n3. **Divide**: Divide both sides by the coefficient\n\n## Example\n\nSolve: 3x + 7 = 22\n\n- Step 1: Subtract 7 from both sides → 3x = 15\n- Step 2: Divide by 3 → **x = 5**\n\n## Key Tips\n\n- Whatever you do to one side, do to the other\n- Check your answer by substituting back\n- Watch for fractions — multiply both sides by the LCD to clear them",
+          "quiz": [
+            {"prompt": "Solve: 5x - 3 = 22", "options": ["3", "5", "7", "25"], "correct": "5", "explanation": "5x = 25, so x = 5."},
+            {"prompt": "Solve: 2(x + 4) = 18", "options": ["5", "7", "9", "11"], "correct": "5", "explanation": "2x + 8 = 18, 2x = 10, x = 5."}
+          ]
+        },
+        {
+          "title": "Systems of Equations",
+          "slug": "systems-of-equations",
+          "skills": ["systems-of-equations"],
+          "difficulty": "medium",
+          "read_along": "# Systems of Equations\n\nA **system of equations** is two or more equations with the same variables. The solution is the point where all equations are satisfied simultaneously.\n\n## Methods\n\n### 1. Substitution\nSolve one equation for a variable, then substitute into the other.\n\n### 2. Elimination\nAdd or subtract equations to eliminate one variable.\n\n## Example (Elimination)\n\nx + y = 10\n2x - y = 5\n\nAdd both equations: 3x = 15 → **x = 5**, then y = 5.",
+          "quiz": [
+            {"prompt": "If x + y = 7 and x - y = 3, what is x?", "options": ["2", "5", "7", "10"], "correct": "5", "explanation": "Add: 2x = 10, x = 5."},
+            {"prompt": "If 2x + y = 11 and x + y = 7, what is x?", "options": ["3", "4", "5", "7"], "correct": "4", "explanation": "Subtract: x = 4."}
+          ]
+        },
+        {
+          "title": "Linear Inequalities",
+          "slug": "inequalities",
+          "skills": ["inequalities"],
+          "difficulty": "medium",
+          "read_along": "# Linear Inequalities\n\nAn **inequality** uses <, >, ≤, or ≥ instead of =.\n\n## Rules\n\n- Solve like an equation, **except**: when multiplying or dividing by a negative number, **flip the inequality sign**\n- Graph on a number line: open circle for <, >; closed circle for ≤, ≥\n\n## Example\n\n2x - 5 > 7\n\n- Add 5: 2x > 12\n- Divide by 2: **x > 6**",
+          "quiz": [
+            {"prompt": "Solve: -3x + 2 > 11", "options": ["x < -3", "x > -3", "x < 3", "x > 3"], "correct": "x < -3", "explanation": "-3x > 9, divide by -3 and flip: x < -3."},
+            {"prompt": "Solve: 4x - 1 ≤ 15", "options": ["x ≤ 3", "x ≤ 4", "x ≥ 4", "x ≤ 16"], "correct": "x ≤ 4", "explanation": "4x ≤ 16, x ≤ 4."}
+          ]
+        },
+        {
+          "title": "Linear Functions",
+          "slug": "linear-functions",
+          "skills": ["linear-functions"],
+          "difficulty": "hard",
+          "read_along": "# Linear Functions\n\nA **linear function** has the form **f(x) = mx + b** where m is the slope and b is the y-intercept.\n\n## Slope\n\n**m = (y₂ - y₁) / (x₂ - x₁)**\n\n## Equation from Two Points\n\n1. Calculate slope m\n2. Use point-slope form: y - y₁ = m(x - x₁)\n3. Simplify to slope-intercept form\n\n## Example\n\nPoints (2, 5) and (4, 11):\n- Slope = (11-5)/(4-2) = 3\n- y - 5 = 3(x - 2) → **y = 3x - 1**",
+          "quiz": [
+            {"prompt": "What is the slope of the line through (1, 3) and (5, 11)?", "options": ["2", "3", "4", "8"], "correct": "2", "explanation": "(11-3)/(5-1) = 8/4 = 2."},
+            {"prompt": "A line has slope 2 and y-intercept 3. What is its equation?", "options": ["y = 2x + 3", "y = 3x + 2", "y = 2x - 3", "y = 3x - 2"], "correct": "y = 2x + 3", "explanation": "Slope-intercept form: y = mx + b = 2x + 3."}
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Problem Solving & Data Analysis",
+      "slug": "problem-solving-data-analysis",
+      "description": "Ratios, rates, percentages, proportions, and data interpretation.",
+      "video": "https://www.youtube.com/embed/UqJIQTq2c6Q",
+      "lessons": [
+        {
+          "title": "Ratios and Rates",
+          "slug": "ratios-rates",
+          "skills": ["ratios-rates"],
+          "difficulty": "easy",
+          "read_along": "# Ratios and Rates\n\nA **ratio** compares two quantities. A **rate** is a ratio with different units.\n\n## Key Formulas\n\n- **Speed** = distance ÷ time\n- **Unit rate** = quantity ÷ units\n\n## Example\n\nA car travels 240 miles in 4 hours:\n- Speed = 240 ÷ 4 = **60 mph**\n\n## Proportion Method\n\nIf 3 items cost $12, how much do 5 items cost?\n\n3/12 = 5/x → 3x = 60 → **x = $20**",
+          "quiz": [
+            {"prompt": "A train travels 300 miles in 5 hours. What is the speed?", "options": ["50 mph", "60 mph", "70 mph", "80 mph"], "correct": "60 mph", "explanation": "300 / 5 = 60 mph."},
+            {"prompt": "If 4 pencils cost $2, how much do 10 pencils cost?", "options": ["$3", "$4", "$5", "$6"], "correct": "$5", "explanation": "Each pencil = $0.50. 10 × 0.50 = $5."}
+          ]
+        },
+        {
+          "title": "Percentages",
+          "slug": "percentages",
+          "skills": ["percentages"],
+          "difficulty": "medium",
+          "read_along": "# Percentages\n\n**Percent** means \"per hundred.\" To convert: decimal = percent ÷ 100.\n\n## Key Formulas\n\n- **Percent of a number**: (percent ÷ 100) × number\n- **Percent change**: (new - old) ÷ old × 100\n- **Discount**: original × (1 - discount%)\n\n## Example\n\nA $80 shirt is 25% off:\n- Discount = $80 × 0.25 = $20\n- Sale price = $80 - $20 = **$60**",
+          "quiz": [
+            {"prompt": "What is 15% of 200?", "options": ["15", "20", "30", "45"], "correct": "30", "explanation": "0.15 × 200 = 30."},
+            {"prompt": "A price increases from $40 to $50. What is the percent increase?", "options": ["10%", "20%", "25%", "30%"], "correct": "25%", "explanation": "(50-40)/40 × 100 = 25%."}
+          ]
+        },
+        {
+          "title": "Proportions",
+          "slug": "proportions",
+          "skills": ["proportions"],
+          "difficulty": "medium",
+          "read_along": "# Proportions\n\nA **proportion** states that two ratios are equal: a/b = c/d.\n\n## Cross-Multiplication\n\nIf a/b = c/d, then **a × d = b × c**\n\n## Work Problems\n\nIf 3 workers take 12 days, how long for 4 workers?\n- Total work = 3 × 12 = 36 worker-days\n- Time = 36 ÷ 4 = **9 days**",
+          "quiz": [
+            {"prompt": "If 5 workers build a wall in 8 days, how long for 4 workers?", "options": ["6", "8", "10", "12"], "correct": "10", "explanation": "5 × 8 = 40 worker-days. 40 / 4 = 10 days."},
+            {"prompt": "If x/6 = 12/18, what is x?", "options": ["2", "3", "4", "6"], "correct": "4", "explanation": "Cross multiply: 18x = 72, x = 4."}
+          ]
+        },
+        {
+          "title": "Data Interpretation",
+          "slug": "data-interpretation",
+          "skills": ["data-interpretation"],
+          "difficulty": "hard",
+          "read_along": "# Data Interpretation\n\nSAT data problems use tables, charts, and graphs.\n\n## Key Skills\n\n- **Read the title and labels** before solving\n- **Find the right row/column** — don't rush\n- **Check units** — are values in thousands? percentages?\n- **Calculate carefully** — convert percentages to decimals\n\n## Example\n\nSurvey of 200 people: 35% prefer coffee.\n- Coffee lovers = 0.35 × 200 = **70 people**",
+          "quiz": [
+            {"prompt": "In a survey of 500 people, 60% prefer dogs. How many prefer dogs?", "options": ["200", "250", "300", "350"], "correct": "300", "explanation": "0.60 × 500 = 300."},
+            {"prompt": "A table shows sales of $5000 in Q1 and $7000 in Q2. What is the increase?", "options": ["$1000", "$1500", "$2000", "$2500"], "correct": "$2000", "explanation": "7000 - 5000 = 2000."}
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Advanced Math",
+      "slug": "advanced-math",
+      "description": "Quadratics, polynomials, exponentials, and nonlinear functions.",
+      "video": "https://www.youtube.com/embed/qYIs5W3s7TI",
+      "lessons": [
+        {
+          "title": "Quadratic Equations",
+          "slug": "quadratics",
+          "skills": ["quadratics"],
+          "difficulty": "medium",
+          "read_along": "# Quadratic Equations\n\nA **quadratic equation** has the form **ax² + bx + c = 0**.\n\n## Solving Methods\n\n### 1. Factoring\nx² - 5x + 6 = 0 → (x-2)(x-3) = 0 → **x = 2 or x = 3**\n\n### 2. Quadratic Formula\n**x = (-b ± √(b²-4ac)) / 2a**\n\nThe discriminant **b² - 4ac** tells you:\n- Positive: two real solutions\n- Zero: one solution\n- Negative: no real solutions",
+          "quiz": [
+            {"prompt": "Solve: x² - 7x + 12 = 0", "options": ["x=3 and x=4", "x=2 and x=6", "x=1 and x=12", "x=-3 and x=-4"], "correct": "x=3 and x=4", "explanation": "(x-3)(x-4) = 0, so x = 3 or 4."},
+            {"prompt": "What is the discriminant of x² + 4x + 5?", "options": ["-4", "0", "4", "16"], "correct": "-4", "explanation": "b² - 4ac = 16 - 20 = -4."}
+          ]
+        },
+        {
+          "title": "Polynomial Operations",
+          "slug": "polynomials",
+          "skills": ["polynomials"],
+          "difficulty": "hard",
+          "read_along": "# Polynomial Operations\n\nA **polynomial** is a sum of terms with variables and coefficients.\n\n## Evaluating\n\nSubstitute the value for x and compute.\n\n## Example\n\nf(x) = x³ - 2x² + 3x - 6, find f(2):\n- f(2) = 8 - 8 + 6 - 6 = **0**\n\n## Factoring\n\n- **GCF**: Factor out the greatest common factor\n- **Grouping**: Group terms and factor each group\n- **Sum/Difference of cubes**: a³ ± b³ = (a ± b)(a² ∓ ab + b²)",
+          "quiz": [
+            {"prompt": "If f(x) = x² + 3x - 4, what is f(-4)?", "options": ["-12", "0", "12", "16"], "correct": "0", "explanation": "16 - 12 - 4 = 0."},
+            {"prompt": "Factor: x² - 16", "options": ["(x-4)(x-4)", "(x+4)(x-4)", "(x+8)(x-2)", "Cannot be factored"], "correct": "(x+4)(x-4)", "explanation": "Difference of squares: (x+4)(x-4)."}
+          ]
+        },
+        {
+          "title": "Exponents and Exponential Functions",
+          "slug": "exponentials",
+          "skills": ["exponentials"],
+          "difficulty": "medium",
+          "read_along": "# Exponents\n\n## Rules\n\n- **Multiplication**: aᵐ × aⁿ = aᵐ⁺ⁿ\n- **Division**: aᵐ ÷ aⁿ = aᵐ⁻ⁿ\n- **Power**: (aᵐ)ⁿ = aᵐⁿ\n- **Zero**: a⁰ = 1\n- **Negative**: a⁻ⁿ = 1/aⁿ\n\n## Example\n\n2³ × 2⁴ = 2³⁺⁴ = **2⁷ = 128**\n\n## Exponential Growth\n\n**y = a(1 + r)ᵗ** where a = initial, r = rate, t = time",
+          "quiz": [
+            {"prompt": "Simplify: 3² × 3⁵", "options": ["3⁷", "3¹⁰", "9⁷", "6⁷"], "correct": "3⁷", "explanation": "Add exponents: 3^(2+5) = 3⁷."},
+            {"prompt": "Simplify: (2³)²", "options": ["2⁵", "2⁶", "4³", "8²"], "correct": "2⁶", "explanation": "Multiply exponents: 2^(3×2) = 2⁶."}
+          ]
+        },
+        {
+          "title": "Nonlinear Functions",
+          "slug": "nonlinear-functions",
+          "skills": ["nonlinear-functions"],
+          "difficulty": "hard",
+          "read_along": "# Nonlinear Functions\n\nFunctions that are **not lines** — quadratics, square roots, absolute values, exponentials.\n\n## Domain\n\nThe set of valid input values.\n\n- **Square root**: expression under √ must be ≥ 0\n- **Fraction**: denominator ≠ 0\n- **Log**: argument must be > 0\n\n## Example\n\nf(x) = √(x + 3)\n\nDomain: x + 3 ≥ 0 → **x ≥ -3**",
+          "quiz": [
+            {"prompt": "What is the domain of f(x) = 1/(x-2)?", "options": ["x ≠ 0", "x ≠ 2", "x ≥ 2", "All real numbers"], "correct": "x ≠ 2", "explanation": "Denominator cannot be zero, so x ≠ 2."},
+            {"prompt": "What is the domain of f(x) = √(2x - 6)?", "options": ["x ≥ 3", "x ≥ 6", "x ≥ 0", "x ≥ -3"], "correct": "x ≥ 3", "explanation": "2x - 6 ≥ 0, so x ≥ 3."}
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Geometry & Trigonometry",
+      "slug": "geometry-trigonometry",
+      "description": "Area, volume, angles, triangles, and trigonometric ratios.",
+      "video": "https://www.youtube.com/embed/xXG1rF6m1k0",
+      "lessons": [
+        {
+          "title": "Area and Volume",
+          "slug": "area-volume",
+          "skills": ["area-volume"],
+          "difficulty": "easy",
+          "read_along": "# Area and Volume\n\n## Area Formulas\n\n- **Rectangle**: A = l × w\n- **Triangle**: A = ½ × b × h\n- **Circle**: A = πr²\n\n## Volume Formulas\n\n- **Rectangular prism**: V = l × w × h\n- **Cylinder**: V = πr²h\n- **Sphere**: V = (4/3)πr³\n\n## Example\n\nRectangle with length 8 and width 5:\n- A = 8 × 5 = **40**",
+          "quiz": [
+            {"prompt": "What is the area of a triangle with base 10 and height 6?", "options": ["15", "30", "60", "120"], "correct": "30", "explanation": "A = ½ × 10 × 6 = 30."},
+            {"prompt": "What is the volume of a cylinder with radius 3 and height 10? (Use π ≈ 3.14)", "options": ["94.2", "282.6", "314", "942"], "correct": "282.6", "explanation": "V = πr²h = 3.14 × 9 × 10 = 282.6."}
+          ]
+        },
+        {
+          "title": "Angles, Lines, and Triangles",
+          "slug": "angles-lines-triangles",
+          "skills": ["angles-lines-triangles"],
+          "difficulty": "medium",
+          "read_along": "# Angles and Triangles\n\n## Key Facts\n\n- **Triangle angles sum to 180°**\n- **Straight line = 180°**\n- **Vertical angles are equal**\n- **Parallel lines**: corresponding angles equal, alternate interior angles equal\n\n## Example\n\nTwo angles in a triangle are 45° and 55°:\n- Third = 180 - 45 - 55 = **80°**",
+          "quiz": [
+            {"prompt": "Two angles in a triangle are 60° and 70°. What is the third angle?", "options": ["30°", "40°", "50°", "60°"], "correct": "50°", "explanation": "180 - 60 - 70 = 50°."},
+            {"prompt": "Two parallel lines are cut by a transversal. If one angle is 65°, what is its supplementary angle?", "options": ["65°", "115°", "25°", "180°"], "correct": "115°", "explanation": "Supplementary: 180 - 65 = 115°."}
+          ]
+        },
+        {
+          "title": "Right Triangles",
+          "slug": "right-triangles",
+          "skills": ["right-triangles"],
+          "difficulty": "medium",
+          "read_along": "# Right Triangles\n\n## Pythagorean Theorem\n\n**a² + b² = c²** (where c is the hypotenuse)\n\n## Special Right Triangles\n\n- **45-45-90**: legs = x, hypotenuse = x√2\n- **30-60-90**: short = x, long = x√3, hypotenuse = 2x\n\n## Example\n\nLegs 6 and 8:\n- Hypotenuse = √(36 + 64) = √100 = **10**",
+          "quiz": [
+            {"prompt": "A right triangle has legs 5 and 12. What is the hypotenuse?", "options": ["13", "15", "17", "60"], "correct": "13", "explanation": "√(25 + 144) = √169 = 13."},
+            {"prompt": "In a 45-45-90 triangle, if a leg is 6, what is the hypotenuse?", "options": ["6√2", "6", "12", "3√2"], "correct": "6√2", "explanation": "Hypotenuse = leg × √2 = 6√2."}
+          ]
+        },
+        {
+          "title": "Trigonometry",
+          "slug": "trigonometry",
+          "skills": ["trigonometry"],
+          "difficulty": "hard",
+          "read_along": "# Trigonometry\n\n## SOH-CAH-TOA\n\n- **sin** = Opposite / Hypotenuse\n- **cos** = Adjacent / Hypotenuse\n- **tan** = Opposite / Adjacent\n\n## Pythagorean Identity\n\n**sin²θ + cos²θ = 1**\n\n## Example\n\nIf sin(θ) = 3/5:\n- cos²θ = 1 - 9/25 = 16/25\n- **cos(θ) = 4/5** (first quadrant)",
+          "quiz": [
+            {"prompt": "If cos(θ) = 5/13 and θ is in the first quadrant, what is sin(θ)?", "options": ["5/12", "12/13", "8/13", "13/12"], "correct": "12/13", "explanation": "sin²θ = 1 - 25/169 = 144/169, sin(θ) = 12/13."},
+            {"prompt": "In a right triangle, the opposite side is 3 and the hypotenuse is 5. What is tan(θ)?", "options": ["3/4", "3/5", "4/5", "4/3"], "correct": "3/4", "explanation": "Adjacent = √(25-9) = 4. tan = 3/4."}
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Passport to Advanced Math",
+      "slug": "passport-advanced-math",
+      "description": "Expression manipulation, complex numbers, structure, and isolating quantities.",
+      "video": "https://www.youtube.com/embed/N7O4W6QXqjY",
+      "lessons": [
+        {
+          "title": "Manipulating Expressions",
+          "slug": "expression-manipulation",
+          "skills": ["expression-manipulation"],
+          "difficulty": "medium",
+          "read_along": "# Manipulating Expressions\n\n## Factoring\n\n- **Difference of squares**: a² - b² = (a+b)(a-b)\n- **Common factor**: ab + ac = a(b + c)\n\n## Simplifying Rational Expressions\n\n(x² - 9) / (x - 3):\n- Factor numerator: (x+3)(x-3) / (x-3)\n- Cancel (x-3): **x + 3** (x ≠ 3)\n\n## Key Tip\n\nAlways check for restrictions on the domain!",
+          "quiz": [
+            {"prompt": "Simplify: (x² - 25) / (x + 5)", "options": ["x - 5", "x + 5", "x² + 5", "Cannot simplify"], "correct": "x - 5", "explanation": "(x+5)(x-5)/(x+5) = x - 5 (x ≠ -5)."},
+            {"prompt": "Factor: 2x² - 8", "options": ["2(x²-4)", "2(x-2)(x+2)", "(2x-4)(x+2)", "2(x-4)(x+4)"], "correct": "2(x-2)(x+2)", "explanation": "2(x²-4) = 2(x-2)(x+2)."}
+          ]
+        },
+        {
+          "title": "Complex Numbers",
+          "slug": "complex-numbers",
+          "skills": ["complex-numbers"],
+          "difficulty": "hard",
+          "read_along": "# Complex Numbers\n\nA **complex number** has the form **a + bi** where i² = -1.\n\n## Operations\n\n- **Addition**: (a+bi) + (c+di) = (a+c) + (b+d)i\n- **Multiplication**: FOIL, then replace i² with -1\n\n## Example\n\n(2 + 3i)(1 - i):\n- = 2 - 2i + 3i - 3i²\n- = 2 + i + 3 = **5 + i**",
+          "quiz": [
+            {"prompt": "What is i²?", "options": ["-1", "1", "i", "-i"], "correct": "-1", "explanation": "By definition, i² = -1."},
+            {"prompt": "Simplify: (3 + 2i) + (1 - 5i)", "options": ["4 - 3i", "4 + 3i", "2 - 3i", "4 - 7i"], "correct": "4 - 3i", "explanation": "Add real parts: 3+1=4. Add imaginary: 2i-5i=-3i. Result: 4-3i."}
+          ]
+        },
+        {
+          "title": "Structure in Expressions",
+          "slug": "structure",
+          "skills": ["structure"],
+          "difficulty": "medium",
+          "read_along": "# Structure in Expressions\n\nRecognize patterns and use them to simplify.\n\n## Chained Ratios\n\nIf a/b = 3/4 and b/c = 8/5:\n- a/c = (a/b) × (b/c) = (3/4)(8/5) = **6/5**\n\n## Rewriting\n\nSometimes rewriting in a different form reveals the answer:\n- x⁴ - 16 = (x²)² - 4² = (x²-4)(x²+4) = (x-2)(x+2)(x²+4)",
+          "quiz": [
+            {"prompt": "If a/b = 2/3 and b/c = 6/5, what is a/c?", "options": ["4/5", "12/15", "2/5", "4/15"], "correct": "4/5", "explanation": "(2/3)(6/5) = 12/15 = 4/5."},
+            {"prompt": "Factor x⁴ - 16", "options": ["(x²-4)(x²+4)", "(x-2)(x+2)(x²+4)", "(x²-4)²", "(x-4)(x+4)"], "correct": "(x-2)(x+2)(x²+4)", "explanation": "x⁴-16 = (x²-4)(x²+4) = (x-2)(x+2)(x²+4)."}
+          ]
+        },
+        {
+          "title": "Isolating Quantities",
+          "slug": "isolating-quantities",
+          "skills": ["isolating-quantities"],
+          "difficulty": "hard",
+          "read_along": "# Isolating Quantities\n\nRearrange a formula to solve for a specific variable.\n\n## Strategy\n\n1. Identify the variable to isolate\n2. Move everything else to the other side (inverse operations)\n3. Simplify\n\n## Example\n\nV = πr²h, solve for r:\n- Divide by πh: r² = V/(πh)\n- Square root: **r = √(V/πh)**\n\n## Key Tip\n\nTreat other variables as constants — you're solving for one variable in terms of the rest.",
+          "quiz": [
+            {"prompt": "If A = ½bh, what is h in terms of A and b?", "options": ["2A/b", "A/2b", "b/2A", "2b/A"], "correct": "2A/b", "explanation": "Multiply by 2: 2A = bh. Divide by b: h = 2A/b."},
+            {"prompt": "If C = 2πr, what is r?", "options": ["C/2π", "2π/C", "C/π", "π/C"], "correct": "C/2π", "explanation": "Divide by 2π: r = C/(2π)."}
+          ]
+        }
+      ]
+    }
+  ],
+  "assessment_questions": [
+    {"skill": "linear-equations", "difficulty": "easy", "prompt": "If 3x + 7 = 22, what is the value of x?", "options": ["3", "5", "7", "15"], "correct": "5", "explanation": "Subtract 7 from both sides: 3x = 15. Divide by 3: x = 5."},
+    {"skill": "systems-of-equations", "difficulty": "medium", "prompt": "If x + y = 10 and 2x - y = 5, what is the value of x?", "options": ["3", "5", "7", "10"], "correct": "5", "explanation": "Add both equations: 3x = 15, so x = 5. Then y = 5."},
+    {"skill": "inequalities", "difficulty": "medium", "prompt": "Which of the following is a solution to the inequality 2x - 5 > 7?", "options": ["x = 5", "x = 6", "x = 7", "x = 4"], "correct": "x = 7", "explanation": "2x > 12, so x > 6. Only x = 7 satisfies this."},
+    {"skill": "linear-functions", "difficulty": "hard", "prompt": "A line passes through (2, 5) and (4, 11). What is the equation of the line?", "options": ["y = 3x - 1", "y = 2x + 1", "y = 3x + 1", "y = 6x - 7"], "correct": "y = 3x - 1", "explanation": "Slope = (11-5)/(4-2) = 3. y - 5 = 3(x-2), so y = 3x - 1."},
+    {"skill": "ratios-rates", "difficulty": "easy", "prompt": "A car travels 240 miles in 4 hours. What is the average speed in mph?", "options": ["50", "60", "70", "80"], "correct": "60", "explanation": "Speed = distance / time = 240 / 4 = 60 mph."},
+    {"skill": "percentages", "difficulty": "medium", "prompt": "A shirt originally costs $80. It is on sale for 25% off. What is the sale price?", "options": ["$55", "$60", "$65", "$70"], "correct": "$60", "explanation": "25% of $80 = $20. Sale price = $80 - $20 = $60."},
+    {"skill": "proportions", "difficulty": "medium", "prompt": "If 3 workers can build a wall in 12 days, how many days would 4 workers take?", "options": ["8", "9", "10", "16"], "correct": "9", "explanation": "3 workers × 12 days = 36 worker-days. 36 / 4 = 9 days."},
+    {"skill": "data-interpretation", "difficulty": "hard", "prompt": "A survey shows 40% prefer tea, 35% prefer coffee, and 25% prefer juice. If 200 people were surveyed, how many prefer coffee?", "options": ["35", "70", "80", "100"], "correct": "70", "explanation": "35% of 200 = 0.35 × 200 = 70."},
+    {"skill": "quadratics", "difficulty": "medium", "prompt": "What are the solutions to x² - 5x + 6 = 0?", "options": ["x = 1 and x = 6", "x = 2 and x = 3", "x = -2 and x = -3", "x = 1 and x = 5"], "correct": "x = 2 and x = 3", "explanation": "Factor: (x-2)(x-3) = 0, so x = 2 or x = 3."},
+    {"skill": "polynomials", "difficulty": "hard", "prompt": "If f(x) = x³ - 2x² + 3x - 6, what is f(2)?", "options": ["0", "2", "4", "6"], "correct": "0", "explanation": "f(2) = 8 - 8 + 6 - 6 = 0."},
+    {"skill": "exponentials", "difficulty": "medium", "prompt": "Simplify: 2³ × 2⁴", "options": ["2⁷", "2¹²", "4⁷", "8⁴"], "correct": "2⁷", "explanation": "When multiplying with same base, add exponents: 2^(3+4) = 2⁷ = 128."},
+    {"skill": "nonlinear-functions", "difficulty": "hard", "prompt": "If f(x) = √(x + 3), what is the domain of f?", "options": ["x ≥ 0", "x ≥ -3", "x ≥ 3", "All real numbers"], "correct": "x ≥ -3", "explanation": "The expression under the square root must be non-negative: x + 3 ≥ 0, so x ≥ -3."},
+    {"skill": "area-volume", "difficulty": "easy", "prompt": "What is the area of a rectangle with length 8 and width 5?", "options": ["13", "26", "40", "45"], "correct": "40", "explanation": "Area = length × width = 8 × 5 = 40."},
+    {"skill": "angles-lines-triangles", "difficulty": "medium", "prompt": "Two angles in a triangle measure 45° and 55°. What is the third angle?", "options": ["70°", "80°", "90°", "100°"], "correct": "80°", "explanation": "Angles in a triangle sum to 180°. 180 - 45 - 55 = 80°."},
+    {"skill": "right-triangles", "difficulty": "medium", "prompt": "A right triangle has legs of length 6 and 8. What is the hypotenuse?", "options": ["10", "12", "14", "100"], "correct": "10", "explanation": "By Pythagorean theorem: √(6² + 8²) = √(36+64) = √100 = 10."},
+    {"skill": "trigonometry", "difficulty": "hard", "prompt": "If sin(θ) = 3/5 and θ is in the first quadrant, what is cos(θ)?", "options": ["3/4", "4/5", "5/12", "5/3"], "correct": "4/5", "explanation": "sin²θ + cos²θ = 1. cos²θ = 1 - 9/25 = 16/25, so cos(θ) = 4/5."},
+    {"skill": "expression-manipulation", "difficulty": "medium", "prompt": "Simplify: (x² - 9) / (x - 3)", "options": ["x + 3", "x - 3", "x² + 3", "Cannot be simplified"], "correct": "x + 3", "explanation": "Factor numerator: (x+3)(x-3)/(x-3) = x + 3 (for x ≠ 3)."},
+    {"skill": "complex-numbers", "difficulty": "hard", "prompt": "What is (2 + 3i)(1 - i)?", "options": ["5 + i", "2 - 3i", "5 - i", "2 + i"], "correct": "5 + i", "explanation": "2(1) + 2(-i) + 3i(1) + 3i(-i) = 2 - 2i + 3i - 3i² = 2 + i + 3 = 5 + i."},
+    {"skill": "structure", "difficulty": "medium", "prompt": "If a/b = 3/4 and b/c = 8/5, what is a/c?", "options": ["3/5", "6/5", "12/5", "24/20"], "correct": "6/5", "explanation": "a/c = (a/b) × (b/c) = (3/4) × (8/5) = 24/20 = 6/5."},
+    {"skill": "isolating-quantities", "difficulty": "hard", "prompt": "If V = πr²h, what is r in terms of V and h?", "options": ["√(V/πh)", "V/(πh)", "Vπ/h", "πh/V"], "correct": "√(V/πh)", "explanation": "Divide by πh: r² = V/(πh). Take square root: r = √(V/πh)."}
+  ]
+}
