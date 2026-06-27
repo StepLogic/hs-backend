@@ -7,6 +7,13 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_DAYS: int = 7
+    B2_KEY_ID: str = ""
+    B2_APP_KEY: str = ""
+    B2_BUCKET: str = "hs-platform"
+    S3_ENDPOINT: str = ""
+    S3_ACCESS_KEY: str = ""
+    S3_SECRET_KEY: str = ""
+    S3_BUCKET: str = "hs-platform"
     class Config:
         env_file = ".env"
         extra = "ignore"
