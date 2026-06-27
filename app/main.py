@@ -34,9 +34,16 @@ app.add_middleware(
 @app.post("/admin/reset-db")
 def reset_db():
     """Drop and recreate all tables. Use with caution — loses all data."""
+    from sqlalchemy import text
     from app.database import Base, engine
     from app import models  # noqa
-    Base.metadata.drop_all(bind=engine)
+
+    # Drop all tables with CASCADE (Postgres needs this for FK constraints)
+    with engine.connect() as conn:
+        conn.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
+        conn.execute(text("CREATE SCHEMA public"))
+        conn.commit()
+
     Base.metadata.create_all(bind=engine)
     init_db()
     return {"ok": True, "message": "Database recreated with latest schema"}
