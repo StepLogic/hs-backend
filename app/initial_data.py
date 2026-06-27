@@ -8,6 +8,11 @@ from app.security import hash_password
 
 
 def init_db() -> None:
+    # Ensure all tables exist (safe — create_all is idempotent, won't alter existing)
+    from app.database import Base, engine
+    from app import models  # noqa: F401 — registers all models with Base
+    Base.metadata.create_all(bind=engine)
+
     db: Session = SessionLocal()
     try:
         admin_email = os.getenv("ADMIN_EMAIL")
