@@ -53,3 +53,16 @@ def delete_course(course_id: str, db: Session = Depends(get_db)) -> dict[str, bo
     if not success:
         raise HTTPException(status_code=404, detail="Course not found")
     return {"ok": True}
+
+@router.delete("/all")
+def delete_all_courses(db: Session = Depends(get_db)) -> dict:
+    # ponytail: bulk delete — fine for admin reset, not for multi-tenant
+    db.query(models.LessonProgress).delete()
+    db.query(models.SkillMastery).delete()
+    db.query(models.Enrollment).delete()
+    db.query(models.Lesson).delete()
+    db.query(models.Unit).delete()
+    db.query(models.Question).delete()
+    db.query(models.Course).delete()
+    db.commit()
+    return {"ok": True, "deleted": "all courses, units, lessons, questions, progress, enrollments, skill mastery"}
