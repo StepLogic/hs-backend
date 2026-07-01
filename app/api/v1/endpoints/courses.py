@@ -191,10 +191,12 @@ def _import_course_json(db: Session, data: dict) -> dict:
 
             # Build content blocks: video + read-along + callout + quiz_embed
             content_blocks = []
-            if unit_video:
+            lesson_video = lesson_def.get("video", "")
+            video_src = lesson_video if lesson_video else unit_video
+            if video_src:
                 content_blocks.append({
                     "type": "video",
-                    "src": unit_video,
+                    "src": video_src,
                     "caption": f"Video lesson: {lesson_def['title']}",
                 })
             if lesson_def.get("read_along"):

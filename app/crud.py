@@ -940,3 +940,4 @@ def update_subscription(
     db.commit()
     db.refresh(db_sub)
     return db_sub
+

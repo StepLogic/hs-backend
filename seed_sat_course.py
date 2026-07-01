@@ -14,7 +14,9 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 # ── Config ──
-BACKEND_URL = "http://localhost:8000/api/v1"
+# Use env var or default to hosted backend
+import os
+BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-backend-75yy.onrender.com/api/v1")
 JSON_FILE = Path(__file__).parent / "sat_math_prep_course.json"
 
 
@@ -45,6 +47,7 @@ def import_from_url(url: str):
 
 
 if __name__ == "__main__":
+    print(f"Target backend: {BACKEND_URL}")
     if len(sys.argv) > 1 and sys.argv[1] == "--url" and len(sys.argv) > 2:
         print(f"Importing course from URL: {sys.argv[2]}")
         result = import_from_url(sys.argv[2])
