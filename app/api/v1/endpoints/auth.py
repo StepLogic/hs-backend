@@ -1,6 +1,9 @@
+import secrets
+import urllib.parse
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+import requests
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -62,27 +65,101 @@ def me(current_user: models.User = Depends(get_current_user)) -> models.User:
     return current_user
 
 
-@router.get("/session-token")
-def get_session_token(
-    session_id: str,
-    x_internal_secret: Optional[str] = Header(None, alias="X-Internal-Secret"),
+# ── Google OAuth ───────────────────────────────────────────────────────
+
+@router.get("/google")
+def google_auth() -> dict:
+    """Initiate Google OAuth sign-in."""
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="Google OAuth not configured")
+
+    state = secrets.token_urlsafe(32)
+    redirect_uri = f"{settings.FRONTEND_URL.rstrip('/')}/api/v1/auth/google/callback"
+
+    params = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
+    return {"url": url}
+
+
+@router.get("/google/callback")
+def google_callback(
+    request: Request,
+    code: str,
+    state: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> dict:
-    """Internal endpoint for hs-platform server hooks to resolve a session ID
-    to its raw token without querying the DB directly.
+    """Handle Google OAuth callback and return JWT token."""
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        raise HTTPException(status_code=503, detail="Google OAuth not configured")
 
-    Protected by a shared secret (BETTER_AUTH_SECRET) known only to the
-    SvelteKit server and the backend.
-    """
-    if x_internal_secret != settings.BETTER_AUTH_SECRET or not settings.BETTER_AUTH_SECRET:
-        raise HTTPException(status_code=403, detail="Invalid secret")
+    # Exchange code for tokens
+    redirect_uri = f"{settings.FRONTEND_URL.rstrip('/')}/api/v1/auth/google/callback"
+    token_resp = requests.post(
+        "https://oauth2.googleapis.com/token",
+        data={
+            "code": code,
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        },
+        timeout=30,
+    )
+    if not token_resp.ok:
+        raise HTTPException(status_code=400, detail="Failed to exchange Google code")
 
-    row = db.execute(
-        text('SELECT token FROM session WHERE id = :id AND "expiresAt" > NOW()'),
-        {"id": session_id},
-    ).mappings().fetchone()
+    tokens = token_resp.json()
+    id_token = tokens.get("id_token")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="No ID token from Google")
 
-    if not row:
-        raise HTTPException(status_code=404, detail="Session not found")
+    # Validate ID token with Google
+    google_user_resp = requests.get(
+        "https://oauth2.googleapis.com/tokeninfo",
+        params={"id_token": id_token},
+        timeout=30,
+    )
+    if not google_user_resp.ok:
+        raise HTTPException(status_code=400, detail="Invalid Google token")
 
-    return {"token": row["token"]}
+    google_user = google_user_resp.json()
+    email = google_user.get("email")
+    name = google_user.get("name") or email.split("@")[0]
+    if not email:
+        raise HTTPException(status_code=400, detail="No email from Google")
+
+    # Find or create user
+    user = crud.get_user_by_email(db, email)
+    if not user:
+        user = models.User(
+            email=email,
+            password_hash="",
+            role=models.Role.STUDENT,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        # Auto-create student profile
+        student = models.Student(
+            name=name,
+            grade_level=1,
+            owner_user_id=user.id,
+        )
+        db.add(student)
+        db.commit()
+
+    token = create_access_token(str(user.id), user.role.value)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "role": user.role,
+        "user_id": user.id,
+    }
