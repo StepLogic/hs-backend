@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY: str = ""
     S3_SECRET_KEY: str = ""
     S3_BUCKET: str = "hs-platform"
+    BETTER_AUTH_SECRET: str = ""
     class Config:
         env_file = ".env"
         extra = "ignore"
