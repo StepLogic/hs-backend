@@ -21,7 +21,7 @@ def on_startup() -> None:
         run_safe_migrations()
     except Exception as e:
         print(f"Migration warning: {e}")
-_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:4173,https://hs-platform.vercel.app,https://hs-admin-two.vercel.app,https://hs-admin.vercel.app")
+_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:4173,https://hs-platform.vercel.app,https://hs-platform-ten.vercel.app,https://hs-admin-two.vercel.app,https://hs-admin.vercel.app")
 allow_origins = [o.strip() for o in _origins.split(",") if o.strip()]
 
 app.add_middleware(
