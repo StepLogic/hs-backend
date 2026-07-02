@@ -4,6 +4,7 @@ from typing import Optional
 
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -157,9 +158,6 @@ def google_callback(
         db.commit()
 
     token = create_access_token(str(user.id), user.role.value)
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "role": user.role,
-        "user_id": user.id,
-    }
+    # Redirect to frontend with token in URL hash for client-side extraction
+    redirect_url = f"{settings.FRONTEND_URL.rstrip('/')}/login#token={token}"
+    return RedirectResponse(url=redirect_url)
