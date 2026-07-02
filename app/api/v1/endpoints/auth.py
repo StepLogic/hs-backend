@@ -50,15 +50,62 @@ def login(
     *, db: Session = Depends(get_db), credentials: schemas.UserLogin
 ) -> dict:
     user = crud.get_user_by_email(db, credentials.email)
-    if not user or not verify_password(credentials.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_access_token(str(user.id), user.role.value)
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "role": user.role,
-        "user_id": user.id,
-    }
+
+    # 1. Try backend users table first
+    if user and user.password_hash and verify_password(credentials.password, user.password_hash):
+        token = create_access_token(str(user.id), user.role.value)
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "role": user.role,
+            "user_id": user.id,
+        }
+
+    # 2. Fall back to Better Auth tables (for users created before backend auth)
+    ba_user = db.execute(
+        text('SELECT id, email FROM "user" WHERE email = :email LIMIT 1'),
+        {"email": credentials.email},
+    ).mappings().fetchone()
+
+    if ba_user:
+        ba_account = db.execute(
+            text('SELECT password FROM account WHERE "userId" = :user_id AND "providerId" = \'credential\' LIMIT 1'),
+            {"user_id": ba_user["id"]},
+        ).mappings().fetchone()
+
+        if ba_account and ba_account["password"] and verify_password(credentials.password, ba_account["password"]):
+            # Sync to backend users table if missing or empty
+            if not user:
+                user = models.User(
+                    email=ba_user["email"],
+                    password_hash=hash_password(credentials.password),
+                    role=models.Role.STUDENT,
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+                # Auto-create student profile
+                student = models.Student(
+                    name=ba_user["email"].split("@")[0],
+                    grade_level=1,
+                    owner_user_id=user.id,
+                )
+                db.add(student)
+                db.commit()
+            elif not user.password_hash:
+                # Update empty password hash
+                user.password_hash = hash_password(credentials.password)
+                db.commit()
+
+            token = create_access_token(str(user.id), user.role.value)
+            return {
+                "access_token": token,
+                "token_type": "bearer",
+                "role": user.role,
+                "user_id": user.id,
+            }
+
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
 @router.get("/me", response_model=schemas.UserResponse)
