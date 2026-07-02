@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.api import api_router
+from app.config import settings
 from app.initial_data import init_db
 
 app = FastAPI(
@@ -21,8 +22,12 @@ def on_startup() -> None:
         run_safe_migrations()
     except Exception as e:
         print(f"Migration warning: {e}")
-_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:4173,https://hs-platform.vercel.app,https://hs-platform-ten.vercel.app,https://hs-admin-two.vercel.app,https://hs-admin.vercel.app")
+
+# Build CORS origins from env var + always include FRONTEND_URL from config
+_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:4173")
 allow_origins = [o.strip() for o in _origins.split(",") if o.strip()]
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in allow_origins:
+    allow_origins.append(settings.FRONTEND_URL)
 
 app.add_middleware(
     CORSMiddleware,
