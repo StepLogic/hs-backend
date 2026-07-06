@@ -662,3 +662,69 @@ class SubscriptionResponse(SubscriptionBase):
     stripe_customer_id: Optional[str] = None
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+# ─── Assessment schemas ───
+
+class AssessmentQuestion(BaseModel):
+    id: str
+    prompt: str
+    question_type: str
+    options: Optional[list[str]] = None
+    skill: str
+    difficulty: str
+    unit_tag: str
+
+
+class AssessmentStartResponse(BaseModel):
+    assessment_id: str
+    course_id: str
+    questions: list[AssessmentQuestion]
+
+
+class AssessmentAnswer(BaseModel):
+    question_id: str
+    answer: Any
+    skill: str
+    unit_tag: str
+
+
+class AssessmentSubmitRequest(BaseModel):
+    student_id: str
+    answers: list[AssessmentAnswer]
+
+
+class TagResult(BaseModel):
+    tag: str
+    correct: int
+    total: int
+    percent: float
+    level: str  # "weak" or "strong"
+
+
+class AssessmentSubmitResponse(BaseModel):
+    assessment_id: str
+    student_id: str
+    course_id: str
+    weak_tags: list[str]
+    strong_tags: list[str]
+    tag_results: list[TagResult]
+    total_correct: int
+    total_questions: int
+
+
+# ─── Personalized Course schemas ───
+
+class PersonalizedCourseResponse(BaseModel):
+    id: str
+    student_id: str
+    base_course_id: str
+    unit_ids: list[str]
+    status: str
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PersonalizedCourseUpdate(BaseModel):
+    unit_ids: list[str]
