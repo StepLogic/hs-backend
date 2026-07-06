@@ -65,3 +65,63 @@ def start_assessment(
         course_id=course_id,
         questions=questions,
     )
+
+
+@router.post("/courses/{course_id}/assessment/submit", response_model=schemas.AssessmentSubmitResponse)
+def submit_assessment(
+    course_id: str,
+    payload: schemas.AssessmentSubmitRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> schemas.AssessmentSubmitResponse:
+    """Score assessment answers by tag. Tags with <60% accuracy are weak."""
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    # Score each answer against the correct answer in the database
+    tag_counts: dict[str, dict] = {}
+    for answer in payload.answers:
+        tag = answer.unit_tag
+        if tag not in tag_counts:
+            tag_counts[tag] = {"correct": 0, "total": 0}
+
+        question = db.query(models.Question).filter(models.Question.id == answer.question_id).first()
+        is_correct = question and question.correct_answer == answer.answer
+        if is_correct:
+            tag_counts[tag]["correct"] += 1
+        tag_counts[tag]["total"] += 1
+
+    weak_tags = []
+    strong_tags = []
+    tag_results = []
+    total_correct = 0
+    total_questions = 0
+
+    for tag, counts in tag_counts.items():
+        percent = (counts["correct"] / counts["total"]) * 100 if counts["total"] > 0 else 0
+        level = "weak" if percent < 60 else "strong"
+        if level == "weak":
+            weak_tags.append(tag)
+        else:
+            strong_tags.append(tag)
+        tag_results.append(schemas.TagResult(
+            tag=tag,
+            correct=counts["correct"],
+            total=counts["total"],
+            percent=round(percent, 1),
+            level=level,
+        ))
+        total_correct += counts["correct"]
+        total_questions += counts["total"]
+
+    return schemas.AssessmentSubmitResponse(
+        assessment_id=f"asmt-{course_id}",
+        student_id=payload.student_id,
+        course_id=course_id,
+        weak_tags=weak_tags,
+        strong_tags=strong_tags,
+        tag_results=tag_results,
+        total_correct=total_correct,
+        total_questions=total_questions,
+    )
