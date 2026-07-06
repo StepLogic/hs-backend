@@ -20,7 +20,7 @@ def create_test_user():
         user = User(
             email="test@test.com",
             name="Test User",
-            hashed_password=hash_password("Test123!"),
+            password_hash=hash_password("Test123!"),
             role="student"
         )
         db.add(user)
