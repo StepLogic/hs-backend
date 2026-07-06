@@ -6,6 +6,7 @@ from app.api.v1.endpoints import (
 
 api_router = APIRouter()
 
+api_router.include_router(assessment.router, tags=["assessment"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 api_router.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
@@ -35,4 +36,3 @@ api_router.include_router(plans.router, prefix="/plans", tags=["plans"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(social.router, prefix="/social", tags=["social"])
 api_router.include_router(sat.router, prefix="/sat", tags=["sat"])
-api_router.include_router(assessment.router, tags=["assessment"])
