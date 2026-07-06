@@ -13,8 +13,13 @@ def generate_personalized_course(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
-) -> models.PersonalizedCourse:
+) -> schemas.PersonalizedCourseResponse:
     """Generate a personalized course containing only units matching weak tags."""
+    # Validate required fields
+    student_id = payload.get("student_id")
+    if not student_id:
+        raise HTTPException(status_code=400, detail="student_id is required")
+
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -23,20 +28,21 @@ def generate_personalized_course(
     if not weak_tags:
         raise HTTPException(status_code=400, detail="weak_tags is required")
 
-    # Find units whose description (tag) matches weak tags
+    # Find units whose description (tag) matches weak tags (case-insensitive)
     units = db.query(models.Unit).filter(models.Unit.course_id == course_id).all()
-    matching_unit_ids = [u.id for u in units if u.description in weak_tags]
+    weak_tags_lower = {t.lower() for t in weak_tags}
+    matching_unit_ids = [u.id for u in units if u.description and u.description.lower() in weak_tags_lower]
 
     if not matching_unit_ids:
         raise HTTPException(status_code=400, detail="No units match the provided weak tags")
 
     # Check for existing personalized course
-    existing = crud.get_personalized_course(db, payload["student_id"], course_id)
+    existing = crud.get_personalized_course(db, student_id, course_id)
     if existing:
         # Update existing draft
         updated = crud.update_personalized_course_units(db, existing.id, matching_unit_ids)
         return updated
 
     return crud.create_personalized_course(
-        db, payload["student_id"], course_id, matching_unit_ids
+        db, student_id, course_id, matching_unit_ids
     )
