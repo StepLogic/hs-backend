@@ -23,9 +23,13 @@ def on_startup() -> None:
     except Exception as e:
         print(f"Migration warning: {e}")
 
-# Build CORS origins from env var + always include FRONTEND_URL from config
+# Build CORS origins from env var + always include localhost + FRONTEND_URL
 _origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:4173")
 allow_origins = [o.strip() for o in _origins.split(",") if o.strip()]
+# ponytail: always allow localhost for local dev against prod backend
+for _local in ("http://localhost:5173", "http://localhost:4173"):
+    if _local not in allow_origins:
+        allow_origins.append(_local)
 if settings.FRONTEND_URL and settings.FRONTEND_URL not in allow_origins:
     allow_origins.append(settings.FRONTEND_URL)
 

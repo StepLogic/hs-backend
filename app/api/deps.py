@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Security
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
-from app import betterauth, models
+from app import models
 from app.database import get_db as _get_db
 from app.security import decode_access_token
 
@@ -29,19 +29,13 @@ def get_current_user(
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    # Prefer Better Auth session (shared DB with hs-platform)
-    ba_user = betterauth.get_user_by_betterauth_session(db, token)
-    if ba_user:
-        return betterauth.get_or_create_backend_user(db, ba_user)
-
-    # Fall back to legacy JWT for existing tokens
     payload = decode_access_token(token)
-    if payload and payload.get("sub"):
-        user = db.query(models.User).filter(models.User.id == payload["sub"]).first()
-        if user:
-            return user
-
-    raise HTTPException(status_code=401, detail="Invalid token")
+    if not payload or not payload.get("sub"):
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = db.query(models.User).filter(models.User.id == payload["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
 
 
 def get_current_user_optional(
@@ -51,10 +45,6 @@ def get_current_user_optional(
     token = _extract_token(auth_header)
     if not token:
         return None
-
-    ba_user = betterauth.get_user_by_betterauth_session(db, token)
-    if ba_user:
-        return betterauth.get_or_create_backend_user(db, ba_user)
 
     payload = decode_access_token(token)
     if payload and payload.get("sub"):

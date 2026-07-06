@@ -3,9 +3,8 @@ import urllib.parse
 from typing import Optional
 
 import requests
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -61,15 +60,16 @@ def login(
             "user_id": user.id,
         }
 
-    # 2. Fall back to Better Auth tables (for users created before backend auth)
+    # 2. Fall back to legacy Better Auth tables (for users created before backend auth)
+    from sqlalchemy import text as sa_text
     ba_user = db.execute(
-        text('SELECT id, email FROM "user" WHERE email = :email LIMIT 1'),
+        sa_text('SELECT id, email FROM "user" WHERE email = :email LIMIT 1'),
         {"email": credentials.email},
     ).mappings().fetchone()
 
     if ba_user:
         ba_account = db.execute(
-            text('SELECT password FROM account WHERE "userId" = :user_id AND "providerId" = \'credential\' LIMIT 1'),
+            sa_text('SELECT password FROM account WHERE "userId" = :user_id AND "providerId" = \'credential\' LIMIT 1'),
             {"user_id": ba_user["id"]},
         ).mappings().fetchone()
 
@@ -84,7 +84,6 @@ def login(
                 db.add(user)
                 db.commit()
                 db.refresh(user)
-                # Auto-create student profile
                 student = models.Student(
                     name=ba_user["email"].split("@")[0],
                     grade_level=1,
@@ -93,7 +92,6 @@ def login(
                 db.add(student)
                 db.commit()
             elif not user.password_hash:
-                # Update empty password hash
                 user.password_hash = hash_password(credentials.password)
                 db.commit()
 
