@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_current_user, get_db
 
 router = APIRouter()
 
@@ -30,3 +30,39 @@ def update_enrollment(
     if not enrollment:
         raise HTTPException(status_code=404, detail="Enrollment not found")
     return enrollment
+
+
+@router.delete("/courses/{course_id}/enrollment")
+def unenroll_from_course(
+    course_id: str,
+    student_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> dict:
+    """Unenroll student from course. Deletes personalized course and enrollment."""
+    enrollment = (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.student_id == student_id,
+            models.Enrollment.course_id == course_id,
+        )
+        .first()
+    )
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+
+    # Delete personalized course if exists
+    pc = (
+        db.query(models.PersonalizedCourse)
+        .filter(
+            models.PersonalizedCourse.student_id == student_id,
+            models.PersonalizedCourse.base_course_id == course_id,
+        )
+        .first()
+    )
+    if pc:
+        db.delete(pc)
+
+    db.delete(enrollment)
+    db.commit()
+    return {"ok": True}

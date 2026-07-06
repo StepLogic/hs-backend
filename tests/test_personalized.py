@@ -179,3 +179,65 @@ def test_cannot_edit_after_activation(client: TestClient, admin_token: str):
     )
     assert r.status_code == 400
     assert "active" in r.json()["detail"].lower()
+
+
+def test_unenroll_clears_personalized_course(client: TestClient, admin_token: str):
+    """Unenrolling should delete the personalized course, allowing fresh assessment."""
+    # ponytail: stub tables so Better Auth fallback doesn't crash
+    from tests.conftest import TestingSessionLocal
+    from sqlalchemy import text
+    db = TestingSessionLocal()
+    db.execute(text("CREATE TABLE IF NOT EXISTS session (token TEXT, \"userId\" TEXT, \"expiresAt\" TIMESTAMP)"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS \"user\" (id TEXT PRIMARY KEY, name TEXT, email TEXT)"))
+    db.commit()
+
+    from app import models
+
+    # Seed course with tagged units
+    course = models.Course(
+        id="test-pc-course-001",
+        title="PC Test Course",
+        short_title="PC Test",
+        description="Personalized course test",
+        subject=models.Subject.MATH,
+        course_type=models.CourseType.CORE,
+        icon="📚",
+        color="#000",
+        price=0,
+        grade_range="9-12",
+        image_emoji="📚",
+        features=[],
+        skills=[],
+    )
+    db.add(course)
+    db.commit()
+
+    unit_alg = models.Unit(id="pc-unit-alg", course_id="test-pc-course-001", title="Algebra", slug="algebra", order_index=0, description="algebra")
+    db.add(unit_alg)
+    db.commit()
+
+    # Create enrollment
+    db.add(models.Enrollment(
+        id="enr-test-001",
+        student_id="student-001",
+        course_id="test-pc-course-001",
+        status=models.EnrollmentStatus.ACTIVE,
+    ))
+    db.commit()
+    db.close()
+
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    r = client.delete(
+        "/api/v1/enrollments/courses/test-pc-course-001/enrollment?student_id=student-001",
+        headers=headers,
+    )
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+
+    # Verify personalized course is gone
+    r = client.post(
+        "/api/v1/courses/test-pc-course-001/personalized",
+        json={"student_id": "student-001", "weak_tags": ["algebra"]},
+        headers=headers,
+    )
+    assert r.status_code == 201  # Creates new, not updating old
