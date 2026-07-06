@@ -194,3 +194,133 @@ def test_submit_assessment_identifies_weak_tags(client: TestClient, admin_token:
     assert "algebra" in data["weak_tags"]
     # geometry: 3/3 correct → strong
     assert "geometry" in data["strong_tags"]
+
+
+def test_full_assessment_to_personalization_flow(client: TestClient, admin_token: str):
+    """End-to-end: assessment → weak tags → personalized course → edit → activate."""
+    from tests.conftest import TestingSessionLocal
+    from sqlalchemy import text
+    from app import models
+
+    # ponytail: stub tables so Better Auth fallback doesn't crash
+    db = TestingSessionLocal()
+    db.execute(text("CREATE TABLE IF NOT EXISTS session (token TEXT, \"userId\" TEXT, \"expiresAt\" TIMESTAMP)"))
+    db.execute(text("CREATE TABLE IF NOT EXISTS \"user\" (id TEXT PRIMARY KEY, name TEXT, email TEXT)"))
+    db.commit()
+    db.close()
+
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # Seed course with 3 tagged units via API
+    r = client.post("/api/v1/courses/", json={
+        "subject": "math",
+        "course_type": "core",
+        "title": "Flow Test Course",
+        "short_title": "Flow",
+        "description": "Integration flow test",
+        "icon": "📚",
+        "color": "#000",
+        "price": 0,
+        "skills": [],
+        "grade_range": "9-12",
+        "features": [],
+        "image_emoji": "📚",
+    }, headers=headers)
+    assert r.status_code == 201
+    course_id = r.json()["id"]
+
+    # Create units with description as tag
+    unit_ids = {}
+    for tag in ["algebra", "geometry", "stats"]:
+        r = client.post("/api/v1/units/", json={
+            "course_id": course_id,
+            "title": tag.capitalize(),
+            "slug": tag,
+            "order_index": 0,
+            "description": tag,
+        }, headers=headers)
+        assert r.status_code == 201
+        unit_ids[tag] = r.json()["id"]
+
+    # Create questions with skill matching unit tag
+    for tag in ["algebra", "geometry", "stats"]:
+        for i in range(3):
+            r = client.post("/api/v1/questions/", json={
+                "subject": "math",
+                "grade_level": 10,
+                "question_type": "multiple-choice",
+                "prompt": f"{tag} Q{i}?",
+                "options": ["A", "B", "C", "D"],
+                "correct_answer": ["A"],
+                "skill": tag,
+                "explanation": "A is correct",
+                "difficulty": "medium",
+            }, headers=headers)
+            assert r.status_code == 201
+
+    # Seed student for FK constraint on personalized_courses
+    db = TestingSessionLocal()
+    db.add(models.Student(id="student-001", name="Test Student", grade_level=10))
+    db.commit()
+    db.close()
+
+    # 1. Start assessment
+    r = client.post(f"/api/v1/courses/{course_id}/assessment/start", headers=headers)
+    assert r.status_code == 200
+    questions = r.json()["questions"]
+    assert len(questions) >= 3
+
+    # 2. Submit with algebra weak (all wrong), geometry strong (all right), stats strong
+    answers = []
+    for q in questions:
+        is_correct = q["unit_tag"] != "algebra"  # algebra all wrong
+        answers.append({
+            "question_id": q["id"],
+            "answer": ["A"] if is_correct else ["B"],
+            "skill": q["skill"],
+            "unit_tag": q["unit_tag"],
+        })
+
+    r = client.post(
+        f"/api/v1/courses/{course_id}/assessment/submit",
+        json={"student_id": "student-001", "answers": answers},
+        headers=headers,
+    )
+    assert r.status_code == 200
+    result = r.json()
+    assert "algebra" in result["weak_tags"]
+
+    # 3. Generate personalized course
+    r = client.post(
+        f"/api/v1/courses/{course_id}/personalized",
+        json={"student_id": "student-001", "weak_tags": result["weak_tags"]},
+        headers=headers,
+    )
+    assert r.status_code == 201
+    pc = r.json()
+    assert pc["status"] == "draft"
+    assert unit_ids["algebra"] in pc["unit_ids"]
+
+    # 4. Edit — add geometry
+    r = client.put(
+        f"/api/v1/courses/{course_id}/personalized/units?student_id=student-001",
+        json={"unit_ids": pc["unit_ids"] + [unit_ids["geometry"]]},
+        headers=headers,
+    )
+    assert r.status_code == 200
+
+    # 5. Activate
+    r = client.post(
+        f"/api/v1/courses/{course_id}/personalized/activate?student_id=student-001",
+        headers=headers,
+    )
+    assert r.status_code == 200
+    assert r.json()["status"] == "active"
+
+    # 6. Cannot edit after activation
+    r = client.put(
+        f"/api/v1/courses/{course_id}/personalized/units?student_id=student-001",
+        json={"unit_ids": [unit_ids["algebra"]]},
+        headers=headers,
+    )
+    assert r.status_code == 400
