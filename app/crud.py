@@ -941,3 +941,55 @@ def update_subscription(
     db.refresh(db_sub)
     return db_sub
 
+
+# ─── Personalized Courses ───
+
+def create_personalized_course(
+    db: Session, student_id: str, base_course_id: str, unit_ids: list[str]
+) -> models.PersonalizedCourse:
+    pc = models.PersonalizedCourse(
+        student_id=student_id,
+        base_course_id=base_course_id,
+        unit_ids=unit_ids,
+        status=models.PersonalizedCourseStatus.DRAFT,
+    )
+    db.add(pc)
+    db.commit()
+    db.refresh(pc)
+    return pc
+
+
+def get_personalized_course(
+    db: Session, student_id: str, base_course_id: str
+) -> models.PersonalizedCourse | None:
+    return (
+        db.query(models.PersonalizedCourse)
+        .filter(
+            models.PersonalizedCourse.student_id == student_id,
+            models.PersonalizedCourse.base_course_id == base_course_id,
+        )
+        .first()
+    )
+
+
+def update_personalized_course_units(
+    db: Session, pc_id: str, unit_ids: list[str]
+) -> models.PersonalizedCourse | None:
+    pc = db.query(models.PersonalizedCourse).filter(models.PersonalizedCourse.id == pc_id).first()
+    if not pc:
+        return None
+    pc.unit_ids = unit_ids
+    db.commit()
+    db.refresh(pc)
+    return pc
+
+
+def activate_personalized_course(db: Session, pc_id: str) -> models.PersonalizedCourse | None:
+    pc = db.query(models.PersonalizedCourse).filter(models.PersonalizedCourse.id == pc_id).first()
+    if not pc:
+        return None
+    pc.status = models.PersonalizedCourseStatus.ACTIVE
+    db.commit()
+    db.refresh(pc)
+    return pc
+
