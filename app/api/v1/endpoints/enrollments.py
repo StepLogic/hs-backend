@@ -40,6 +40,13 @@ def unenroll_from_course(
     current_user: models.User = Depends(get_current_user),
 ) -> dict:
     """Unenroll student from course. Deletes personalized course and enrollment."""
+    # Verify student exists and belongs to current user
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if str(student.owner_user_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to access this student")
+
     enrollment = (
         db.query(models.Enrollment)
         .filter(

@@ -97,6 +97,10 @@ def test_submit_assessment_identifies_weak_tags(client: TestClient, admin_token:
     db.execute(text("CREATE TABLE IF NOT EXISTS session (token TEXT, \"userId\" TEXT, \"expiresAt\" TIMESTAMP)"))
     db.execute(text("CREATE TABLE IF NOT EXISTS \"user\" (id TEXT PRIMARY KEY, name TEXT, email TEXT)"))
     db.commit()
+
+    from app import models as m
+    db.add(m.Student(id="student-001", name="Test Student", grade_level=10, owner_user_id="admin-user-001"))
+    db.commit()
     db.close()
 
     headers = {"Authorization": f"Bearer {admin_token}"}
@@ -260,7 +264,7 @@ def test_full_assessment_to_personalization_flow(client: TestClient, admin_token
 
     # Seed student for FK constraint on personalized_courses
     db = TestingSessionLocal()
-    db.add(models.Student(id="student-001", name="Test Student", grade_level=10))
+    db.add(models.Student(id="student-001", name="Test Student", grade_level=10, owner_user_id="admin-user-001"))
     db.commit()
     db.close()
 

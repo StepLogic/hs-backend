@@ -75,6 +75,13 @@ def submit_assessment(
     current_user: models.User = Depends(get_current_user),
 ) -> schemas.AssessmentSubmitResponse:
     """Score assessment answers by tag. Tags with <60% accuracy are weak."""
+    # Verify student exists and belongs to current user
+    student = db.query(models.Student).filter(models.Student.id == payload.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if str(student.owner_user_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to access this student")
+
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")

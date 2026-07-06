@@ -20,6 +20,13 @@ def generate_personalized_course(
     if not student_id:
         raise HTTPException(status_code=400, detail="student_id is required")
 
+    # Verify student exists and belongs to current user
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if str(student.owner_user_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to access this student")
+
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -57,6 +64,13 @@ def edit_personalized_units(
     current_user: models.User = Depends(get_current_user),
 ) -> schemas.PersonalizedCourseResponse:
     """Edit unit list of a personalized course. Only allowed in draft status."""
+    # Verify student exists and belongs to current user
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if str(student.owner_user_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to access this student")
+
     pc = crud.get_personalized_course(db, student_id, course_id)
     if not pc:
         raise HTTPException(status_code=404, detail="Personalized course not found")
@@ -83,6 +97,13 @@ def activate_personalized_course(
     current_user: models.User = Depends(get_current_user),
 ) -> schemas.PersonalizedCourseResponse:
     """Lock in the personalized course. After activation, units cannot be changed."""
+    # Verify student exists and belongs to current user
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if str(student.owner_user_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to access this student")
+
     pc = crud.get_personalized_course(db, student_id, course_id)
     if not pc:
         raise HTTPException(status_code=404, detail="Personalized course not found")

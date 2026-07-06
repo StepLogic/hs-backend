@@ -13,6 +13,10 @@ def test_generate_personalized_course_from_weak_tags(client: TestClient, admin_t
 
     from app import models
 
+    # Seed student owned by admin
+    db.add(models.Student(id="student-001", name="Test Student", grade_level=10, owner_user_id="admin-user-001"))
+    db.commit()
+
     # Seed course with tagged units
     course = models.Course(
         id="test-pc-course-001",
@@ -72,6 +76,10 @@ def test_edit_personalized_course_units(client: TestClient, admin_token: str):
 
     from app import models
 
+    # Seed student owned by admin
+    db.add(models.Student(id="student-001", name="Test Student", grade_level=10, owner_user_id="admin-user-001"))
+    db.commit()
+
     # Seed course with tagged units
     course = models.Course(
         id="test-pc-course-001",
@@ -128,6 +136,10 @@ def test_cannot_edit_after_activation(client: TestClient, admin_token: str):
     db.commit()
 
     from app import models
+
+    # Seed student owned by admin
+    db.add(models.Student(id="student-001", name="Test Student", grade_level=10, owner_user_id="admin-user-001"))
+    db.commit()
 
     # Seed course with tagged units
     course = models.Course(
@@ -192,6 +204,10 @@ def test_unenroll_clears_personalized_course(client: TestClient, admin_token: st
     db.commit()
 
     from app import models
+
+    # Seed student owned by admin
+    db.add(models.Student(id="student-001", name="Test Student", grade_level=10, owner_user_id="admin-user-001"))
+    db.commit()
 
     # Seed course with tagged units
     course = models.Course(
