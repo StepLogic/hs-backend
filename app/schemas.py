@@ -25,6 +25,7 @@ class SkillTaxonomyResponse(SkillTaxonomyBase):
 # ─── Auth schemas ───
 class UserCreate(BaseModel):
     email: str
+    name: Optional[str] = None
     password: str
     role: Role = Role.STUDENT
 

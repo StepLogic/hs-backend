@@ -38,6 +38,7 @@ def setup_database():
     admin = models.User(
         id="admin-user-001",
         email="admin@test.com",
+        name="Admin",
         password_hash=security.hash_password("admin123"),
         role=models.Role.ADMIN,
     )

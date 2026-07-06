@@ -62,46 +62,51 @@ def login(
 
     # 2. Fall back to legacy Better Auth tables (for users created before backend auth)
     from sqlalchemy import text as sa_text
-    ba_user = db.execute(
-        sa_text('SELECT id, email FROM "user" WHERE email = :email LIMIT 1'),
-        {"email": credentials.email},
-    ).mappings().fetchone()
-
-    if ba_user:
-        ba_account = db.execute(
-            sa_text('SELECT password FROM account WHERE "userId" = :user_id AND "providerId" = \'credential\' LIMIT 1'),
-            {"user_id": ba_user["id"]},
+    from sqlalchemy.exc import ProgrammingError
+    try:
+        ba_user = db.execute(
+            sa_text('SELECT id, email FROM "user" WHERE email = :email LIMIT 1'),
+            {"email": credentials.email},
         ).mappings().fetchone()
 
-        if ba_account and ba_account["password"] and verify_password(credentials.password, ba_account["password"]):
-            # Sync to backend users table if missing or empty
-            if not user:
-                user = models.User(
-                    email=ba_user["email"],
-                    password_hash=hash_password(credentials.password),
-                    role=models.Role.STUDENT,
-                )
-                db.add(user)
-                db.commit()
-                db.refresh(user)
-                student = models.Student(
-                    name=ba_user["email"].split("@")[0],
-                    grade_level=1,
-                    owner_user_id=user.id,
-                )
-                db.add(student)
-                db.commit()
-            elif not user.password_hash:
-                user.password_hash = hash_password(credentials.password)
-                db.commit()
+        if ba_user:
+            ba_account = db.execute(
+                sa_text('SELECT password FROM account WHERE "userId" = :user_id AND "providerId" = \'credential\' LIMIT 1'),
+                {"user_id": ba_user["id"]},
+            ).mappings().fetchone()
 
-            token = create_access_token(str(user.id), user.role.value)
-            return {
-                "access_token": token,
-                "token_type": "bearer",
-                "role": user.role,
-                "user_id": user.id,
-            }
+            if ba_account and ba_account["password"] and verify_password(credentials.password, ba_account["password"]):
+                # Sync to backend users table if missing or empty
+                if not user:
+                    user = models.User(
+                        email=ba_user["email"],
+                        name=ba_user["email"].split("@")[0],
+                        password_hash=hash_password(credentials.password),
+                        role=models.Role.STUDENT,
+                    )
+                    db.add(user)
+                    db.commit()
+                    db.refresh(user)
+                    student = models.Student(
+                        name=ba_user["email"].split("@")[0],
+                        grade_level=1,
+                        owner_user_id=user.id,
+                    )
+                    db.add(student)
+                    db.commit()
+                elif not user.password_hash:
+                    user.password_hash = hash_password(credentials.password)
+                    db.commit()
+
+                token = create_access_token(str(user.id), user.role.value)
+                return {
+                    "access_token": token,
+                    "token_type": "bearer",
+                    "role": user.role,
+                    "user_id": user.id,
+                }
+    except ProgrammingError:
+        pass  # Legacy tables don't exist; fall through to invalid credentials
 
     raise HTTPException(status_code=401, detail="Invalid credentials")
 

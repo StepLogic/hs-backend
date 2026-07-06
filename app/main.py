@@ -12,7 +12,7 @@ app = FastAPI(
     description="Administration backend for hs-platform",
     version="0.1.0",
 )
-
+# print(settings)
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
@@ -35,7 +35,7 @@ if settings.FRONTEND_URL and settings.FRONTEND_URL not in allow_origins:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,7 +52,7 @@ def reset_db():
         conn.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
         conn.execute(text("CREATE SCHEMA public"))
         conn.commit()
-
+    
     Base.metadata.create_all(bind=engine)
     init_db()
     return {"ok": True, "message": "Database recreated with latest schema"}

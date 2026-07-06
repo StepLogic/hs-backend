@@ -17,7 +17,12 @@ def get_user_by_email(db: Session, email: str) -> models.User | None:
 
 
 def create_user(db: Session, user: schemas.UserCreate, password_hash: str) -> models.User:
-    db_user = models.User(email=user.email, password_hash=password_hash, role=user.role)
+    db_user = models.User(
+        email=user.email,
+        name=user.name or user.email.split("@")[0],
+        password_hash=password_hash,
+        role=user.role,
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
