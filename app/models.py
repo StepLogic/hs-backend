@@ -424,3 +424,24 @@ class ForumPost(Base):
 
     student = relationship("Student")
     course = relationship("Course")
+
+
+class PersonalizedCourseStatus(str, PyEnum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    ABANDONED = "abandoned"
+
+
+class PersonalizedCourse(Base):
+    __tablename__ = "personalized_courses"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id"), nullable=False)
+    base_course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+    unit_ids = Column(JSON, nullable=False, default=list)
+    status = Column(Enum(PersonalizedCourseStatus), nullable=False, default=PersonalizedCourseStatus.DRAFT)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (UniqueConstraint("student_id", "base_course_id"),)
