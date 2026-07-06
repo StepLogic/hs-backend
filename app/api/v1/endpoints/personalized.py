@@ -55,13 +55,21 @@ def edit_personalized_units(
     payload: schemas.PersonalizedCourseUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
-) -> models.PersonalizedCourse:
+) -> schemas.PersonalizedCourseResponse:
     """Edit unit list of a personalized course. Only allowed in draft status."""
     pc = crud.get_personalized_course(db, student_id, course_id)
     if not pc:
         raise HTTPException(status_code=404, detail="Personalized course not found")
     if pc.status != models.PersonalizedCourseStatus.DRAFT:
         raise HTTPException(status_code=400, detail="Cannot edit units after course is active")
+
+    # Validate all unit_ids belong to this course
+    course_units = db.query(models.Unit).filter(
+        models.Unit.course_id == course_id,
+        models.Unit.id.in_(payload.unit_ids)
+    ).all()
+    if len(course_units) != len(payload.unit_ids):
+        raise HTTPException(status_code=400, detail="Some unit_ids do not belong to this course")
 
     updated = crud.update_personalized_course_units(db, pc.id, payload.unit_ids)
     return updated
@@ -73,7 +81,7 @@ def activate_personalized_course(
     student_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
-) -> models.PersonalizedCourse:
+) -> schemas.PersonalizedCourseResponse:
     """Lock in the personalized course. After activation, units cannot be changed."""
     pc = crud.get_personalized_course(db, student_id, course_id)
     if not pc:
