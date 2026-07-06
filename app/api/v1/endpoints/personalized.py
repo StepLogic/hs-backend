@@ -46,3 +46,40 @@ def generate_personalized_course(
     return crud.create_personalized_course(
         db, student_id, course_id, matching_unit_ids
     )
+
+
+@router.put("/courses/{course_id}/personalized/units", response_model=schemas.PersonalizedCourseResponse)
+def edit_personalized_units(
+    course_id: str,
+    student_id: str,
+    payload: schemas.PersonalizedCourseUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> models.PersonalizedCourse:
+    """Edit unit list of a personalized course. Only allowed in draft status."""
+    pc = crud.get_personalized_course(db, student_id, course_id)
+    if not pc:
+        raise HTTPException(status_code=404, detail="Personalized course not found")
+    if pc.status != models.PersonalizedCourseStatus.DRAFT:
+        raise HTTPException(status_code=400, detail="Cannot edit units after course is active")
+
+    updated = crud.update_personalized_course_units(db, pc.id, payload.unit_ids)
+    return updated
+
+
+@router.post("/courses/{course_id}/personalized/activate", response_model=schemas.PersonalizedCourseResponse)
+def activate_personalized_course(
+    course_id: str,
+    student_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> models.PersonalizedCourse:
+    """Lock in the personalized course. After activation, units cannot be changed."""
+    pc = crud.get_personalized_course(db, student_id, course_id)
+    if not pc:
+        raise HTTPException(status_code=404, detail="Personalized course not found")
+    if pc.status == models.PersonalizedCourseStatus.ACTIVE:
+        raise HTTPException(status_code=400, detail="Course is already active")
+
+    activated = crud.activate_personalized_course(db, pc.id)
+    return activated
