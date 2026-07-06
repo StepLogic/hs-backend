@@ -289,6 +289,7 @@ def test_full_assessment_to_personalization_flow(client: TestClient, admin_token
     assert r.status_code == 200
     result = r.json()
     assert "algebra" in result["weak_tags"]
+    assert "stats" not in result["weak_tags"]  # stats should be strong
 
     # 3. Generate personalized course
     r = client.post(
@@ -308,6 +309,7 @@ def test_full_assessment_to_personalization_flow(client: TestClient, admin_token
         headers=headers,
     )
     assert r.status_code == 200
+    assert unit_ids["geometry"] in r.json()["unit_ids"]
 
     # 5. Activate
     r = client.post(
@@ -324,3 +326,4 @@ def test_full_assessment_to_personalization_flow(client: TestClient, admin_token
         headers=headers,
     )
     assert r.status_code == 400
+    assert "active" in r.json()["detail"].lower()
