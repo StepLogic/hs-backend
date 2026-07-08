@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models import Subject, QuestionType, MasteryLevel, Role, CourseType, ReviewStatus, EnrollmentStatus, LessonProgressStatus, Difficulty, ExamType, LiveStatus
+from app.models import Subject, QuestionType, MasteryLevel, Role, CourseType, ReviewStatus, EnrollmentStatus, LessonProgressStatus, Difficulty, ExamType, LiveStatus, CertificateStatus
 
 
 # ─── SkillTaxonomy schemas ───
@@ -111,6 +111,8 @@ class CourseBase(BaseModel):
     review_count: int = 0
     features: list[str]
     image_emoji: str
+    certificate_enabled: bool = False
+    certificate_passing_score: int = 70
 
 
 class CourseCreate(CourseBase):
@@ -135,6 +137,8 @@ class CourseUpdate(BaseModel):
     review_count: Optional[int] = None
     features: Optional[list[str]] = None
     image_emoji: Optional[str] = None
+    certificate_enabled: Optional[bool] = None
+    certificate_passing_score: Optional[int] = None
 
 
 class CourseResponse(CourseBase):
@@ -729,3 +733,74 @@ class PersonalizedCourseResponse(BaseModel):
 
 class PersonalizedCourseUpdate(BaseModel):
     unit_ids: list[str]
+
+
+# ─── Final Exam schemas ───
+
+class FinalExamQuestion(BaseModel):
+    id: str
+    prompt: str
+    question_type: str
+    options: Optional[list[str]] = None
+    skill: str
+    difficulty: str
+
+
+class FinalExamStartResponse(BaseModel):
+    exam_id: str
+    course_id: str
+    questions: list[FinalExamQuestion]
+
+
+class FinalExamAnswer(BaseModel):
+    question_id: str
+    answer: Any
+
+
+class FinalExamSubmitRequest(BaseModel):
+    student_id: str
+    answers: list[FinalExamAnswer]
+
+
+class FinalExamSubmitResponse(BaseModel):
+    exam_id: str
+    student_id: str
+    course_id: str
+    total_correct: int
+    total_questions: int
+    score: int
+    passed: bool
+    passing_score: int
+
+
+# ─── Certificate schemas ───
+
+class EligibilityResponse(BaseModel):
+    eligible: bool
+    lessons_completed: int
+    total_lessons: int
+    all_lessons_done: bool
+    final_exam_taken: bool
+    final_score: Optional[int] = None
+    final_passed: bool
+    certificate_enabled: bool
+
+
+class ClaimResponse(BaseModel):
+    certificate_id: str
+    student_name: str
+    course_title: str
+    earned_at: datetime
+    final_score: int
+    certificate_hash: str
+
+
+class CertificateResponse(BaseModel):
+    id: str
+    student_id: str
+    course_id: str
+    earned_at: datetime
+    final_score: int
+    status: str
+    certificate_hash: str
+    model_config = ConfigDict(from_attributes=True)

@@ -58,6 +58,11 @@ class EnrollmentStatus(str, PyEnum):
     DROPPED = "dropped"
 
 
+class CertificateStatus(str, PyEnum):
+    EARNED = "earned"
+    REVOKED = "revoked"
+
+
 class LessonProgressStatus(str, PyEnum):
     NOT_STARTED = "not_started"
     IN_PROGRESS = "in_progress"
@@ -109,6 +114,8 @@ class Course(Base):
     review_count = Column(Integer, nullable=False, default=0)
     features = Column(JSON, nullable=False, default=list)
     image_emoji = Column(String, nullable=False)
+    certificate_enabled = Column(Boolean, nullable=False, default=False)
+    certificate_passing_score = Column(Integer, nullable=False, default=70)
 
     units = relationship("Unit", back_populates="course", cascade="all, delete-orphan", order_by="Unit.order_index")
 
@@ -446,3 +453,42 @@ class PersonalizedCourse(Base):
     expires_at = Column(DateTime, nullable=True)
 
     __table_args__ = (UniqueConstraint("student_id", "base_course_id"),)
+
+
+class FinalExam(Base):
+    __tablename__ = "final_exams"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    prompt = Column(Text, nullable=False)
+    question_type = Column("type", Enum(QuestionType), nullable=False)
+    options = Column(JSON, nullable=True)
+    correct_answer = Column("correct_answer", JSON, nullable=False)
+    skill = Column(String, nullable=False)
+    difficulty = Column(Enum(Difficulty), nullable=False, default=Difficulty.MEDIUM)
+    order_index = Column(Integer, nullable=False, default=0)
+
+
+class FinalExamAttempt(Base):
+    __tablename__ = "final_exam_attempts"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    score = Column(Integer, nullable=False)
+    passed = Column(Boolean, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Certificate(Base):
+    __tablename__ = "certificates"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    earned_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    final_score = Column(Integer, nullable=False)
+    status = Column(Enum(CertificateStatus), nullable=False, default=CertificateStatus.EARNED)
+    certificate_hash = Column(String, nullable=False)
+
+    __table_args__ = (UniqueConstraint("student_id", "course_id"),)
