@@ -1,5 +1,5 @@
 from typing import Optional, Any
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
@@ -464,6 +464,187 @@ def create_or_update_lesson_progress(
     db.commit()
     db.refresh(db_progress)
     return db_progress
+
+
+# ─── Final Exam CRUD ───
+
+
+def get_final_exam_questions(db: Session, course_id: str) -> list[models.FinalExam]:
+    return (
+        db.query(models.FinalExam)
+        .filter(models.FinalExam.course_id == course_id)
+        .order_by(models.FinalExam.order_index)
+        .all()
+    )
+
+
+def create_final_exam_question(
+    db: Session, course_id: str, prompt: str, question_type: models.QuestionType,
+    options: list[str] | None, correct_answer: Any, skill: str,
+    difficulty: models.Difficulty = models.Difficulty.MEDIUM, order_index: int = 0
+) -> models.FinalExam:
+    q = models.FinalExam(
+        course_id=course_id,
+        prompt=prompt,
+        question_type=question_type,
+        options=options,
+        correct_answer=correct_answer,
+        skill=skill,
+        difficulty=difficulty,
+        order_index=order_index,
+    )
+    db.add(q)
+    db.commit()
+    db.refresh(q)
+    return q
+
+
+def delete_final_exam_question(db: Session, question_id: str) -> bool:
+    q = db.query(models.FinalExam).filter(models.FinalExam.id == question_id).first()
+    if not q:
+        return False
+    db.delete(q)
+    db.commit()
+    return True
+
+
+# ─── Final Exam Attempt CRUD ───
+
+
+def create_final_exam_attempt(
+    db: Session, student_id: str, course_id: str, score: int, passed: bool
+) -> models.FinalExamAttempt:
+    attempt = models.FinalExamAttempt(
+        student_id=student_id,
+        course_id=course_id,
+        score=score,
+        passed=passed,
+    )
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    return attempt
+
+
+def get_latest_final_exam_attempt(
+    db: Session, student_id: str, course_id: str
+) -> models.FinalExamAttempt | None:
+    return (
+        db.query(models.FinalExamAttempt)
+        .filter(
+            models.FinalExamAttempt.student_id == student_id,
+            models.FinalExamAttempt.course_id == course_id,
+        )
+        .order_by(models.FinalExamAttempt.created_at.desc())
+        .first()
+    )
+
+
+import hashlib
+
+
+# ─── Certificate CRUD ───
+
+
+def get_certificate_eligibility(
+    db: Session, student_id: str, course_id: str
+) -> dict:
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise ValueError("Course not found")
+
+    # Count total lessons
+    units = get_units_by_course(db, course_id)
+    total_lessons = 0
+    for unit in units:
+        total_lessons += len(get_lessons_by_unit(db, unit.id))
+
+    # Count completed lessons
+    completed_lessons = 0
+    for unit in units:
+        for lesson in get_lessons_by_unit(db, unit.id):
+            progress = get_lesson_progress_by_student_lesson(db, student_id, lesson.id)
+            if progress and progress.status == models.LessonProgressStatus.COMPLETED:
+                completed_lessons += 1
+
+    # Check latest final exam attempt
+    latest_attempt = get_latest_final_exam_attempt(db, student_id, course_id)
+    final_exam_taken = latest_attempt is not None
+    final_score = latest_attempt.score if latest_attempt else None
+    final_passed = latest_attempt.passed if latest_attempt else False
+
+    all_lessons_done = completed_lessons >= total_lessons and total_lessons > 0
+    eligible = (
+        course.certificate_enabled
+        and all_lessons_done
+        and final_passed
+    )
+
+    return {
+        "eligible": eligible,
+        "lessons_completed": completed_lessons,
+        "total_lessons": total_lessons,
+        "all_lessons_done": all_lessons_done,
+        "final_exam_taken": final_exam_taken,
+        "final_score": final_score,
+        "final_passed": final_passed,
+        "certificate_enabled": course.certificate_enabled,
+    }
+
+
+def claim_certificate(db: Session, student_id: str, course_id: str) -> models.Certificate:
+    eligibility = get_certificate_eligibility(db, student_id, course_id)
+    if not eligibility["eligible"]:
+        raise ValueError("Student is not eligible for a certificate")
+
+    existing = (
+        db.query(models.Certificate)
+        .filter(
+            models.Certificate.student_id == student_id,
+            models.Certificate.course_id == course_id,
+        )
+        .first()
+    )
+    if existing:
+        raise ValueError("Certificate already claimed")
+
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not course or not student:
+        raise ValueError("Course or student not found")
+
+    latest_attempt = get_latest_final_exam_attempt(db, student_id, course_id)
+    assert latest_attempt is not None
+
+    earned_at = datetime.utcnow()
+    hash_input = f"{student_id}:{course_id}:{earned_at.isoformat()}"
+    certificate_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:12]
+
+    cert = models.Certificate(
+        student_id=student_id,
+        course_id=course_id,
+        earned_at=earned_at,
+        final_score=latest_attempt.score,
+        status=models.CertificateStatus.EARNED,
+        certificate_hash=certificate_hash,
+    )
+    db.add(cert)
+    db.commit()
+    db.refresh(cert)
+    return cert
+
+
+def get_certificates_by_student(db: Session, student_id: str) -> list[models.Certificate]:
+    return (
+        db.query(models.Certificate)
+        .filter(models.Certificate.student_id == student_id)
+        .order_by(models.Certificate.earned_at.desc())
+        .all()
+    )
+
+
+def get_certificate_by_id(db: Session, certificate_id: str) -> models.Certificate | None:
+    return db.query(models.Certificate).filter(models.Certificate.id == certificate_id).first()
 
 
 # ─── SkillMastery ───
