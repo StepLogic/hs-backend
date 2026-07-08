@@ -35,6 +35,7 @@ def learning_path(
                     locked = True
             lesson_data.append({
                 "id": lesson.id,
+                "unit_id": unit.id,
                 "title": lesson.title,
                 "slug": lesson.slug,
                 "order_index": lesson.order_index,
@@ -50,6 +51,7 @@ def learning_path(
             })
         result.append({
             "id": unit.id,
+            "course_id": unit.course_id,
             "title": unit.title,
             "slug": unit.slug,
             "order_index": unit.order_index,

@@ -1,10 +1,49 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
 from app.api.deps import get_db, get_current_user
 
 router = APIRouter()
+
+
+@router.get("/courses/{course_id}/personalized", response_model=schemas.PersonalizedCourseResponse)
+def get_personalized_course_detail(
+    course_id: str,
+    student_id: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> schemas.PersonalizedCourseResponse:
+    """Get the personalized course for a student. If active but missing enrollment, auto-fix."""
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if str(student.owner_user_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to access this student")
+
+    pc = crud.get_personalized_course(db, student_id, course_id)
+    if not pc:
+        raise HTTPException(status_code=404, detail="Personalized course not found")
+
+    # Backfill enrollment for existing active personalized courses that lack one
+    if pc.status == models.PersonalizedCourseStatus.ACTIVE:
+        existing_enrollment = (
+            db.query(models.Enrollment)
+            .filter(
+                models.Enrollment.student_id == student_id,
+                models.Enrollment.course_id == course_id,
+            )
+            .first()
+        )
+        if not existing_enrollment:
+            enrollment_in = schemas.EnrollmentCreate(
+                student_id=student_id,
+                course_id=course_id,
+                status=models.EnrollmentStatus.ACTIVE,
+            )
+            crud.create_enrollment(db, enrollment_in)
+
+    return pc
 
 
 @router.post("/courses/{course_id}/personalized", response_model=schemas.PersonalizedCourseResponse, status_code=201)
@@ -111,4 +150,22 @@ def activate_personalized_course(
         raise HTTPException(status_code=400, detail="Course is already active")
 
     activated = crud.activate_personalized_course(db, pc.id)
+
+    # Ensure an enrollment record exists so the course appears in My Learning
+    existing_enrollment = (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.student_id == student_id,
+            models.Enrollment.course_id == course_id,
+        )
+        .first()
+    )
+    if not existing_enrollment:
+        enrollment_in = schemas.EnrollmentCreate(
+            student_id=student_id,
+            course_id=course_id,
+            status=models.EnrollmentStatus.ACTIVE,
+        )
+        crud.create_enrollment(db, enrollment_in)
+
     return activated
