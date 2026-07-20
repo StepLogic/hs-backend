@@ -1179,3 +1179,77 @@ def activate_personalized_course(db: Session, pc_id: str) -> models.Personalized
     db.refresh(pc)
     return pc
 
+
+# ─── Tutor Meetings ───
+
+def create_tutor_meeting(db: Session, meeting: schemas.TutorMeetingCreate) -> models.TutorMeeting:
+    db_meeting = models.TutorMeeting(**meeting.model_dump())
+    db.add(db_meeting)
+    db.commit()
+    db.refresh(db_meeting)
+    return db_meeting
+
+
+def get_tutor_meeting(db: Session, meeting_id: str) -> models.TutorMeeting | None:
+    return db.query(models.TutorMeeting).filter(models.TutorMeeting.id == meeting_id).first()
+
+
+def get_tutor_meetings_by_student(db: Session, student_id: str) -> list[models.TutorMeeting]:
+    return (
+        db.query(models.TutorMeeting)
+        .filter(models.TutorMeeting.student_id == student_id)
+        .order_by(models.TutorMeeting.created_at.desc())
+        .all()
+    )
+
+
+def get_tutor_meetings_by_tutor(db: Session, tutor_id: str) -> list[models.TutorMeeting]:
+    return (
+        db.query(models.TutorMeeting)
+        .filter(models.TutorMeeting.tutor_id == tutor_id)
+        .order_by(models.TutorMeeting.scheduled_at.asc())
+        .all()
+    )
+
+
+def get_tutor_meetings_by_course(db: Session, course_id: str) -> list[models.TutorMeeting]:
+    return (
+        db.query(models.TutorMeeting)
+        .filter(models.TutorMeeting.course_id == course_id)
+        .order_by(models.TutorMeeting.created_at.desc())
+        .all()
+    )
+
+
+def get_all_tutor_meetings(db: Session, skip: int = 0, limit: int = 100) -> list[models.TutorMeeting]:
+    return (
+        db.query(models.TutorMeeting)
+        .order_by(models.TutorMeeting.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def update_tutor_meeting(
+    db: Session, meeting_id: str, meeting: schemas.TutorMeetingUpdate
+) -> models.TutorMeeting | None:
+    db_meeting = get_tutor_meeting(db, meeting_id)
+    if not db_meeting:
+        return None
+    update_data = meeting.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_meeting, key, value)
+    db.commit()
+    db.refresh(db_meeting)
+    return db_meeting
+
+
+def delete_tutor_meeting(db: Session, meeting_id: str) -> bool:
+    db_meeting = get_tutor_meeting(db, meeting_id)
+    if not db_meeting:
+        return False
+    db.delete(db_meeting)
+    db.commit()
+    return True
+

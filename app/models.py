@@ -322,6 +322,36 @@ class LiveSession(Base):
     teacher_id = Column(String, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+class MeetingStatus(str, PyEnum):
+    REQUESTED = "requested"
+    SCHEDULED = "scheduled"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    DECLINED = "declined"
+
+
+class TutorMeeting(Base):
+    __tablename__ = "tutor_meetings"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    tutor_id = Column(String, ForeignKey("users.id"), nullable=True)
+    topic = Column(String(300), nullable=False)
+    scheduled_at = Column(DateTime, nullable=True)
+    duration_min = Column(Integer, nullable=False, default=30)
+    status = Column(Enum(MeetingStatus), nullable=False, default=MeetingStatus.REQUESTED)
+    meeting_url = Column(String(500), nullable=True)
+    student_notes = Column(Text, nullable=True)
+    tutor_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+    course = relationship("Course")
+    tutor = relationship("User")
+
+
 class ChatSession(Base):
     __tablename__ = "chat_sessions"
 

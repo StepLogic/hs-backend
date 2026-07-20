@@ -30,6 +30,25 @@ MIGRATIONS = [
     ("courses", "review_count", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS review_count INTEGER DEFAULT 0 NOT NULL"),
     ("courses", "features", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS features JSON DEFAULT '[]' NOT NULL"),
     ("courses", "image_emoji", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS image_emoji VARCHAR DEFAULT '📚' NOT NULL"),
+
+    # tutor_meetings table
+    ("tutor_meetings", "create_table", """
+    CREATE TABLE IF NOT EXISTS tutor_meetings (
+        id VARCHAR PRIMARY KEY,
+        student_id VARCHAR NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+        course_id VARCHAR NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+        tutor_id VARCHAR REFERENCES users(id),
+        topic VARCHAR(300) NOT NULL,
+        scheduled_at TIMESTAMP WITHOUT TIME ZONE,
+        duration_min INTEGER DEFAULT 30 NOT NULL,
+        status VARCHAR DEFAULT 'requested' NOT NULL,
+        meeting_url VARCHAR(500),
+        student_notes TEXT,
+        tutor_notes TEXT,
+        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW() NOT NULL
+    )
+    """),
 ]
 
 

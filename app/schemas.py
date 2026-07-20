@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional, Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.models import Subject, QuestionType, MasteryLevel, Role, CourseType, ReviewStatus, EnrollmentStatus, LessonProgressStatus, Difficulty, ExamType, LiveStatus, CertificateStatus
 
@@ -90,6 +90,27 @@ class QuestionUpdate(BaseModel):
 class QuestionResponse(QuestionBase):
     id: str
     model_config = ConfigDict(from_attributes=True)
+
+    @staticmethod
+    def _flatten_options(options: Any) -> Optional[list[str]]:
+        if options is None:
+            return None
+        if not isinstance(options, list):
+            return None
+        flat: list[str] = []
+        for item in options:
+            if isinstance(item, list):
+                for sub in item:
+                    if isinstance(sub, str):
+                        flat.append(sub)
+            elif isinstance(item, str):
+                flat.append(item)
+        return flat if flat else None
+
+    @field_validator("options", mode="before")
+    @classmethod
+    def _validate_options(cls, v: Any) -> Any:
+        return cls._flatten_options(v)
 
 
 # ─── Course schemas ───
@@ -733,6 +754,58 @@ class PersonalizedCourseResponse(BaseModel):
 
 class PersonalizedCourseUpdate(BaseModel):
     unit_ids: list[str]
+
+
+# ─── TutorMeeting schemas ───
+
+class TutorMeetingBase(BaseModel):
+    student_id: str
+    course_id: str
+    tutor_id: Optional[str] = None
+    topic: str
+    scheduled_at: Optional[datetime] = None
+    duration_min: int = 30
+    status: str = "requested"
+    meeting_url: Optional[str] = None
+    student_notes: Optional[str] = None
+    tutor_notes: Optional[str] = None
+
+
+class TutorMeetingCreate(BaseModel):
+    student_id: str
+    course_id: str
+    topic: str
+    scheduled_at: Optional[datetime] = None
+    duration_min: int = 30
+    student_notes: Optional[str] = None
+
+
+class TutorMeetingUpdate(BaseModel):
+    tutor_id: Optional[str] = None
+    topic: Optional[str] = None
+    scheduled_at: Optional[datetime] = None
+    duration_min: Optional[int] = None
+    status: Optional[str] = None
+    meeting_url: Optional[str] = None
+    student_notes: Optional[str] = None
+    tutor_notes: Optional[str] = None
+
+
+class TutorMeetingResponse(BaseModel):
+    id: str
+    student_id: str
+    course_id: str
+    tutor_id: Optional[str] = None
+    topic: str
+    scheduled_at: Optional[datetime] = None
+    duration_min: int
+    status: str
+    meeting_url: Optional[str] = None
+    student_notes: Optional[str] = None
+    tutor_notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ─── Final Exam schemas ───

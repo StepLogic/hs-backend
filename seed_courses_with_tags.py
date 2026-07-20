@@ -311,7 +311,7 @@ def seed_courses():
                         content=lesson_data["content"],
                         content_blocks=[
                             {"type": "text", "content": lesson_data["content"]},
-                            {"type": "video", "url": f"https://example.com/video/{lesson_data['slug']}"},
+                            {"type": "video", "url": "https://www.youtube.com/embed/aTsc4WIT2cs"},
                         ],
                         resources=[],
                         objectives=[f"Master {lesson_data['skills'][0]}"],
