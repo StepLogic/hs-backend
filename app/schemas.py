@@ -38,6 +38,7 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: str
     email: str
+    name: Optional[str] = None
     role: Role
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)

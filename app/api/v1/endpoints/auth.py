@@ -44,6 +44,28 @@ def register(
     }
 
 
+@router.post("/create-user", response_model=schemas.UserResponse, status_code=201)
+def create_user_admin(
+    *,
+    db: Session = Depends(get_db),
+    user_in: schemas.UserCreate,
+) -> models.User:
+    existing = crud.get_user_by_email(db, user_in.email)
+    if existing:
+        raise HTTPException(status_code=409, detail="Email already registered")
+    password_hash = hash_password(user_in.password)
+    user = crud.create_user(db, user_in, password_hash)
+    if user.role == models.Role.STUDENT:
+        student = models.Student(
+            name=user.name or user.email.split("@")[0],
+            grade_level=1,
+            owner_user_id=user.id,
+        )
+        db.add(student)
+        db.commit()
+    return user
+
+
 @router.post("/login", response_model=schemas.Token)
 def login(
     *, db: Session = Depends(get_db), credentials: schemas.UserLogin
