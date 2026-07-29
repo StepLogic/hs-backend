@@ -93,6 +93,14 @@ class Question(Base):
     review_status = Column(Enum(ReviewStatus), nullable=False, default=ReviewStatus.PUBLISHED)
     difficulty = Column(Enum(Difficulty), nullable=False, default=Difficulty.MEDIUM)
     source_test_id = Column(String, nullable=True)
+    lesson_id = Column(String, ForeignKey("lessons.id"), nullable=True)
+    unit_id = Column(String, ForeignKey("units.id"), nullable=True)
+    course_id = Column(String, ForeignKey("courses.id"), nullable=True)
+    is_full_test = Column(Boolean, nullable=False, default=False)
+
+    lesson = relationship("Lesson")
+    unit = relationship("Unit")
+    course = relationship("Course")
 
 class Course(Base):
     __tablename__ = "courses"

@@ -68,6 +68,10 @@ class QuestionBase(BaseModel):
     review_status: Optional[ReviewStatus] = None
     difficulty: Difficulty = Difficulty.MEDIUM
     source_test_id: Optional[str] = None
+    lesson_id: Optional[str] = None
+    unit_id: Optional[str] = None
+    course_id: Optional[str] = None
+    is_full_test: bool = False
 
 class QuestionCreate(QuestionBase):
     pass
@@ -88,6 +92,10 @@ class QuestionUpdate(BaseModel):
     review_status: Optional[ReviewStatus] = None
     difficulty: Optional[Difficulty] = None
     source_test_id: Optional[str] = None
+    lesson_id: Optional[str] = None
+    unit_id: Optional[str] = None
+    course_id: Optional[str] = None
+    is_full_test: Optional[bool] = None
 
 
 class QuestionResponse(QuestionBase):
