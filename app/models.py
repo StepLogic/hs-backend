@@ -92,6 +92,7 @@ class Question(Base):
     hint = Column(Text, nullable=True)
     review_status = Column(Enum(ReviewStatus), nullable=False, default=ReviewStatus.PUBLISHED)
     difficulty = Column(Enum(Difficulty), nullable=False, default=Difficulty.MEDIUM)
+    source_test_id = Column(String, nullable=True)
 
 class Course(Base):
     __tablename__ = "courses"

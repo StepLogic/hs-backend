@@ -67,6 +67,7 @@ class QuestionBase(BaseModel):
     hint: Optional[str] = None
     review_status: Optional[ReviewStatus] = None
     difficulty: Difficulty = Difficulty.MEDIUM
+    source_test_id: Optional[str] = None
 
 class QuestionCreate(QuestionBase):
     pass
@@ -86,6 +87,7 @@ class QuestionUpdate(BaseModel):
     hint: Optional[str] = None
     review_status: Optional[ReviewStatus] = None
     difficulty: Optional[Difficulty] = None
+    source_test_id: Optional[str] = None
 
 
 class QuestionResponse(QuestionBase):
