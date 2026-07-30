@@ -20,9 +20,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Data migration: reading/comprehension -> english_language_arts
-    op.execute("UPDATE questions SET subject = 'english_language_arts' WHERE subject IN ('reading', 'comprehension')")
-    op.execute("UPDATE courses SET subject = 'english_language_arts' WHERE subject IN ('reading', 'comprehension')")
-    op.execute("UPDATE test_results SET subject = 'english_language_arts' WHERE subject IN ('reading', 'comprehension')")
+    # Use text cast to avoid enum validation errors on fresh databases
+    op.execute("UPDATE questions SET subject = 'english_language_arts' WHERE subject::text IN ('reading', 'comprehension')")
+    op.execute("UPDATE courses SET subject = 'english_language_arts' WHERE subject::text IN ('reading', 'comprehension')")
+    op.execute("UPDATE test_results SET subject = 'english_language_arts' WHERE subject::text IN ('reading', 'comprehension')")
 
     # Recreate subject enum with new values
     op.execute("ALTER TABLE questions ALTER COLUMN subject TYPE VARCHAR")

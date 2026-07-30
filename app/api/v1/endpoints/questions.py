@@ -18,6 +18,10 @@ def read_questions(
     grade_level: Optional[int] = None,
     skill: Optional[str] = None,
     status: Optional[str] = Query(None),
+    lesson_id: Optional[str] = None,
+    unit_id: Optional[str] = None,
+    course_id: Optional[str] = None,
+    is_full_test: Optional[bool] = None,
 ) -> list[models.Question]:
     query = db.query(models.Question)
     if subject is not None:
@@ -30,6 +34,14 @@ def read_questions(
         query = query.filter(models.Question.review_status == status)
     else:
         query = query.filter(models.Question.review_status == models.ReviewStatus.PUBLISHED)
+    if lesson_id is not None:
+        query = query.filter(models.Question.lesson_id == lesson_id)
+    if unit_id is not None:
+        query = query.filter(models.Question.unit_id == unit_id)
+    if course_id is not None:
+        query = query.filter(models.Question.course_id == course_id)
+    if is_full_test is not None:
+        query = query.filter(models.Question.is_full_test == is_full_test)
     return query.offset(skip).limit(limit).all()
 
 

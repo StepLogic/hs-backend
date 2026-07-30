@@ -36,6 +36,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
 
+    # reviewstatus was already created in migration 002
+    review_status_enum = sa.Enum("draft", "in_review", "published", "rejected", name="reviewstatus")
+
     op.create_table(
         "lessons",
         sa.Column("id", sa.String(), nullable=False),
@@ -46,7 +49,7 @@ def upgrade() -> None:
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("duration_min", sa.Integer(), nullable=False, server_default="10"),
         sa.Column("skills", sa.JSON(), nullable=False, server_default="[]"),
-        sa.Column("review_status", sa.Enum("draft", "in_review", "published", "rejected", name="reviewstatus"), nullable=False),
+        sa.Column("review_status", review_status_enum, nullable=False),
         sa.Column("prerequisite_lesson_id", sa.String(), sa.ForeignKey("lessons.id"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )

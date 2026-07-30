@@ -1,9 +1,26 @@
 import os
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
+from sqlalchemy.sql import sqltypes
 
 from alembic import context
+
+# Monkey-patch: force checkfirst=True for PostgreSQL enum creation
+# to avoid DuplicateObject errors when enums were already created explicitly
+# in earlier migration steps.
+from sqlalchemy.dialects.postgresql import named_types  # noqa: E402
+
+_original_named_type_create = named_types.NamedType.create
+
+def _patched_named_type_create(self, bind, checkfirst=False, **kw):
+    return _original_named_type_create(self, bind, checkfirst=True, **kw)
+
+named_types.NamedType.create = _patched_named_type_create
+
+# Load environment variables from .env so alembic can read DATABASE_URL
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -27,7 +44,13 @@ target_metadata = Base.metadata
 # ... etc.
 
 def get_url():
-    return os.getenv("DATABASE_URL")
+    url = os.getenv("DATABASE_URL", "")
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    if "sslmode=" not in url:
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}sslmode=require"
+    return url
 
 
 def run_migrations_offline() -> None:

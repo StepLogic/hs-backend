@@ -29,17 +29,18 @@ def upgrade() -> None:
     question_type_enum = sa.Enum("multiple-choice", "fill-in", "ordering", "matching", name="questiontype")
     mastery_level_enum = sa.Enum("beginner", "developing", "proficient", "advanced", name="masterylevel")
 
-    role_enum.create(op.get_bind(), checkfirst=True)
-    subject_enum.create(op.get_bind(), checkfirst=True)
-    question_type_enum.create(op.get_bind(), checkfirst=True)
-    mastery_level_enum.create(op.get_bind(), checkfirst=True)
+    # Enums are created automatically by create_table; explicit create causes DuplicateObject
+    # role_enum.create(op.get_bind(), checkfirst=True)
+    # subject_enum.create(op.get_bind(), checkfirst=True)
+    # question_type_enum.create(op.get_bind(), checkfirst=True)
+    # mastery_level_enum.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         "users",
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("password_hash", sa.String(), nullable=False),
-        sa.Column("role", sa.Enum("student", "parent", "teacher", "admin", name="role"), nullable=False),
+        sa.Column("role", role_enum, nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email"),

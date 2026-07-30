@@ -42,12 +42,24 @@ def get_questions(
     limit: int = 100,
     subject: Optional[str] = None,
     grade_level: Optional[int] = None,
+    lesson_id: Optional[str] = None,
+    unit_id: Optional[str] = None,
+    course_id: Optional[str] = None,
+    is_full_test: Optional[bool] = None,
 ) -> list[models.Question]:
     query = db.query(models.Question)
     if subject:
         query = query.filter(models.Question.subject == subject)
     if grade_level is not None:
         query = query.filter(models.Question.grade_level == grade_level)
+    if lesson_id is not None:
+        query = query.filter(models.Question.lesson_id == lesson_id)
+    if unit_id is not None:
+        query = query.filter(models.Question.unit_id == unit_id)
+    if course_id is not None:
+        query = query.filter(models.Question.course_id == course_id)
+    if is_full_test is not None:
+        query = query.filter(models.Question.is_full_test == is_full_test)
     return query.offset(skip).limit(limit).all()
 
 

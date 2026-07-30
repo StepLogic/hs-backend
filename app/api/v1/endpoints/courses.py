@@ -168,28 +168,7 @@ def _import_course_json(db: Session, data: dict) -> dict:
         unit_video = u.get("video", "")
 
         for l_idx, lesson_def in enumerate(u.get("lessons", [])):
-            # Create quiz questions first
-            quiz_q_ids = []
-            for q_idx, quiz_q in enumerate(lesson_def.get("quiz", [])):
-                diff = models.Difficulty.EASY if q_idx == 0 else models.Difficulty.MEDIUM
-                quiz_q_obj = models.Question(
-                    subject=subject,
-                    grade_level=12,
-                    question_type=models.QuestionType.MULTIPLE_CHOICE,
-                    prompt=quiz_q["prompt"],
-                    options=quiz_q["options"],
-                    correct_answer=quiz_q["correct"],
-                    skill=lesson_def["skills"][0] if lesson_def.get("skills") else "general",
-                    explanation=quiz_q["explanation"],
-                    difficulty=diff,
-                    review_status=models.ReviewStatus.PUBLISHED,
-                )
-                db.add(quiz_q_obj)
-                db.commit()
-                db.refresh(quiz_q_obj)
-                quiz_q_ids.append(quiz_q_obj.id)
-
-            # Build content blocks: video + read-along + callout + quiz_embed
+            # Build content blocks: video + read-along + callout
             content_blocks = []
             lesson_video = lesson_def.get("video", "")
             video_src = lesson_video if lesson_video else unit_video
@@ -209,11 +188,6 @@ def _import_course_json(db: Session, data: dict) -> dict:
                 "title": "Lesson Quiz",
                 "content": "Complete the quiz below to test your understanding.",
             })
-            if quiz_q_ids:
-                content_blocks.append({
-                    "type": "quiz_embed",
-                    "question_id": quiz_q_ids[0],
-                })
 
             lesson = models.Lesson(
                 unit_id=unit.id,
@@ -224,7 +198,7 @@ def _import_course_json(db: Session, data: dict) -> dict:
                 content_blocks=content_blocks,
                 resources=[],
                 objectives=[f"Master {lesson_def['title']}"],
-                homework=[{"question_id": qid} for qid in quiz_q_ids],
+                homework=[],
                 duration_min=15,
                 skills=lesson_def.get("skills", []),
                 review_status=models.ReviewStatus.PUBLISHED,
@@ -233,6 +207,38 @@ def _import_course_json(db: Session, data: dict) -> dict:
             db.add(lesson)
             db.commit()
             db.refresh(lesson)
+
+            # Create quiz questions and attach them to the lesson
+            quiz_q_ids = []
+            for q_idx, quiz_q in enumerate(lesson_def.get("quiz", [])):
+                diff = models.Difficulty.EASY if q_idx == 0 else models.Difficulty.MEDIUM
+                quiz_q_obj = models.Question(
+                    subject=subject,
+                    grade_level=12,
+                    question_type=models.QuestionType.MULTIPLE_CHOICE,
+                    prompt=quiz_q["prompt"],
+                    options=quiz_q["options"],
+                    correct_answer=quiz_q["correct"],
+                    skill=lesson_def["skills"][0] if lesson_def.get("skills") else "general",
+                    explanation=quiz_q["explanation"],
+                    difficulty=diff,
+                    review_status=models.ReviewStatus.PUBLISHED,
+                    lesson_id=lesson.id,
+                )
+                db.add(quiz_q_obj)
+                db.commit()
+                db.refresh(quiz_q_obj)
+                quiz_q_ids.append(quiz_q_obj.id)
+
+            # Add quiz embed and homework now that questions exist
+            if quiz_q_ids:
+                lesson.content_blocks = [
+                    *lesson.content_blocks,
+                    {"type": "quiz_embed", "question_id": quiz_q_ids[0]},
+                ]
+                lesson.homework = [{"question_id": qid} for qid in quiz_q_ids]
+                db.commit()
+                db.refresh(lesson)
 
             # Prerequisite: previous lesson in same unit
             if l_idx > 0:

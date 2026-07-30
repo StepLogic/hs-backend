@@ -7,6 +7,17 @@ from app.api.deps import get_db, get_current_user
 router = APIRouter()
 
 
+def _get_all_final_exam_questions(db: Session, course_id: str):
+    """Return FinalExam rows plus Question rows scoped to this course as full-test questions."""
+    final_exam_rows = crud.get_final_exam_questions(db, course_id)
+    question_rows = (
+        db.query(models.Question)
+        .filter(models.Question.course_id == course_id, models.Question.is_full_test == True)
+        .all()
+    )
+    return final_exam_rows + question_rows
+
+
 @router.post("/{course_id}/final/start", response_model=schemas.FinalExamStartResponse)
 def start_final_exam(
     course_id: str,
@@ -19,7 +30,7 @@ def start_final_exam(
     if not course.certificate_enabled:
         raise HTTPException(status_code=403, detail="This course does not offer certificates")
 
-    questions = crud.get_final_exam_questions(db, course_id)
+    questions = _get_all_final_exam_questions(db, course_id)
     if not questions:
         raise HTTPException(status_code=404, detail="No final exam questions found for this course")
 
@@ -57,7 +68,7 @@ def submit_final_exam(
     if str(student.owner_user_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized to access this student")
 
-    questions = crud.get_final_exam_questions(db, course_id)
+    questions = _get_all_final_exam_questions(db, course_id)
     question_map = {q.id: q for q in questions}
 
     total_correct = 0
