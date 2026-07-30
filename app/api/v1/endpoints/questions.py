@@ -45,6 +45,48 @@ def read_questions(
     return query.offset(skip).limit(limit).all()
 
 
+@router.get("/detailed")
+def read_questions_detailed(
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=5000),
+) -> list[dict]:
+    """Return questions with their associated course/unit/lesson names."""
+    questions = db.query(models.Question).offset(skip).limit(limit).all()
+
+    # Build lookup tables
+    courses = {c.id: c for c in db.query(models.Course).all()}
+    units = {u.id: u for u in db.query(models.Unit).all()}
+    lessons = {l.id: l for l in db.query(models.Lesson).all()}
+
+    result = []
+    for q in questions:
+        result.append({
+            "id": q.id,
+            "subject": q.subject.value if q.subject else None,
+            "grade_level": q.grade_level,
+            "question_type": q.question_type.value if q.question_type else None,
+            "prompt": q.prompt,
+            "context": q.context,
+            "options": q.options,
+            "correct_answer": q.correct_answer,
+            "skill": q.skill,
+            "explanation": q.explanation,
+            "hint": q.hint,
+            "review_status": q.review_status.value if q.review_status else None,
+            "difficulty": q.difficulty.value if q.difficulty else None,
+            "source_test_id": q.source_test_id,
+            "lesson_id": q.lesson_id,
+            "unit_id": q.unit_id,
+            "course_id": q.course_id,
+            "is_full_test": q.is_full_test,
+            "course_title": courses.get(q.course_id).title if q.course_id and q.course_id in courses else None,
+            "unit_title": units.get(q.unit_id).title if q.unit_id and q.unit_id in units else None,
+            "lesson_title": lessons.get(q.lesson_id).title if q.lesson_id and q.lesson_id in lessons else None,
+        })
+    return result
+
+
 @router.get("/{question_id}", response_model=schemas.QuestionResponse)
 def read_question(question_id: str, db: Session = Depends(get_db)) -> models.Question:
     question = crud.get_question(db, question_id)
