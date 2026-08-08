@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, String, Integer, Float, Boolean, Date, DateTime, ForeignKey, Enum, JSON, Text, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Float, Boolean, Date, DateTime, ForeignKey, Enum, JSON, Text, Table, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -98,9 +98,19 @@ class Question(Base):
     course_id = Column(String, ForeignKey("courses.id"), nullable=True)
     is_full_test = Column(Boolean, nullable=False, default=False)
 
-    lesson = relationship("Lesson")
     unit = relationship("Unit")
     course = relationship("Course")
+    lessons = relationship("Lesson", secondary="lesson_questions", back_populates="questions")
+
+
+# Association table for many-to-many between lessons and questions
+lesson_questions = Table(
+    "lesson_questions",
+    Base.metadata,
+    Column("lesson_id", String, ForeignKey("lessons.id", ondelete="CASCADE"), primary_key=True),
+    Column("question_id", String, ForeignKey("questions.id", ondelete="CASCADE"), primary_key=True),
+)
+
 
 class Course(Base):
     __tablename__ = "courses"
@@ -175,6 +185,7 @@ class Lesson(Base):
 
     unit = relationship("Unit", back_populates="lessons")
     prerequisite = relationship("Lesson", remote_side="Lesson.id")
+    questions = relationship("Question", secondary="lesson_questions", back_populates="lessons")
 
 class Student(Base):
     __tablename__ = "students"

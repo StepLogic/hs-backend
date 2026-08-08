@@ -64,17 +64,20 @@ def read_questions_detailed(
 
     result = []
     for q in questions:
-        # Resolve course/unit through lesson chain when direct FKs are null
-        lesson = lessons.get(q.lesson_id)
-        unit_via_lesson = units.get(lesson.unit_id) if lesson else None
+        # Resolve via many-to-many lessons, falling back to direct lesson_id
+        q_lessons = list(q.lessons) if hasattr(q, 'lessons') else []
+        if not q_lessons and q.lesson_id and q.lesson_id in lessons:
+            q_lessons = [lessons[q.lesson_id]]
+
+        unit_via_lesson = units.get(q_lessons[0].unit_id) if q_lessons else None
         course_via_lesson = courses.get(unit_via_lesson.course_id) if unit_via_lesson else None
 
         course_id = q.course_id or (unit_via_lesson.course_id if unit_via_lesson else None)
-        unit_id = q.unit_id or (lesson.unit_id if lesson else None)
+        unit_id = q.unit_id or (q_lessons[0].unit_id if q_lessons else None)
 
         course_title = courses.get(q.course_id).title if q.course_id and q.course_id in courses else (course_via_lesson.title if course_via_lesson else None)
         unit_title = units.get(q.unit_id).title if q.unit_id and q.unit_id in units else (unit_via_lesson.title if unit_via_lesson else None)
-        lesson_title = lessons.get(q.lesson_id).title if q.lesson_id and q.lesson_id in lessons else None
+        lesson_title = q_lessons[0].title if q_lessons else None
 
         result.append({
             "id": q.id,
@@ -98,6 +101,7 @@ def read_questions_detailed(
             "course_title": course_title,
             "unit_title": unit_title,
             "lesson_title": lesson_title,
+            "lessons": [{"id": l.id, "title": l.title} for l in q_lessons],
         })
     return result
 

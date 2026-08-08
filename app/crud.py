@@ -54,7 +54,9 @@ def get_questions(
     if grade_level is not None:
         query = query.filter(models.Question.grade_level == grade_level)
     if lesson_id is not None:
-        query = query.filter(models.Question.lesson_id == lesson_id)
+        query = query.join(models.lesson_questions).filter(
+            models.lesson_questions.c.lesson_id == lesson_id
+        )
     if unit_id is not None:
         query = query.filter(models.Question.unit_id == unit_id)
     if course_id is not None:
@@ -62,7 +64,9 @@ def get_questions(
     if is_full_test is not None:
         query = query.filter(models.Question.is_full_test == is_full_test)
     if unattached:
-        query = query.filter(models.Question.lesson_id.is_(None))
+        # ponytail: subquery check for questions with no lesson associations
+        sub = db.query(models.lesson_questions.c.question_id)
+        query = query.filter(~models.Question.id.in_(sub))
     return query.offset(skip).limit(limit).all()
 
 
@@ -433,15 +437,15 @@ def update_lesson(db: Session, lesson_id: str, lesson: schemas.LessonUpdate) -> 
     added = new_ids - old_ids
     removed = old_ids - new_ids
     if added or removed:
-        affected = list(added | removed)
-        questions = db.query(models.Question).filter(models.Question.id.in_(affected)).all()
-        q_map = {q.id: q for q in questions}
+        # ponytail: use many-to-many relationship for lesson<->question links
+        current_q_map = {q.id: q for q in db_lesson.questions}
         for qid in added:
-            if qid in q_map:
-                q_map[qid].lesson_id = lesson_id
+            q = db.query(models.Question).filter(models.Question.id == qid).first()
+            if q and q.id not in current_q_map:
+                db_lesson.questions.append(q)
         for qid in removed:
-            if qid in q_map:
-                q_map[qid].lesson_id = None
+            if qid in current_q_map:
+                db_lesson.questions.remove(current_q_map[qid])
 
     db.commit()
     db.refresh(db_lesson)
