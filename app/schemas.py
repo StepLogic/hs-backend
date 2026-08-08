@@ -88,6 +88,7 @@ class QuestionUpdate(BaseModel):
     items: Optional[list[str]] = None
     correct_answer: Optional[Any] = None
     skill: Optional[str] = None
+    explanation: Optional[str] = None
     hint: Optional[str] = None
     review_status: Optional[ReviewStatus] = None
     difficulty: Optional[Difficulty] = None
