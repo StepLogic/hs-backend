@@ -407,6 +407,10 @@ def update_lesson(db: Session, lesson_id: str, lesson: schemas.LessonUpdate) -> 
             if isinstance(block, dict):
                 if block.get("type") == "quiz_embed" and block.get("question_id"):
                     ids.add(block["question_id"])
+                elif block.get("type") == "question_bank":
+                    for qid in block.get("question_ids", []):
+                        if qid:
+                            ids.add(qid)
                 elif block.get("question_id"):
                     ids.add(block["question_id"])
         return ids
