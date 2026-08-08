@@ -88,6 +88,14 @@ def read_questions_detailed(
             "lesson_title": lessons.get(q.lesson_id).title if q.lesson_id and q.lesson_id in lessons else None,
         })
     return result
+@router.get("/source-tests")
+def read_source_tests(db: Session = Depends(get_db)) -> list[str]:
+    """Return distinct non-null source_test_id values from questions."""
+    rows = db.query(models.Question.source_test_id).filter(
+        models.Question.source_test_id.isnot(None)
+    ).distinct().order_by(models.Question.source_test_id).all()
+    return [row[0] for row in rows]
+
 
 
 @router.get("/{question_id}", response_model=schemas.QuestionResponse)

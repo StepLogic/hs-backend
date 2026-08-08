@@ -401,6 +401,7 @@ def update_lesson(db: Session, lesson_id: str, lesson: schemas.LessonUpdate) -> 
 
     def _extract_question_ids(blocks):
         ids = set()
+        source_test_ids = set()
         if not isinstance(blocks, list):
             return ids
         for block in blocks:
@@ -411,8 +412,15 @@ def update_lesson(db: Session, lesson_id: str, lesson: schemas.LessonUpdate) -> 
                     for qid in block.get("question_ids", []):
                         if qid:
                             ids.add(qid)
+                elif block.get("type") == "full_mock_embed" and block.get("source_test_id"):
+                    source_test_ids.add(block["source_test_id"])
                 elif block.get("question_id"):
                     ids.add(block["question_id"])
+        if source_test_ids:
+            for row in db.query(models.Question.id).filter(
+                models.Question.source_test_id.in_(list(source_test_ids))
+            ).all():
+                ids.add(row[0])
         return ids
 
     old_ids = _extract_question_ids(db_lesson.content_blocks) | _extract_question_ids(db_lesson.homework)
