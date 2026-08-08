@@ -64,6 +64,18 @@ def read_questions_detailed(
 
     result = []
     for q in questions:
+        # Resolve course/unit through lesson chain when direct FKs are null
+        lesson = lessons.get(q.lesson_id)
+        unit_via_lesson = units.get(lesson.unit_id) if lesson else None
+        course_via_lesson = courses.get(unit_via_lesson.course_id) if unit_via_lesson else None
+
+        course_id = q.course_id or (unit_via_lesson.course_id if unit_via_lesson else None)
+        unit_id = q.unit_id or (lesson.unit_id if lesson else None)
+
+        course_title = courses.get(q.course_id).title if q.course_id and q.course_id in courses else (course_via_lesson.title if course_via_lesson else None)
+        unit_title = units.get(q.unit_id).title if q.unit_id and q.unit_id in units else (unit_via_lesson.title if unit_via_lesson else None)
+        lesson_title = lessons.get(q.lesson_id).title if q.lesson_id and q.lesson_id in lessons else None
+
         result.append({
             "id": q.id,
             "subject": q.subject.value if q.subject else None,
@@ -80,21 +92,26 @@ def read_questions_detailed(
             "difficulty": q.difficulty.value if q.difficulty else None,
             "source_test_id": q.source_test_id,
             "lesson_id": q.lesson_id,
-            "unit_id": q.unit_id,
-            "course_id": q.course_id,
+            "unit_id": unit_id,
+            "course_id": course_id,
             "is_full_test": q.is_full_test,
-            "course_title": courses.get(q.course_id).title if q.course_id and q.course_id in courses else None,
-            "unit_title": units.get(q.unit_id).title if q.unit_id and q.unit_id in units else None,
-            "lesson_title": lessons.get(q.lesson_id).title if q.lesson_id and q.lesson_id in lessons else None,
+            "course_title": course_title,
+            "unit_title": unit_title,
+            "lesson_title": lesson_title,
         })
     return result
+
 @router.get("/source-tests")
-def read_source_tests(db: Session = Depends(get_db)) -> list[str]:
-    """Return distinct non-null source_test_id values from questions."""
-    rows = db.query(models.Question.source_test_id).filter(
+def read_source_tests(db: Session = Depends(get_db)) -> list[dict]:
+    """Return distinct source_test_id values with question counts."""
+    from sqlalchemy import func
+    rows = db.query(
+        models.Question.source_test_id,
+        func.count(models.Question.id).label("count")
+    ).filter(
         models.Question.source_test_id.isnot(None)
-    ).distinct().order_by(models.Question.source_test_id).all()
-    return [row[0] for row in rows]
+    ).group_by(models.Question.source_test_id).order_by(models.Question.source_test_id).all()
+    return [{"source_test_id": row[0], "count": row[1]} for row in rows]
 
 
 
