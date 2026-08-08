@@ -46,6 +46,7 @@ def get_questions(
     unit_id: Optional[str] = None,
     course_id: Optional[str] = None,
     is_full_test: Optional[bool] = None,
+    unattached: bool = False,
 ) -> list[models.Question]:
     query = db.query(models.Question)
     if subject:
@@ -60,6 +61,8 @@ def get_questions(
         query = query.filter(models.Question.course_id == course_id)
     if is_full_test is not None:
         query = query.filter(models.Question.is_full_test == is_full_test)
+    if unattached:
+        query = query.filter(models.Question.lesson_id.is_(None))
     return query.offset(skip).limit(limit).all()
 
 
@@ -395,8 +398,39 @@ def update_lesson(db: Session, lesson_id: str, lesson: schemas.LessonUpdate) -> 
     db_lesson = get_lesson(db, lesson_id)
     if not db_lesson:
         return None
+
+    def _extract_question_ids(blocks):
+        ids = set()
+        if not isinstance(blocks, list):
+            return ids
+        for block in blocks:
+            if isinstance(block, dict):
+                if block.get("type") == "quiz_embed" and block.get("question_id"):
+                    ids.add(block["question_id"])
+                elif block.get("question_id"):
+                    ids.add(block["question_id"])
+        return ids
+
+    old_ids = _extract_question_ids(db_lesson.content_blocks) | _extract_question_ids(db_lesson.homework)
+
     for key, value in lesson.model_dump(exclude_unset=True).items():
         setattr(db_lesson, key, value)
+
+    new_ids = _extract_question_ids(db_lesson.content_blocks) | _extract_question_ids(db_lesson.homework)
+
+    added = new_ids - old_ids
+    removed = old_ids - new_ids
+    if added or removed:
+        affected = list(added | removed)
+        questions = db.query(models.Question).filter(models.Question.id.in_(affected)).all()
+        q_map = {q.id: q for q in questions}
+        for qid in added:
+            if qid in q_map:
+                q_map[qid].lesson_id = lesson_id
+        for qid in removed:
+            if qid in q_map:
+                q_map[qid].lesson_id = None
+
     db.commit()
     db.refresh(db_lesson)
     return db_lesson

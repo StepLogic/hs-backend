@@ -22,6 +22,7 @@ def read_questions(
     unit_id: Optional[str] = None,
     course_id: Optional[str] = None,
     is_full_test: Optional[bool] = None,
+    unattached: bool = False,
 ) -> list[models.Question]:
     query = db.query(models.Question)
     if subject is not None:
@@ -42,6 +43,8 @@ def read_questions(
         query = query.filter(models.Question.course_id == course_id)
     if is_full_test is not None:
         query = query.filter(models.Question.is_full_test == is_full_test)
+    if unattached:
+        query = query.filter(models.Question.lesson_id.is_(None))
     return query.offset(skip).limit(limit).all()
 
 
