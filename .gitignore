@@ -12,3 +12,4 @@ test.db
 alembic/versions/*.py
 !alembic/versions/.gitkeep
 data/
+.playwright-mcp/
