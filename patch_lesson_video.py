@@ -12,7 +12,7 @@ import sys
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
-BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-backend-75yy.onrender.com/api/v1")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-platform-oboac.ondigitalocean.app/api/v1")
 NEW_VIDEO_SRC = "https://www.youtube.com/embed/aTsc4WIT2cs?si=WIH5QxvSjkwW8z0k"
 
 

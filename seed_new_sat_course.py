@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-backend-75yy.onrender.com/api/v1")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-platform-oboac.ondigitalocean.app/api/v1")
 JSON_FILE = Path(__file__).parent / "sat_math_course.json"
 
 

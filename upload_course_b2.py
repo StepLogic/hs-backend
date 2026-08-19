@@ -29,4 +29,4 @@ if __name__ == "__main__":
     key = sys.argv[2] if len(sys.argv) > 2 else None
     url = upload_course_json(filepath, key)
     print(f"\nTo import on production:")
-    print(f"  curl -X POST 'https://hs-backend-75yy.onrender.com/api/v1/courses/import-url?url={url}'")
+    print(f"  curl -X POST 'https://hs-platform-oboac.ondigitalocean.app/api/v1/courses/import-url?url={url}'")

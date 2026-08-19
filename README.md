@@ -24,23 +24,22 @@ Administration backend for the hs-platform homeschool assessment system.
    uvicorn app.main:app --reload
    ```
 
-## Render Deployment
+## DigitalOcean App Platform Deployment
 
-1. Create a new **Web Service** on Render and connect your repository.
-2. Select **Python 3** as the environment.
-3. Set the start command to:
+The backend is deployed on DigitalOcean App Platform (web service) backed by a DigitalOcean managed PostgreSQL database.
+
+1. Create a **Web Service** on App Platform and connect this repository (autodeploys from `main`).
+2. Set the run command to:
    ```bash
    gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app
    ```
-4. Add a **PostgreSQL** database in the Render dashboard.
-5. Copy the internal database URL and set it as the `DATABASE_URL` environment variable.
-6. Set `SECRET_KEY` to a secure random string.
-7. Deploy. After the first deploy, run migrations via Render Shell:
+3. Set environment variables: `DATABASE_URL` (the managed Postgres connection string), `SECRET_KEY`, `FRONTEND_URL`, plus `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` if auth is enabled.
+4. The managed Postgres is behind **Trusted Sources** — the App Platform app's egress must be allowlisted there (it is, by default, for the app).
+5. After each deploy that includes a new migration, run migrations from the App Platform **Console**:
    ```bash
    alembic upgrade head
    ```
-
-Or use the included `render.yaml` for blueprint-based deployment.
+   (Migrations are NOT run automatically on deploy.)
 
 ## API Documentation
 

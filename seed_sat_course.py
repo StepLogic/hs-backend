@@ -16,7 +16,7 @@ from urllib.request import Request, urlopen
 # ── Config ──
 # Use env var or default to hosted backend
 import os
-BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-backend-75yy.onrender.com/api/v1")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-platform-oboac.ondigitalocean.app/api/v1")
 JSON_FILE = Path(__file__).parent / "sat_math_prep_course.json"
 
 

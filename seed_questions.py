@@ -7,7 +7,7 @@ import re
 import sys
 import urllib.request
 
-BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-backend-75yy.onrender.com/api/v1")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-platform-oboac.ondigitalocean.app/api/v1")
 
 # --- Cloud LLM config ---
 # Set ONE of: OLLAMA_CLOUD_API_KEY, GROQ_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY
