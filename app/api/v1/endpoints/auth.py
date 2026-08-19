@@ -1,10 +1,12 @@
 import secrets
 import urllib.parse
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import jwt
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -140,18 +142,53 @@ def me(current_user: models.User = Depends(get_current_user)) -> models.User:
 
 # ── Google OAuth ───────────────────────────────────────────────────────
 
+# The redirect URI must be identical in the authorize request and the token exchange,
+# and must point at *this* API — the callback route below lives here, not on the frontend.
+def _google_redirect_uri() -> str:
+    return f"{settings.BACKEND_URL.rstrip('/')}/api/v1/auth/google/callback"
+
+
+_STATE_COOKIE = "hs-oauth-state"
+_STATE_TTL_SECONDS = 600
+
+
+def _issue_state() -> str:
+    """A short-lived signed token binding the callback to the request that started it."""
+    now = datetime.now(timezone.utc)
+    return jwt.encode(
+        {
+            "nonce": secrets.token_urlsafe(16),
+            "iat": now,
+            "exp": now + timedelta(seconds=_STATE_TTL_SECONDS),
+            "purpose": "google-oauth-state",
+        },
+        settings.SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+
+def _verify_state(state: Optional[str], cookie_state: Optional[str]) -> None:
+    """Reject a callback we did not initiate. This is the CSRF defence in OAuth."""
+    if not state or not cookie_state or not secrets.compare_digest(state, cookie_state):
+        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+    try:
+        claims = jwt.decode(state, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+    if claims.get("purpose") != "google-oauth-state":
+        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+
+
 @router.get("/google")
-def google_auth() -> dict:
+def google_auth() -> JSONResponse:
     """Initiate Google OAuth sign-in."""
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
 
-    state = secrets.token_urlsafe(32)
-    redirect_uri = f"{settings.FRONTEND_URL.rstrip('/')}/api/v1/auth/google/callback"
-
+    state = _issue_state()
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
-        "redirect_uri": redirect_uri,
+        "redirect_uri": _google_redirect_uri(),
         "response_type": "code",
         "scope": "openid email profile",
         "state": state,
@@ -159,7 +196,19 @@ def google_auth() -> dict:
         "prompt": "consent",
     }
     url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
-    return {"url": url}
+
+    # The same state goes back in a cookie so the callback can prove it started here.
+    response = JSONResponse({"url": url})
+    response.set_cookie(
+        _STATE_COOKIE,
+        state,
+        max_age=_STATE_TTL_SECONDS,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="lax",
+        path="/",
+    )
+    return response
 
 
 @router.get("/google/callback")
@@ -168,20 +217,20 @@ def google_callback(
     code: str,
     state: Optional[str] = None,
     db: Session = Depends(get_db),
-) -> dict:
-    """Handle Google OAuth callback and return JWT token."""
+):
+    """Handle the Google OAuth callback and hand a JWT back to the frontend."""
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
 
-    # Exchange code for tokens
-    redirect_uri = f"{settings.FRONTEND_URL.rstrip('/')}/api/v1/auth/google/callback"
+    _verify_state(state, request.cookies.get(_STATE_COOKIE))
+
     token_resp = requests.post(
         "https://oauth2.googleapis.com/token",
         data={
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": redirect_uri,
+            "redirect_uri": _google_redirect_uri(),
             "grant_type": "authorization_code",
         },
         timeout=30,
@@ -189,12 +238,10 @@ def google_callback(
     if not token_resp.ok:
         raise HTTPException(status_code=400, detail="Failed to exchange Google code")
 
-    tokens = token_resp.json()
-    id_token = tokens.get("id_token")
+    id_token = token_resp.json().get("id_token")
     if not id_token:
         raise HTTPException(status_code=400, detail="No ID token from Google")
 
-    # Validate ID token with Google
     google_user_resp = requests.get(
         "https://oauth2.googleapis.com/tokeninfo",
         params={"id_token": id_token},
@@ -204,12 +251,22 @@ def google_callback(
         raise HTTPException(status_code=400, detail="Invalid Google token")
 
     google_user = google_user_resp.json()
+
+    # tokeninfo says the token is well-formed; it does not say it was minted for *us*.
+    # Without this check a token issued to any other Google app would be accepted.
+    if google_user.get("aud") != settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=400, detail="Google token was not issued for this app")
+
     email = google_user.get("email")
-    name = google_user.get("name") or email.split("@")[0]
     if not email:
         raise HTTPException(status_code=400, detail="No email from Google")
 
-    # Find or create user
+    # An unverified address must never match an existing account — that is account takeover.
+    if str(google_user.get("email_verified", "")).lower() not in ("true", "1"):
+        raise HTTPException(status_code=400, detail="Google email is not verified")
+
+    name = google_user.get("name") or email.split("@")[0]
+
     user = crud.get_user_by_email(db, email)
     if not user:
         user = models.User(
@@ -220,16 +277,18 @@ def google_callback(
         db.add(user)
         db.commit()
         db.refresh(user)
-        # Auto-create student profile
-        student = models.Student(
-            name=name,
-            grade_level=1,
-            owner_user_id=user.id,
+        db.add(
+            models.Student(
+                name=name,
+                grade_level=1,
+                owner_user_id=user.id,
+            )
         )
-        db.add(student)
         db.commit()
 
     token = create_access_token(str(user.id), user.role.value)
-    # Redirect to frontend with token in URL hash for client-side extraction
+    # The fragment is never sent to a server, so the token does not leak via Referer or logs.
     redirect_url = f"{settings.FRONTEND_URL.rstrip('/')}/login#token={token}"
-    return RedirectResponse(url=redirect_url)
+    response = RedirectResponse(url=redirect_url)
+    response.delete_cookie(_STATE_COOKIE, path="/")
+    return response

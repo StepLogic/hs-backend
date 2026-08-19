@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     FRONTEND_URL: str = "http://localhost:5173"
+    # This service's own public URL. The Google OAuth redirect_uri must point at the
+    # callback route on *this* API, not at the frontend, and must match byte-for-byte
+    # between the authorize request and the token exchange.
+    BACKEND_URL: str = "http://localhost:8000"
     class Config:
         env_file = ".env"
         extra = "ignore"
