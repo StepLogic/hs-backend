@@ -135,6 +135,7 @@ class Course(Base):
     image_emoji = Column(String, nullable=False)
     certificate_enabled = Column(Boolean, nullable=False, default=False)
     certificate_passing_score = Column(Integer, nullable=False, default=70)
+    banner_image_url = Column(String, nullable=True)
 
     units = relationship("Unit", back_populates="course", cascade="all, delete-orphan", order_by="Unit.order_index")
 
@@ -196,6 +197,7 @@ class Student(Base):
     grade_level = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     owner_user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    profile_image_url = Column(String, nullable=True)
 
     test_results = relationship("TestResult", back_populates="student", cascade="all, delete-orphan")
     owner = relationship("User", back_populates="owned_students")

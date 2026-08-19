@@ -146,6 +146,7 @@ class CourseBase(BaseModel):
     image_emoji: str
     certificate_enabled: bool = False
     certificate_passing_score: int = 70
+    banner_image_url: Optional[str] = None
 
 
 class CourseCreate(CourseBase):
@@ -172,6 +173,7 @@ class CourseUpdate(BaseModel):
     image_emoji: Optional[str] = None
     certificate_enabled: Optional[bool] = None
     certificate_passing_score: Optional[int] = None
+    banner_image_url: Optional[str] = None
 
 
 class CourseResponse(CourseBase):
@@ -184,6 +186,7 @@ class StudentBase(BaseModel):
     name: str
     email: Optional[str] = None
     grade_level: int
+    profile_image_url: Optional[str] = None
 class StudentCreate(StudentBase):
     owner_user_id: Optional[str] = None
 
@@ -193,6 +196,7 @@ class StudentUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     grade_level: Optional[int] = None
+    profile_image_url: Optional[str] = None
 
 
 class StudentResponse(StudentBase):
