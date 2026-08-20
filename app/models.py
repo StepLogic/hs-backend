@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, String, Integer, Float, Boolean, Date, DateTime, ForeignKey, Enum, JSON, Text, Table, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Float, Boolean, Date, DateTime, ForeignKey, Enum, JSON, Text, Table, UniqueConstraint, text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -198,6 +198,8 @@ class Student(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     owner_user_id = Column(String, ForeignKey("users.id"), nullable=True)
     profile_image_url = Column(String, nullable=True)
+    guardian_name = Column(String(120), nullable=True)
+    guardian_email = Column(String(255), nullable=True)
 
     test_results = relationship("TestResult", back_populates="student", cascade="all, delete-orphan")
     owner = relationship("User", back_populates="owned_students")
@@ -322,6 +324,12 @@ class UserAnswer(Base):
     test_result = relationship("TestResult", back_populates="user_answers")
 
 
+class Theme(str, PyEnum):
+    SYSTEM = "system"
+    LIGHT = "light"
+    DARK = "dark"
+
+
 class LiveStatus(str, PyEnum):
     SCHEDULED = "scheduled"
     LIVE = "live"
@@ -417,6 +425,11 @@ class UserProfile(Base):
     streak_days = Column(Integer, nullable=False, default=0)
     last_active = Column(Date, nullable=True)
     badges = Column(JSON, nullable=False, default=list)
+    display_name = Column(String(80), nullable=True)
+    bio = Column(Text, nullable=True)
+    theme = Column(String(10), nullable=False, server_default="system", default="system")
+    notify_weekly_email = Column(Boolean, nullable=False, server_default=text("true"), default=True)
+    notify_practice_tips = Column(Boolean, nullable=False, server_default=text("false"), default=False)
 
     user = relationship("User", backref="profile")
 

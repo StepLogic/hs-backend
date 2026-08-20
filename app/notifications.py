@@ -37,6 +37,36 @@ def send_parent_digest(parent_email: str, student_data: list[dict]) -> dict:
         return {"sent": False, "reason": str(e)}
 
 
+def send_password_reset(email: str, reset_url: str) -> dict:
+    """Email a password reset link. The link carries a short-lived, single-use token."""
+    if not RESEND_API_KEY:
+        return {"sent": False, "reason": "RESEND_API_KEY not configured"}
+
+    html = (
+        "<div>"
+        "<h2>Reset your HomeSchool password</h2>"
+        "<p>Click the link below to choose a new password. "
+        "It expires in 30 minutes and can only be used once.</p>"
+        f'<p><a href="{reset_url}">Reset my password</a></p>'
+        "<p>If you did not ask for this, you can ignore this email — "
+        "your password has not changed.</p>"
+        "</div>"
+    )
+
+    params: resend.Email = {
+        "from": FROM_EMAIL,
+        "to": email,
+        "subject": "Reset your HomeSchool password",
+        "html": html,
+    }
+
+    try:
+        response = resend.Emails.send(params)
+        return {"sent": True, "id": response.get("id")}
+    except Exception as e:
+        return {"sent": False, "reason": str(e)}
+
+
 def notify_student(student_id: str, event: str, data: dict) -> dict:
     """Record a notification event for a student (placeholder for push/email)."""
     # ponytail: placeholder — wire to actual push/email provider when needed

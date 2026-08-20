@@ -1,9 +1,9 @@
 from datetime import date, datetime
 from typing import Optional, Any
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from app.models import Subject, QuestionType, MasteryLevel, Role, CourseType, ReviewStatus, EnrollmentStatus, LessonProgressStatus, Difficulty, ExamType, LiveStatus, CertificateStatus
+from app.models import Subject, QuestionType, MasteryLevel, Role, CourseType, ReviewStatus, EnrollmentStatus, LessonProgressStatus, Difficulty, ExamType, LiveStatus, CertificateStatus, Theme
 
 
 # ─── SkillTaxonomy schemas ───
@@ -187,6 +187,10 @@ class StudentBase(BaseModel):
     email: Optional[str] = None
     grade_level: int
     profile_image_url: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_email: Optional[EmailStr] = None
+
+
 class StudentCreate(StudentBase):
     owner_user_id: Optional[str] = None
 
@@ -197,6 +201,8 @@ class StudentUpdate(BaseModel):
     email: Optional[str] = None
     grade_level: Optional[int] = None
     profile_image_url: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_email: Optional[EmailStr] = None
 
 
 class StudentResponse(StudentBase):
@@ -428,6 +434,11 @@ class UserProfileBase(BaseModel):
     streak_days: int = 0
     last_active: Optional[date] = None
     badges: list[str] = []
+    display_name: Optional[str] = Field(default=None, max_length=80)
+    bio: Optional[str] = Field(default=None, max_length=2000)
+    theme: Theme = Theme.SYSTEM
+    notify_weekly_email: bool = True
+    notify_practice_tips: bool = False
 
 
 class UserProfileCreate(UserProfileBase):
@@ -440,11 +451,36 @@ class UserProfileUpdate(BaseModel):
     streak_days: Optional[int] = None
     last_active: Optional[date] = None
     badges: Optional[list[str]] = None
+    display_name: Optional[str] = Field(default=None, max_length=80)
+    bio: Optional[str] = Field(default=None, max_length=2000)
+    theme: Optional[Theme] = None
+    notify_weekly_email: Optional[bool] = None
+    notify_practice_tips: Optional[bool] = None
+    # Composed write-through onto the users row; see endpoints/profiles.py.
+    name: Optional[str] = Field(default=None, max_length=120)
+    email: Optional[EmailStr] = None
 
 
 class UserProfileResponse(UserProfileBase):
     id: str
+    # Composed from the users row so the account screen is a single fetch.
+    name: Optional[str] = None
+    email: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str = Field(min_length=8, max_length=128)
 
 
 # ─── Practice schemas ───

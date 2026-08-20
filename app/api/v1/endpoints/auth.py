@@ -1,3 +1,5 @@
+import hashlib
+import logging
 import secrets
 import urllib.parse
 from datetime import datetime, timedelta, timezone
@@ -13,6 +15,9 @@ from app import crud, models, schemas
 from app.api.deps import get_db, get_current_user
 from app.config import settings
 from app.security import create_access_token, hash_password, verify_password
+from app.notifications import send_password_reset
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -86,7 +91,7 @@ def login(
 
     # 2. Fall back to legacy Better Auth tables (for users created before backend auth)
     from sqlalchemy import text as sa_text
-    from sqlalchemy.exc import ProgrammingError
+    from sqlalchemy.exc import OperationalError, ProgrammingError
     try:
         ba_user = db.execute(
             sa_text('SELECT id, email FROM "user" WHERE email = :email LIMIT 1'),
@@ -129,8 +134,11 @@ def login(
                     "role": user.role,
                     "user_id": user.id,
                 }
-    except ProgrammingError:
-        pass  # Legacy tables don't exist; fall through to invalid credentials
+    except (ProgrammingError, OperationalError):
+        # Legacy tables don't exist; fall through to invalid credentials. Postgres
+        # raises ProgrammingError for a missing relation, SQLite OperationalError —
+        # catching only the first turned every failed login into a 500 under SQLite.
+        db.rollback()  # the failed statement poisons the session on Postgres
 
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
@@ -138,6 +146,99 @@ def login(
 @router.get("/me", response_model=schemas.UserResponse)
 def me(current_user: models.User = Depends(get_current_user)) -> models.User:
     return current_user
+
+
+# ── Password reset ─────────────────────────────────────────────────────
+
+_RESET_TTL_SECONDS = 1800
+
+
+def _password_fingerprint(password_hash: str) -> str:
+    """A non-reversible marker of the *current* password.
+
+    Carried in the reset token and re-checked on confirm, so a token stops working
+    the moment the password changes — that makes it single-use without a table."""
+    return hashlib.sha256(password_hash.encode()).hexdigest()[:16]
+
+
+def _issue_reset_token(user: models.User) -> str:
+    now = datetime.now(timezone.utc)
+    return jwt.encode(
+        {
+            "sub": str(user.id),
+            "iat": now,
+            "exp": now + timedelta(seconds=_RESET_TTL_SECONDS),
+            "purpose": "password-reset",
+            "pwh": _password_fingerprint(user.password_hash or ""),
+        },
+        settings.SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+
+@router.post("/password-reset/request", status_code=204)
+def request_password_reset(
+    body: schemas.PasswordResetRequest, db: Session = Depends(get_db)
+) -> None:
+    # Always 204, whether or not the address exists — a different answer for a
+    # registered address turns this into an account-enumeration oracle.
+    user = crud.get_user_by_email(db, body.email)
+    if user and user.password_hash:
+        token = _issue_reset_token(user)
+        url = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={urllib.parse.quote(token)}"
+        result = send_password_reset(user.email, url)
+        if not result.get("sent"):
+            # Without RESEND_API_KEY nothing is delivered and the flow is untestable.
+            # Log the link so local development can follow it; never in production.
+            logger.warning("Password reset email not sent (%s)", result.get("reason"))
+            if settings.DEBUG:
+                logger.warning("Password reset link for %s: %s", user.email, url)
+
+
+@router.post("/password-reset/confirm", status_code=204)
+def confirm_password_reset(
+    body: schemas.PasswordResetConfirm, db: Session = Depends(get_db)
+) -> None:
+    invalid = HTTPException(status_code=400, detail="Reset link is invalid or has expired")
+    try:
+        claims = jwt.decode(
+            body.token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
+        )
+    except jwt.PyJWTError:
+        raise invalid
+    if claims.get("purpose") != "password-reset":
+        raise invalid
+
+    user = crud.get_user(db, str(claims.get("sub")))
+    if not user or not user.password_hash:
+        raise invalid
+    # Already used, or the password changed by another route since it was issued.
+    if not secrets.compare_digest(
+        str(claims.get("pwh", "")), _password_fingerprint(user.password_hash)
+    ):
+        raise invalid
+
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
+
+@router.post("/change-password", status_code=204)
+def change_password(
+    body: schemas.PasswordChange,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    # Google-created accounts get password_hash="" and can never have a password
+    # verified against them — bcrypt raises on an empty hash, so answer plainly.
+    if not current_user.password_hash:
+        raise HTTPException(
+            status_code=400, detail="This account signs in with Google and has no password"
+        )
+    if not verify_password(body.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    if body.new_password == body.current_password:
+        raise HTTPException(status_code=400, detail="New password must be different")
+    current_user.password_hash = hash_password(body.new_password)
+    db.commit()
 
 
 # ── Google OAuth ───────────────────────────────────────────────────────
