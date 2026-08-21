@@ -384,11 +384,13 @@ def google_callback(
         raise HTTPException(status_code=400, detail="Google email is not verified")
 
     name = google_user.get("name") or email.split("@")[0]
+    picture = google_user.get("picture") or None
 
     user = crud.get_user_by_email(db, email)
     if not user:
         user = models.User(
             email=email,
+            name=name,
             password_hash="",
             role=models.Role.STUDENT,
         )
@@ -400,9 +402,27 @@ def google_callback(
                 name=name,
                 grade_level=1,
                 owner_user_id=user.id,
+                profile_image_url=picture,
             )
         )
         db.commit()
+    else:
+        # Backfill only what is still empty. A returning user may have set their own
+        # name or uploaded their own photo, and Google must not overwrite either.
+        changed = False
+        if not user.name and name:
+            user.name = name
+            changed = True
+        student = (
+            db.query(models.Student)
+            .filter(models.Student.owner_user_id == user.id)
+            .first()
+        )
+        if student and not student.profile_image_url and picture:
+            student.profile_image_url = picture
+            changed = True
+        if changed:
+            db.commit()
 
     token = create_access_token(str(user.id), user.role.value)
     # The fragment is never sent to a server, so the token does not leak via Referer or logs.
