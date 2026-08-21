@@ -74,10 +74,17 @@ def generate_personalized_course(
     if not weak_tags:
         raise HTTPException(status_code=400, detail="weak_tags is required")
 
-    # Find units whose description (tag) matches weak tags (case-insensitive)
+    # Match units to weak tags on title first, then description. The diagnostic
+    # reports unit titles (see _unit_tag in assessment.py); matching description
+    # alone meant no unit ever matched and this endpoint 400'd for every course.
     units = db.query(models.Unit).filter(models.Unit.course_id == course_id).all()
     weak_tags_lower = {t.lower() for t in weak_tags}
-    matching_unit_ids = [u.id for u in units if u.description and u.description.lower() in weak_tags_lower]
+    matching_unit_ids = [
+        u.id
+        for u in units
+        if (u.title and u.title.lower() in weak_tags_lower)
+        or (u.description and u.description.lower() in weak_tags_lower)
+    ]
 
     if not matching_unit_ids:
         raise HTTPException(status_code=400, detail="No units match the provided weak tags")

@@ -1,4 +1,5 @@
 import random
+from fractions import Fraction
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -28,17 +29,56 @@ def _unit_tag(db: Session, unit: models.Unit) -> str | None:
     for candidate in (unit.title, unit.description):
         if not candidate:
             continue
-        exists = (
-            db.query(models.Question.id)
+        if _answerable(
+            db.query(models.Question)
             .filter(
                 models.Question.skill == candidate,
                 models.Question.review_status == models.ReviewStatus.PUBLISHED,
             )
-            .first()
-        )
-        if exists:
+            .limit(60)
+            .all()
+        ):
             return candidate
     return None
+
+
+def _answerable(questions: list[models.Question]) -> list[models.Question]:
+    """Drop questions the runner cannot present.
+
+    A question needs either choices to pick from or a fill-in box to type into.
+    One with neither — a grid-in still typed as multiple choice — renders as a
+    prompt with no answers and strands the student. Filtered in Python rather
+    than SQL because JSON emptiness is spelled differently across backends.
+    """
+    return [
+        q
+        for q in questions
+        if q.options or q.question_type == models.QuestionType.FILL_IN
+    ]
+
+
+def _normalise(value) -> str:
+    """Compare grid-in answers forgivingly.
+
+    A typed answer arrives as "5", " 5", "$5$" or "5.0" for the same number.
+    Exact string equality would mark all but one wrong, so strip the LaTeX and
+    whitespace, then compare numerically when both sides are numbers.
+    """
+    text = str(value if value is not None else "").strip()
+    text = text.replace("$", "").replace(" ", "").replace(",", "")
+    if text.endswith("."):
+        text = text[:-1]
+    return text.lower()
+
+
+def answers_match(given, expected) -> bool:
+    a, b = _normalise(given), _normalise(expected)
+    if a == b:
+        return True
+    try:
+        return float(Fraction(a)) == float(Fraction(b))
+    except (ValueError, ZeroDivisionError):
+        return False
 
 
 def _sample_for_tag(db: Session, tag: str, count: int) -> list[models.Question]:
@@ -47,11 +87,13 @@ def _sample_for_tag(db: Session, tag: str, count: int) -> list[models.Question]:
         models.Question.skill == tag,
         models.Question.review_status == models.ReviewStatus.PUBLISHED,
     )
-    medium = base.filter(models.Question.difficulty == models.Difficulty.MEDIUM).limit(30).all()
+    medium = _answerable(
+        base.filter(models.Question.difficulty == models.Difficulty.MEDIUM).limit(60).all()
+    )
     picked = random.sample(medium, min(count, len(medium)))
     if len(picked) < count:
         chosen = {q.id for q in picked}
-        rest = [q for q in base.limit(30).all() if q.id not in chosen]
+        rest = [q for q in _answerable(base.limit(60).all()) if q.id not in chosen]
         picked += random.sample(rest, min(count - len(picked), len(rest)))
     return picked
 
@@ -153,7 +195,7 @@ def submit_assessment(
             tag_counts[tag] = {"correct": 0, "total": 0}
 
         question = db.query(models.Question).filter(models.Question.id == answer.question_id).first()
-        is_correct = question and question.correct_answer == answer.answer
+        is_correct = bool(question) and answers_match(answer.answer, question.correct_answer)
         if is_correct:
             tag_counts[tag]["correct"] += 1
         tag_counts[tag]["total"] += 1

@@ -351,13 +351,16 @@ def build(db: Session, videos: list[dict], questions: list[dict], dry_run: bool)
                 n_questions += 1
                 continue
 
+            # No choices means a student-produced response (an SAT grid-in), which
+            # is a fill-in, not a multiple choice with its options missing.
+            choices = q.get("choices") or {}
             question = models.Question(
                 subject="math",
                 grade_level=11,
-                question_type="multiple-choice",
+                question_type="multiple-choice" if choices else "fill-in",
                 prompt=str(q.get("question", "")),
                 context=map_context(q.get("passage")),
-                options=[f"{k}. {v}" for k, v in sorted((q.get("choices") or {}).items())],
+                options=[f"{k}. {v}" for k, v in sorted(choices.items())],
                 correct_answer=str(q.get("correct_answer", "")),
                 skill=skill,
                 explanation=build_explanation(q),
@@ -379,7 +382,7 @@ def build(db: Session, videos: list[dict], questions: list[dict], dry_run: bool)
         # mastery: ContentBlock only reports quiz_embed blocks, which are the only
         # kind that reference a real Question row.
         for lesson in lessons:
-            qids = assigned.get(lesson.id, [])
+            qids = [q.id for q in lesson.questions]
             if qids:
                 lesson.content_blocks = list(lesson.content_blocks) + [
                     {"type": "quiz_embed", "question_id": qid} for qid in qids
@@ -406,6 +409,23 @@ def refresh_quizzes(db: Session) -> None:
     course = db.query(models.Course).filter(models.Course.title == "SAT Math").first()
     if not course:
         sys.exit("No SAT Math course found.")
+
+    # Grid-ins were seeded as multiple-choice with no options, which renders as a
+    # prompt with no answers. Retype them so the runner can show an input instead.
+    retyped = (
+        db.query(models.Question)
+        .filter(models.Question.course_id == course.id)
+        .filter(models.Question.question_type == models.QuestionType.MULTIPLE_CHOICE)
+        .all()
+    )
+    fixed = 0
+    for q in retyped:
+        if not q.options:
+            q.question_type = models.QuestionType.FILL_IN
+            fixed += 1
+    if fixed:
+        db.commit()
+        print(f"{fixed} questions retyped as fill-in")
 
     touched = added = 0
     lessons = (
