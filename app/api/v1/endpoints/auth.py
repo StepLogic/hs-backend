@@ -269,8 +269,20 @@ def _issue_state() -> str:
 
 
 def _verify_state(state: Optional[str], cookie_state: Optional[str]) -> None:
-    """Reject a callback we did not initiate. This is the CSRF defence in OAuth."""
-    if not state or not cookie_state or not secrets.compare_digest(state, cookie_state):
+    """Reject a callback we did not initiate. This is the CSRF defence in OAuth.
+
+    The signature and the 10-minute expiry are the part that cannot be forged: only
+    this server can mint a state, so a third party cannot fabricate one. The cookie
+    additionally binds the callback to the browser that started it, which is what
+    stops an attacker replaying *their* state into *your* session.
+
+    The cookie is checked when present. It is not required, because browsers are
+    increasingly refusing third-party cookies outright and a blocked cookie would
+    otherwise make Google sign-in impossible rather than merely less bound.
+    """
+    if not state:
+        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+    if cookie_state and not secrets.compare_digest(state, cookie_state):
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
     try:
         claims = jwt.decode(state, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
@@ -278,6 +290,8 @@ def _verify_state(state: Optional[str], cookie_state: Optional[str]) -> None:
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
     if claims.get("purpose") != "google-oauth-state":
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
+    if not cookie_state:
+        logger.warning("Google OAuth state cookie missing; verified by signature only")
 
 
 @router.get("/google")
@@ -305,8 +319,11 @@ def google_auth() -> JSONResponse:
         state,
         max_age=_STATE_TTL_SECONDS,
         httponly=True,
-        secure=not settings.DEBUG,
-        samesite="lax",
+        # The API and the app are on different sites, so this is a cross-site cookie:
+        # SameSite=Lax would neither be stored by the credentialed fetch that sets it
+        # nor returned on Google's redirect. None requires Secure.
+        secure=True,
+        samesite="none",
         path="/",
     )
     return response

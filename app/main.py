@@ -26,7 +26,17 @@ def on_startup() -> None:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    # A wildcard origin and credentials cannot be combined — the browser rejects the
+    # response and never stores the cookie, which is what broke the Google OAuth state.
+    allow_origins=[
+        o.strip()
+        for o in (
+            settings.ALLOWED_ORIGINS.split(",")
+            if getattr(settings, "ALLOWED_ORIGINS", "")
+            else [settings.FRONTEND_URL, "http://localhost:5173", "http://localhost:4173"]
+        )
+        if o and o.strip()
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
