@@ -310,12 +310,14 @@ def build(db: Session, videos: list[dict], questions: list[dict], dry_run: bool)
             blocks = []
             if v["url"]:
                 blocks.append({"type": "video", "src": v["url"], "title": v["title"]})
-            blocks.append({
-                "type": "markdown",
-                "content": (f"Watch the explanation, then work the questions below.\n\n"
-                            f"**Skill:** {title}" if v["url"]
-                            else f"Practice set for **{title}**. No video for this skill yet."),
-            })
+            # No filler prose. "Watch the explanation, then work the questions below"
+            # tells the student nothing they cannot see, and the skill is already in
+            # the page heading — it only crowded the lesson.
+            if not v["url"]:
+                blocks.append({
+                    "type": "markdown",
+                    "content": f"Practice set for {title}. No video for this skill yet.",
+                })
             lesson = models.Lesson(
                 unit_id=unit.id,
                 title=v["title"],
@@ -427,6 +429,9 @@ def refresh_quizzes(db: Session) -> None:
         db.commit()
         print(f"{fixed} questions retyped as fill-in")
 
+    # Remove the filler prose block earlier runs added.
+    FILLER = "Watch the explanation, then work the questions below"
+
     touched = added = 0
     lessons = (
         db.query(models.Lesson)
@@ -436,7 +441,11 @@ def refresh_quizzes(db: Session) -> None:
     )
     for lesson in lessons:
         qids = [q.id for q in lesson.questions]
-        kept = [b for b in (lesson.content_blocks or []) if b.get("type") != "quiz_embed"]
+        kept = [
+            b
+            for b in (lesson.content_blocks or [])
+            if b.get("type") != "quiz_embed" and FILLER not in (b.get("content") or "")
+        ]
         blocks = kept + [{"type": "quiz_embed", "question_id": qid} for qid in qids]
         if blocks != list(lesson.content_blocks or []):
             lesson.content_blocks = blocks
