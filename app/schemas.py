@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional, Any
+from typing import Optional, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -743,6 +743,52 @@ class SubscriptionResponse(SubscriptionBase):
 
 
 # ─── Assessment schemas ───
+
+# ─── Course goal schemas ───
+class CourseGoalCreate(BaseModel):
+    student_id: str
+    scope: Literal["weak_units", "full_course"] = "weak_units"
+    target_skills: list[str] = []
+    baseline: dict[str, float] = {}
+    target_mastery: int = Field(default=70, ge=1, le=100)
+    target_exam_score: int = Field(default=70, ge=1, le=100)
+
+
+class GoalSkillProgress(BaseModel):
+    skill: str
+    baseline_percent: Optional[float] = None
+    mastery_score: int
+    target: int
+    # not_practiced is distinct from failing: SkillMastery is only written by the
+    # practice runner, so a student who only watched lessons has no score at all.
+    status: Literal["met", "in_progress", "not_practiced"]
+
+
+class GoalExamProgress(BaseModel):
+    attempted: bool
+    best_score: Optional[float] = None
+    target: int
+    passed: bool
+
+
+class CourseGoalResponse(BaseModel):
+    id: str
+    student_id: str
+    course_id: str
+    scope: str
+    target_skills: list[str]
+    baseline: dict[str, float]
+    target_mastery: int
+    target_exam_score: int
+    created_at: datetime
+    achieved_at: Optional[datetime] = None
+    # Two lines, reported separately — they can disagree, and that is worth seeing.
+    skills: list[GoalSkillProgress] = []
+    skills_met: int = 0
+    skills_total: int = 0
+    exam: Optional[GoalExamProgress] = None
+    model_config = ConfigDict(from_attributes=True)
+
 
 class AssessmentQuestion(BaseModel):
     id: str

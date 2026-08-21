@@ -8,54 +8,109 @@ from app.api.deps import get_db, get_current_user
 router = APIRouter()
 
 
+# One item per skill is a *screen*, not a measurement, so the scoring rule in
+# submit_assessment is deliberately asymmetric: a miss includes the unit, a hit
+# offers to skip it. Including a unit the student did not need is cheap;
+# skipping one they did need is not.
+QUESTIONS_PER_SKILL = {"quick": 1, "full": 3}
+QUICK_MAX_QUESTIONS = 20
+# Below this percentage on a tag, the unit is included in the study plan.
+WEAK_THRESHOLD = 60
+
+
+def _unit_tag(db: Session, unit: models.Unit) -> str | None:
+    """The skill this unit assesses.
+
+    `title` holds the skill for every seeded course. `description` is free text —
+    matching on it alone meant no course ever produced a tag that matched a
+    question, which left the diagnostic returning 404 for everything.
+    """
+    for candidate in (unit.title, unit.description):
+        if not candidate:
+            continue
+        exists = (
+            db.query(models.Question.id)
+            .filter(
+                models.Question.skill == candidate,
+                models.Question.review_status == models.ReviewStatus.PUBLISHED,
+            )
+            .first()
+        )
+        if exists:
+            return candidate
+    return None
+
+
+def _sample_for_tag(db: Session, tag: str, count: int) -> list[models.Question]:
+    """Prefer medium items — they discriminate best when you only get one shot."""
+    base = db.query(models.Question).filter(
+        models.Question.skill == tag,
+        models.Question.review_status == models.ReviewStatus.PUBLISHED,
+    )
+    medium = base.filter(models.Question.difficulty == models.Difficulty.MEDIUM).limit(30).all()
+    picked = random.sample(medium, min(count, len(medium)))
+    if len(picked) < count:
+        chosen = {q.id for q in picked}
+        rest = [q for q in base.limit(30).all() if q.id not in chosen]
+        picked += random.sample(rest, min(count - len(picked), len(rest)))
+    return picked
+
+
 @router.post(
     "/courses/{course_id}/assessment/start",
     response_model=schemas.AssessmentStartResponse,
 )
 def start_assessment(
     course_id: str,
+    depth: str = "quick",
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ) -> schemas.AssessmentStartResponse:
-    """Start an adaptive diagnostic for a course. Returns questions sampled per unit tag."""
+    """Start a diagnostic for a course. One question per skill by default.
+
+    depth=quick (default) screens every skill with a single medium item, capped at
+    QUICK_MAX_QUESTIONS so the test stays inside the ten minutes the UI promises.
+    depth=full asks three per skill, which is long but actually measures.
+    """
+    if depth not in QUESTIONS_PER_SKILL:
+        raise HTTPException(status_code=422, detail="depth must be 'quick' or 'full'")
+
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
-    units = db.query(models.Unit).filter(models.Unit.course_id == course_id).all()
+    units = (
+        db.query(models.Unit)
+        .filter(models.Unit.course_id == course_id)
+        .order_by(models.Unit.order_index)
+        .all()
+    )
     if not units:
         raise HTTPException(status_code=404, detail="Course has no units")
 
-    # Collect unique tags from unit descriptions (free-form per course)
-    unit_tags = list({u.description for u in units if u.description})
+    per_skill = QUESTIONS_PER_SKILL[depth]
+    seen_tags: set[str] = set()
+    questions: list[schemas.AssessmentQuestion] = []
 
-    # Sample up to 3 questions per tag
-    questions = []
-    for tag in unit_tags:
-        tag_questions = (
-            db.query(models.Question)
-            .filter(
-                models.Question.skill == tag,
-                models.Question.review_status == models.ReviewStatus.PUBLISHED,
-            )
-            .limit(10)
-            .all()
-        )
-        sample_size = min(3, len(tag_questions))
-        if sample_size > 0:
-            sampled = random.sample(tag_questions, sample_size)
-            for q in sampled:
-                questions.append(
-                    schemas.AssessmentQuestion(
-                        id=q.id,
-                        prompt=q.prompt,
-                        question_type=q.question_type.value if q.question_type else "multiple-choice",
-                        options=q.options,
-                        skill=q.skill,
-                        difficulty=q.difficulty.value if q.difficulty else "medium",
-                        unit_tag=tag,
-                    )
+    for unit in units:
+        tag = _unit_tag(db, unit)
+        if not tag or tag in seen_tags:
+            continue
+        seen_tags.add(tag)
+        if depth == "quick" and len(questions) + per_skill > QUICK_MAX_QUESTIONS:
+            break
+        for q in _sample_for_tag(db, tag, per_skill):
+            questions.append(
+                schemas.AssessmentQuestion(
+                    id=q.id,
+                    prompt=q.prompt,
+                    question_type=q.question_type.value if q.question_type else "multiple-choice",
+                    options=q.options,
+                    skill=q.skill,
+                    difficulty=q.difficulty.value if q.difficulty else "medium",
+                    unit_tag=tag,
                 )
+            )
 
     if not questions:
         raise HTTPException(status_code=404, detail="No questions found for course units")
@@ -74,7 +129,11 @@ def submit_assessment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ) -> schemas.AssessmentSubmitResponse:
-    """Score assessment answers by tag. Tags with <60% accuracy are weak."""
+    """Score assessment answers by tag. Tags below WEAK_THRESHOLD are weak.
+
+    At depth=quick a tag carries a single item, so this reduces to "missed it =>
+    study that unit". That asymmetry is intentional; see QUESTIONS_PER_SKILL.
+    """
     # Verify student exists and belongs to current user
     student = db.query(models.Student).filter(models.Student.id == payload.student_id).first()
     if not student:
@@ -107,7 +166,7 @@ def submit_assessment(
 
     for tag, counts in tag_counts.items():
         percent = (counts["correct"] / counts["total"]) * 100 if counts["total"] > 0 else 0
-        level = "weak" if percent < 60 else "strong"
+        level = "weak" if percent < WEAK_THRESHOLD else "strong"
         if level == "weak":
             weak_tags.append(tag)
         else:

@@ -520,6 +520,32 @@ class PersonalizedCourse(Base):
     __table_args__ = (UniqueConstraint("student_id", "base_course_id"),)
 
 
+class CourseGoal(Base):
+    """What a student committed to after their diagnostic, and how to tell if they got there.
+
+    scope is a plain String, not an Enum: every enum type in this schema is created
+    from member names, and adding another one is a migration hazard for no gain.
+    """
+    __tablename__ = "course_goals"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    scope = Column(String(20), nullable=False, default="weak_units")
+    # Skills the diagnostic flagged weak — the things this student is here to fix.
+    target_skills = Column(JSON, nullable=False, default=list)
+    # {skill: percent} at diagnostic time, so progress can be shown as before/after.
+    baseline = Column(JSON, nullable=False, default=dict)
+    target_mastery = Column(Integer, nullable=False, default=70)
+    target_exam_score = Column(Integer, nullable=False, default=70)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    achieved_at = Column(DateTime, nullable=True)
+
+    student = relationship("Student")
+    course = relationship("Course")
+    __table_args__ = (UniqueConstraint("student_id", "course_id"),)
+
+
 class FinalExam(Base):
     __tablename__ = "final_exams"
 
