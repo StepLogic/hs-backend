@@ -280,6 +280,7 @@ def build(db: Session, videos: list[dict], questions: list[dict], dry_run: bool)
     db.flush()
 
     n_lessons = n_questions = 0
+    assigned: dict[str, list[str]] = defaultdict(list)
     for u_idx, (domain, skill) in enumerate(units):
         title = "Foundations & Review" if skill == "FOUNDATIONS" else skill
         unit = models.Unit(
@@ -344,6 +345,7 @@ def build(db: Session, videos: list[dict], questions: list[dict], dry_run: bool)
                 # them would silently empty that course.
                 if lesson:
                     lesson.questions.append(q)
+                    assigned[lesson.id].append(q.id)
                     if q.lesson_id is None:
                         q.lesson_id, q.unit_id, q.course_id = lesson.id, unit.id, course.id
                 n_questions += 1
@@ -368,8 +370,20 @@ def build(db: Session, videos: list[dict], questions: list[dict], dry_run: bool)
             )
             db.add(question)
             if lesson:
+                db.flush()
                 lesson.questions.append(question)
+                assigned[lesson.id].append(question.id)
             n_questions += 1
+
+        # A lesson has to contain its questions for answering one to count toward
+        # mastery: ContentBlock only reports quiz_embed blocks, which are the only
+        # kind that reference a real Question row.
+        for lesson in lessons:
+            qids = assigned.get(lesson.id, [])
+            if qids:
+                lesson.content_blocks = list(lesson.content_blocks) + [
+                    {"type": "quiz_embed", "question_id": qid} for qid in qids
+                ]
 
         db.commit()
         print(f"  {title:46} {len(lessons):>3} lessons  {len(skill_questions):>4} questions")
@@ -377,6 +391,39 @@ def build(db: Session, videos: list[dict], questions: list[dict], dry_run: bool)
     course.lesson_count = n_lessons
     db.commit()
     print(f"\ncourse {course.id}: {len(units)} units, {n_lessons} lessons, {n_questions} questions")
+
+
+def refresh_quizzes(db: Session) -> None:
+    """Give an existing course's lessons quiz_embed blocks for the questions already
+    attached to them.
+
+    An answered quiz_embed is what moves skill mastery, and lessons seeded before that
+    was wired have only video and prose. Rebuilding the course with --reset would drop
+    lessons that real students already have progress rows against, so this edits in
+    place: it rewrites only the quiz_embed blocks and leaves every other block, lesson
+    and progress row untouched. Safe to run more than once.
+    """
+    course = db.query(models.Course).filter(models.Course.title == "SAT Math").first()
+    if not course:
+        sys.exit("No SAT Math course found.")
+
+    touched = added = 0
+    lessons = (
+        db.query(models.Lesson)
+        .join(models.Unit, models.Unit.id == models.Lesson.unit_id)
+        .filter(models.Unit.course_id == course.id)
+        .all()
+    )
+    for lesson in lessons:
+        qids = [q.id for q in lesson.questions]
+        kept = [b for b in (lesson.content_blocks or []) if b.get("type") != "quiz_embed"]
+        blocks = kept + [{"type": "quiz_embed", "question_id": qid} for qid in qids]
+        if blocks != list(lesson.content_blocks or []):
+            lesson.content_blocks = blocks
+            touched += 1
+        added += len(qids)
+    db.commit()
+    print(f"{touched} lessons updated, {added} quiz blocks now present")
 
 
 def reset(db: Session):
@@ -396,6 +443,11 @@ def main():
     ap.add_argument("--questions", type=Path, default=root / "data" / "all_sat_questions.json")
     ap.add_argument("--reset", action="store_true", help="delete an existing SAT Math course first")
     ap.add_argument("--dry-run", action="store_true", help="print the plan, write nothing")
+    ap.add_argument(
+        "--refresh-quizzes",
+        action="store_true",
+        help="add quiz_embed blocks to an existing course in place; touches nothing else",
+    )
     args = ap.parse_args()
 
     for p in (args.videos, args.questions):
@@ -412,6 +464,9 @@ def main():
 
     db = SessionLocal()
     try:
+        if args.refresh_quizzes:
+            refresh_quizzes(db)
+            return
         if args.reset:
             reset(db)
         elif db.query(models.Course).filter(models.Course.title == "SAT Math").first():
