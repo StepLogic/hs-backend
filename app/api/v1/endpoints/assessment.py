@@ -1,3 +1,4 @@
+import math
 import random
 from fractions import Fraction
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,8 +14,11 @@ router = APIRouter()
 # submit_assessment is deliberately asymmetric: a miss includes the unit, a hit
 # offers to skip it. Including a unit the student did not need is cheap;
 # skipping one they did need is not.
-QUESTIONS_PER_SKILL = {"quick": 1, "full": 3}
-QUICK_MAX_QUESTIONS = 20
+QUESTIONS_PER_SKILL = {"quick": 1, "full": 3, "practice": 3}
+# Per-depth ceiling on total items. "full" is deliberately uncapped.
+MAX_QUESTIONS = {"quick": 20, "practice": 50}
+# A practice test on a one-skill course still has to feel like a test.
+PRACTICE_MIN_QUESTIONS = 4
 # Below this percentage on a tag, the unit is included in the study plan.
 WEAK_THRESHOLD = 60
 
@@ -111,11 +115,14 @@ def start_assessment(
     """Start a diagnostic for a course. One question per skill by default.
 
     depth=quick (default) screens every skill with a single medium item, capped at
-    QUICK_MAX_QUESTIONS so the test stays inside the ten minutes the UI promises.
+    20 so the test stays inside the ten minutes the UI promises.
     depth=full asks three per skill, which is long but actually measures.
+    depth=practice is the same sampler sized to the course — 3 per skill, floored
+    at PRACTICE_MIN_QUESTIONS and capped at 50 — for students who aced the
+    diagnostic and want a real test rather than a study plan.
     """
     if depth not in QUESTIONS_PER_SKILL:
-        raise HTTPException(status_code=422, detail="depth must be 'quick' or 'full'")
+        raise HTTPException(status_code=422, detail=f"depth must be one of {sorted(QUESTIONS_PER_SKILL)}")
 
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
@@ -130,16 +137,20 @@ def start_assessment(
     if not units:
         raise HTTPException(status_code=404, detail="Course has no units")
 
-    per_skill = QUESTIONS_PER_SKILL[depth]
-    seen_tags: set[str] = set()
-    questions: list[schemas.AssessmentQuestion] = []
-
+    tags: list[str] = []
     for unit in units:
         tag = _unit_tag(db, unit)
-        if not tag or tag in seen_tags:
-            continue
-        seen_tags.add(tag)
-        if depth == "quick" and len(questions) + per_skill > QUICK_MAX_QUESTIONS:
+        if tag and tag not in tags:
+            tags.append(tag)
+
+    per_skill = QUESTIONS_PER_SKILL[depth]
+    cap = MAX_QUESTIONS.get(depth)
+    if depth == "practice" and tags:
+        per_skill = max(per_skill, math.ceil(PRACTICE_MIN_QUESTIONS / len(tags)))
+
+    questions: list[schemas.AssessmentQuestion] = []
+    for tag in tags:
+        if cap and len(questions) + per_skill > cap:
             break
         for q in _sample_for_tag(db, tag, per_skill):
             questions.append(

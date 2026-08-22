@@ -87,6 +87,14 @@ def test_start_assessment_returns_questions_per_tag(client: TestClient, admin_to
     assert "algebra" in tags
     assert "geometry" in tags
 
+    # depth=practice is the same sampler sized to the course: 3 per skill here,
+    # inside the 4..50 band and strictly longer than the one-per-skill screen.
+    r = client.post(f"/api/v1/courses/{course_id}/assessment/start?depth=practice", headers=headers)
+    assert r.status_code == 200
+    practice = r.json()["questions"]
+    assert 4 <= len(practice) <= 50
+    assert len(practice) > len(data["questions"])
+
 
 def test_submit_assessment_identifies_weak_tags(client: TestClient, admin_token: str):
     """Submitting answers should identify tags with <60% accuracy as weak."""
