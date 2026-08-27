@@ -140,8 +140,6 @@ class CourseBase(BaseModel):
     grade_range: str
     lesson_count: int = 0
     student_count: int = 0
-    rating: float = 0.0
-    review_count: int = 0
     features: list[str]
     image_emoji: str
     certificate_enabled: bool = False
@@ -167,8 +165,6 @@ class CourseUpdate(BaseModel):
     grade_range: Optional[str] = None
     lesson_count: Optional[int] = None
     student_count: Optional[int] = None
-    rating: Optional[float] = None
-    review_count: Optional[int] = None
     features: Optional[list[str]] = None
     image_emoji: Optional[str] = None
     certificate_enabled: Optional[bool] = None
@@ -178,6 +174,9 @@ class CourseUpdate(BaseModel):
 
 class CourseResponse(CourseBase):
     id: str
+    # Averaged over real student ratings; None until somebody has rated the course.
+    rating: Optional[float] = None
+    review_count: int = 0
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -344,6 +343,8 @@ class LessonUpdate(BaseModel):
 
 class LessonResponse(LessonBase):
     id: str
+    rating: Optional[float] = None
+    review_count: int = 0
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -975,3 +976,49 @@ class CertificateResponse(BaseModel):
     status: str
     certificate_hash: str
     model_config = ConfigDict(from_attributes=True)
+
+
+# ─── Testimonial schemas ───
+
+class TestimonialCreate(BaseModel):
+    name: str = Field("Anonymous", max_length=80)
+    role: str = Field("Parent", max_length=80)
+    quote: str = Field(..., min_length=20, max_length=4000)
+    stars: int = Field(5, ge=1, le=5)
+    published: bool = False
+
+
+class TestimonialUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=80)
+    role: Optional[str] = Field(None, max_length=80)
+    quote: Optional[str] = Field(None, min_length=20, max_length=4000)
+    stars: Optional[int] = Field(None, ge=1, le=5)
+    published: Optional[bool] = None
+
+
+class TestimonialResponse(BaseModel):
+    id: str
+    name: str
+    role: str
+    quote: str
+    stars: int
+    published: bool
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── Rating schemas ───
+
+class RatingCreate(BaseModel):
+    student_id: str
+    target_type: Literal["course", "lesson"]
+    target_id: str
+    stars: int = Field(..., ge=1, le=5)
+
+
+class RatingSummary(BaseModel):
+    target_type: str
+    target_id: str
+    average: Optional[float] = None
+    count: int = 0
+    my_stars: Optional[int] = None

@@ -26,8 +26,6 @@ MIGRATIONS = [
     ("courses", "grade_range", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS grade_range VARCHAR DEFAULT '9-12' NOT NULL"),
     ("courses", "lesson_count", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS lesson_count INTEGER DEFAULT 0 NOT NULL"),
     ("courses", "student_count", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS student_count INTEGER DEFAULT 0 NOT NULL"),
-    ("courses", "rating", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS rating FLOAT DEFAULT 0 NOT NULL"),
-    ("courses", "review_count", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS review_count INTEGER DEFAULT 0 NOT NULL"),
     ("courses", "features", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS features JSON DEFAULT '[]' NOT NULL"),
     ("courses", "image_emoji", "ALTER TABLE courses ADD COLUMN IF NOT EXISTS image_emoji VARCHAR DEFAULT '📚' NOT NULL"),
 
@@ -47,6 +45,21 @@ MIGRATIONS = [
         tutor_notes TEXT,
         created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW() NOT NULL,
         updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW() NOT NULL
+    )
+    """),
+
+    # Course.rating / Lesson.rating are aggregates over this table, so EVERY course and
+    # lesson query needs it to exist. Migrations do not run on deploy here, which would
+    # otherwise leave production 500ing between the deploy and the alembic run.
+    ("ratings", "create_table", """
+    CREATE TABLE IF NOT EXISTS ratings (
+        id VARCHAR PRIMARY KEY,
+        student_id VARCHAR NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+        target_type VARCHAR(10) NOT NULL,
+        target_id VARCHAR NOT NULL,
+        stars INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        CONSTRAINT uq_rating_student_target UNIQUE (student_id, target_type, target_id)
     )
     """),
 ]

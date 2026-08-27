@@ -3,7 +3,8 @@ from datetime import datetime
 from enum import Enum as PyEnum
 
 from sqlalchemy import Column, String, Integer, Float, Boolean, Date, DateTime, ForeignKey, Enum, JSON, Text, Table, UniqueConstraint, text
-from sqlalchemy.orm import relationship
+from sqlalchemy import func, select
+from sqlalchemy.orm import column_property, relationship
 
 from app.database import Base
 
@@ -129,8 +130,7 @@ class Course(Base):
     grade_range = Column(String, nullable=False)
     lesson_count = Column(Integer, nullable=False, default=0)
     student_count = Column(Integer, nullable=False, default=0)
-    rating = Column(Float, nullable=False, default=0.0)
-    review_count = Column(Integer, nullable=False, default=0)
+    # rating / review_count are column_property aggregates over `ratings` — see below.
     features = Column(JSON, nullable=False, default=list)
     image_emoji = Column(String, nullable=False)
     certificate_enabled = Column(Boolean, nullable=False, default=False)
@@ -583,3 +583,58 @@ class Certificate(Base):
     certificate_hash = Column(String, nullable=False)
 
     __table_args__ = (UniqueConstraint("student_id", "course_id"),)
+
+class Testimonial(Base):
+    """A quote from a parent or student. Submitted publicly, published by an admin.
+
+    ponytail: no rating column — the marketing cards draw a fixed 5 stars, and
+    nobody has asked for a per-quote score.
+    """
+    __tablename__ = "testimonials"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False, default="Anonymous")
+    role = Column(String, nullable=False, default="Parent")
+    quote = Column(Text, nullable=False)
+    stars = Column(Integer, nullable=False, default=5)
+    published = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Rating(Base):
+    """A student's star rating of one course or one lesson.
+
+    target_type is a plain String for the same reason CourseGoal.scope is: adding an
+    enum member to this schema is a migration hazard for no gain.
+    """
+    __tablename__ = "ratings"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = Column(String, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    target_type = Column(String(10), nullable=False)  # "course" | "lesson"
+    target_id = Column(String, nullable=False)
+    stars = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (UniqueConstraint("student_id", "target_type", "target_id"),)
+
+
+def _rating_aggregates(target_type: str, id_column):
+    """Average and count of real ratings, as read-only columns on the rated model.
+
+    ponytail: a correlated subquery per row, so every course/lesson SELECT pays for it.
+    Materialise onto the table with a trigger only if a listing query actually shows up slow.
+    """
+    where = (Rating.target_type == target_type, Rating.target_id == id_column)
+    average = column_property(
+        select(func.avg(Rating.stars)).where(*where).correlate_except(Rating).scalar_subquery()
+    )
+    count = column_property(
+        select(func.count(Rating.id)).where(*where).correlate_except(Rating).scalar_subquery()
+    )
+    return average, count
+
+
+# None until somebody actually rates it — the frontends hide the stars on None.
+Course.rating, Course.review_count = _rating_aggregates("course", Course.id)
+Lesson.rating, Lesson.review_count = _rating_aggregates("lesson", Lesson.id)

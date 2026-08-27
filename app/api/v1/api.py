@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
-    ai, analytics, assessment, goals, auth, certificates, content, courses, diagnostics, enrollments, exams, final_exams, learning, lessons, live, notifications, personalized, plans, practice, profiles, questions, results, roster, sat, skills, social, students, transcripts, tutor, tutor_meetings, units, uploads, writing,
+    ai, analytics, assessment, goals, auth, certificates, content, courses, diagnostics, enrollments, exams, final_exams, learning, lessons, live, notifications, personalized, plans, practice, profiles, questions, ratings, results, roster, sat, skills, social, students, testimonials, transcripts, tutor, tutor_meetings, units, uploads, writing,
 )
 
 api_router = APIRouter()
@@ -42,4 +42,6 @@ api_router.include_router(personalized.router, tags=["personalized"])
 api_router.include_router(goals.router, tags=["goals"])
 api_router.include_router(social.router, prefix="/social", tags=["social"])
 api_router.include_router(sat.router, prefix="/sat", tags=["sat"])
+api_router.include_router(ratings.router, prefix="/ratings", tags=["ratings"])
+api_router.include_router(testimonials.router, prefix="/testimonials", tags=["testimonials"])
 api_router.include_router(ai.router, tags=["ai"])

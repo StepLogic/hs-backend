@@ -128,8 +128,6 @@ def _import_course_json(db: Session, data: dict) -> dict:
         grade_range=c.get("grade_range", "9-12"),
         lesson_count=0,
         student_count=0,
-        rating=c.get("rating", 0.0),
-        review_count=0,
         features=c.get("features", []),
         image_emoji=c.get("image_emoji", c.get("icon", "📚")),
     )
