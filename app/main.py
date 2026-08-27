@@ -37,6 +37,7 @@ app.add_middleware(
         )
         if o and o.strip()
     ],
+    allow_origin_regex=getattr(settings, "ALLOWED_ORIGIN_REGEX", None) or None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

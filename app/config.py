@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     # Comma-separated. Credentialed CORS forbids a wildcard, so the origins allowed
     # to call this API have to be named.
     ALLOWED_ORIGINS: str = ""
+    # hs-admin is deployed on Vercel, which mints a fresh hostname for every preview
+    # deploy. Listing them one by one is how production ended up locked out, so the
+    # project's own Vercel hostnames are matched by pattern instead. Scoped to this
+    # project on purpose — `.*\.vercel\.app` would let any Vercel site make
+    # credentialed calls against this API.
+    ALLOWED_ORIGIN_REGEX: str = r"https://hs-(admin|platform)[a-z0-9-]*\.vercel\.app"
     # This service's own public URL. The Google OAuth redirect_uri must point at the
     # callback route on *this* API, not at the frontend, and must match byte-for-byte
     # between the authorize request and the token exchange.
