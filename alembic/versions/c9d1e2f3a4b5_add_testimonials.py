@@ -4,6 +4,7 @@ Revision ID: c9d1e2f3a4b5
 Revises: 246f4ad9a700
 """
 from typing import Sequence, Union
+from datetime import datetime
 import uuid
 
 import sqlalchemy as sa
@@ -64,20 +65,47 @@ SEED = [
 
 
 def upgrade() -> None:
-    testimonials = op.create_table(
+    # app.initial_data.init_db() runs create_all() at startup, so a deploy that lands
+    # before this migration will already have built the table from the model. Bind to
+    # the existing shape in that case rather than failing on a duplicate.
+    testimonials = sa.table(
         "testimonials",
-        sa.Column("id", sa.String(), primary_key=True),
-        sa.Column("name", sa.String(), nullable=False, server_default="Anonymous"),
-        sa.Column("role", sa.String(), nullable=False, server_default="Parent"),
-        sa.Column("quote", sa.Text(), nullable=False),
-        sa.Column("stars", sa.Integer(), nullable=False, server_default="5"),
-        sa.Column("published", sa.Boolean(), nullable=False, server_default=sa.false()),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.column("id", sa.String),
+        sa.column("name", sa.String),
+        sa.column("role", sa.String),
+        sa.column("quote", sa.Text),
+        sa.column("stars", sa.Integer),
+        sa.column("published", sa.Boolean),
+        sa.column("created_at", sa.DateTime),
     )
+    if not sa.inspect(op.get_bind()).has_table("testimonials"):
+        testimonials = op.create_table(
+            "testimonials",
+            sa.Column("id", sa.String(), primary_key=True),
+            sa.Column("name", sa.String(), nullable=False, server_default="Anonymous"),
+            sa.Column("role", sa.String(), nullable=False, server_default="Parent"),
+            sa.Column("quote", sa.Text(), nullable=False),
+            sa.Column("stars", sa.Integer(), nullable=False, server_default="5"),
+            sa.Column("published", sa.Boolean(), nullable=False, server_default=sa.false()),
+            sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        )
+
+    # Seed only into an empty table, so this is safe however the table got here.
+    if op.get_bind().execute(sa.text("SELECT COUNT(*) FROM testimonials")).scalar():
+        return
+
     op.bulk_insert(
         testimonials,
         [
-            {"id": str(uuid.uuid4()), "name": "Anonymous", "role": role, "quote": quote, "stars": 5, "published": True}
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Anonymous",
+                "role": role,
+                "quote": quote,
+                "stars": 5,
+                "published": True,
+                "created_at": datetime.utcnow(),
+            }
             for role, quote in SEED
         ],
     )
