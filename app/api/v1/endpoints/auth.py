@@ -12,7 +12,8 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, require_roles
+from app.api.v1.endpoints import invite_codes
 from app.config import settings
 from app.security import create_access_token, hash_password, verify_password
 from app.notifications import send_password_reset
@@ -20,6 +21,9 @@ from app.notifications import send_password_reset
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+_INVITE_INVALID = "That invite code is invalid or has already been used"
+_INVITE_MISSING = "An invite code is required to create an account"
 
 
 @router.post("/register", response_model=schemas.Token, status_code=201)
@@ -31,8 +35,19 @@ def register(
     existing = crud.get_user_by_email(db, user_in.email)
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered")
+    invite = None
+    if settings.REGISTRATION_INVITE_REQUIRED:
+        if not invite_codes.normalize(user_in.invite_code):
+            raise HTTPException(status_code=403, detail=_INVITE_MISSING)
+        invite = invite_codes.claim(db, user_in.invite_code)
+        if invite is None:
+            raise HTTPException(status_code=403, detail=_INVITE_INVALID)
     password_hash = hash_password(user_in.password)
+    # create_user commits, which commits the claim with it; if it raises, neither lands.
     user = crud.create_user(db, user_in, password_hash)
+    if invite is not None:
+        invite.used_by_user_id = user.id
+        db.commit()
     # Auto-create student profile for student-role registrations
     if user.role == models.Role.STUDENT:
         student = models.Student(
@@ -56,6 +71,8 @@ def create_user_admin(
     *,
     db: Session = Depends(get_db),
     user_in: schemas.UserCreate,
+    # Unauthenticated, this was a way to open an account without paying for one.
+    _admin: models.User = Depends(require_roles("admin")),
 ) -> models.User:
     existing = crud.get_user_by_email(db, user_in.email)
     if existing:
@@ -253,11 +270,15 @@ _STATE_COOKIE = "hs-oauth-state"
 _STATE_TTL_SECONDS = 600
 
 
-def _issue_state() -> str:
-    """A short-lived signed token binding the callback to the request that started it."""
+def _issue_state(invite_code: Optional[str] = None) -> str:
+    """A short-lived signed token binding the callback to the request that started it.
+
+    It also carries the invite code typed on the sign-up page, since Google's redirect
+    is the only thing that reaches the callback. Signed, so it cannot be swapped."""
     now = datetime.now(timezone.utc)
     return jwt.encode(
         {
+            "invite": invite_codes.normalize(invite_code) or None,
             "nonce": secrets.token_urlsafe(16),
             "iat": now,
             "exp": now + timedelta(seconds=_STATE_TTL_SECONDS),
@@ -268,7 +289,7 @@ def _issue_state() -> str:
     )
 
 
-def _verify_state(state: Optional[str], cookie_state: Optional[str]) -> None:
+def _verify_state(state: Optional[str], cookie_state: Optional[str]) -> dict:
     """Reject a callback we did not initiate. This is the CSRF defence in OAuth.
 
     The signature and the 10-minute expiry are the part that cannot be forged: only
@@ -292,15 +313,22 @@ def _verify_state(state: Optional[str], cookie_state: Optional[str]) -> None:
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
     if not cookie_state:
         logger.warning("Google OAuth state cookie missing; verified by signature only")
+    return claims
 
 
 @router.get("/google")
-def google_auth() -> JSONResponse:
-    """Initiate Google OAuth sign-in."""
+def google_auth(
+    invite_code: Optional[str] = None, db: Session = Depends(get_db)
+) -> JSONResponse:
+    """Initiate Google OAuth sign-in. `invite_code` is only needed for a new account."""
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
+    # Checked here too so a typo fails on the sign-up page, not after the Google round trip.
+    # The callback still claims it atomically; this is only an early answer.
+    if invite_code and not invite_codes.is_available(db, invite_code):
+        raise HTTPException(status_code=403, detail=_INVITE_INVALID)
 
-    state = _issue_state()
+    state = _issue_state(invite_code)
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
         "redirect_uri": _google_redirect_uri(),
@@ -340,7 +368,7 @@ def google_callback(
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
 
-    _verify_state(state, request.cookies.get(_STATE_COOKIE))
+    state_claims = _verify_state(state, request.cookies.get(_STATE_COOKIE))
 
     token_resp = requests.post(
         "https://oauth2.googleapis.com/token",
@@ -388,6 +416,19 @@ def google_callback(
 
     user = crud.get_user_by_email(db, email)
     if not user:
+        invite = None
+        if settings.REGISTRATION_INVITE_REQUIRED:
+            invite = invite_codes.claim(db, state_claims.get("invite"))
+            if invite is None:
+                # A browser is following this redirect, so answer on the sign-up page
+                # rather than with a bare JSON error.
+                reason = _INVITE_INVALID if state_claims.get("invite") else _INVITE_MISSING
+                response = RedirectResponse(
+                    url=f"{settings.FRONTEND_URL.rstrip('/')}/register#error="
+                    + urllib.parse.quote(reason)
+                )
+                response.delete_cookie(_STATE_COOKIE, path="/")
+                return response
         user = models.User(
             email=email,
             name=name,
@@ -397,6 +438,8 @@ def google_callback(
         db.add(user)
         db.commit()
         db.refresh(user)
+        if invite is not None:
+            invite.used_by_user_id = user.id
         db.add(
             models.Student(
                 name=name,

@@ -62,6 +62,18 @@ MIGRATIONS = [
         CONSTRAINT uq_rating_student_target UNIQUE (student_id, target_type, target_id)
     )
     """),
+
+    # /auth/register reads this on every sign-up, so it has to exist before alembic runs.
+    ("invite_codes", "create_table", """
+    CREATE TABLE IF NOT EXISTS invite_codes (
+        id VARCHAR PRIMARY KEY,
+        code VARCHAR NOT NULL UNIQUE,
+        note VARCHAR,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        used_at TIMESTAMP,
+        used_by_user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL
+    )
+    """),
 ]
 
 

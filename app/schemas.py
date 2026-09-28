@@ -28,6 +28,8 @@ class UserCreate(BaseModel):
     name: Optional[str] = None
     password: str
     role: Role = Role.STUDENT
+    # Required by /auth/register; ignored by the admin-only /auth/create-user.
+    invite_code: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -1022,3 +1024,20 @@ class RatingSummary(BaseModel):
     average: Optional[float] = None
     count: int = 0
     my_stars: Optional[int] = None
+
+
+# ─── Invite code schemas ───
+
+class InviteCodeCreate(BaseModel):
+    note: Optional[str] = None
+
+
+class InviteCodeResponse(BaseModel):
+    id: str
+    code: str
+    note: Optional[str] = None
+    created_at: datetime
+    used_at: Optional[datetime] = None
+    used_by_user_id: Optional[str] = None
+    used_by_email: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)

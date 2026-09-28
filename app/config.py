@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # callback route on *this* API, not at the frontend, and must match byte-for-byte
     # between the authorize request and the token exchange.
     BACKEND_URL: str = "http://localhost:8000"
+    # New accounts need an admin-issued invite code (issued once someone has paid).
+    # Only turn this off to open registration to everyone.
+    REGISTRATION_INVITE_REQUIRED: bool = True
     class Config:
         env_file = ".env"
         extra = "ignore"

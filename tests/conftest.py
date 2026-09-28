@@ -6,6 +6,8 @@ from sqlalchemy.orm import sessionmaker
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["SECRET_KEY"] = "test-secret-key-for-tests-only"
+# Most suites register accounts as setup; test_invite_codes.py switches the gate back on.
+os.environ["REGISTRATION_INVITE_REQUIRED"] = "false"
 
 from app.database import Base, get_db
 from app.main import app

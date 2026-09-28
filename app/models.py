@@ -638,3 +638,21 @@ def _rating_aggregates(target_type: str, id_column):
 # None until somebody actually rates it — the frontends hide the stars on None.
 Course.rating, Course.review_count = _rating_aggregates("course", Course.id)
 Lesson.rating, Lesson.review_count = _rating_aggregates("lesson", Lesson.id)
+
+
+class InviteCode(Base):
+    """A single-use code an admin issues once someone has paid. Creating an account —
+    by password or by Google — claims one; an account that already exists never needs one."""
+    __tablename__ = "invite_codes"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    code = Column(String, unique=True, nullable=False)
+    note = Column(String, nullable=True)  # who paid, so the admin can tell codes apart
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    used_by_user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    used_by = relationship("User")
+
+    @property
+    def used_by_email(self):
+        return self.used_by.email if self.used_by else None
