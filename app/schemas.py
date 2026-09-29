@@ -70,6 +70,8 @@ class QuestionBase(BaseModel):
     review_status: Optional[ReviewStatus] = None
     difficulty: Difficulty = Difficulty.MEDIUM
     source_test_id: Optional[str] = None
+    mock_module: Optional[str] = None
+    mock_position: Optional[int] = None
     lesson_id: Optional[str] = None
     unit_id: Optional[str] = None
     course_id: Optional[str] = None

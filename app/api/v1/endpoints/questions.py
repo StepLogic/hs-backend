@@ -23,6 +23,7 @@ def read_questions(
     unit_id: Optional[str] = None,
     course_id: Optional[str] = None,
     difficulty: Optional[models.Difficulty] = None,
+    source_test_id: Optional[str] = None,
     is_full_test: Optional[bool] = None,
     unattached: bool = False,
     # Practice asks for a fresh draw each round; admin lists keep a stable order.
@@ -31,6 +32,11 @@ def read_questions(
     query = db.query(models.Question)
     if difficulty is not None:
         query = query.filter(models.Question.difficulty == difficulty)
+    if source_test_id is not None:
+        # A mock is played in order, module by module.
+        query = query.filter(models.Question.source_test_id == source_test_id).order_by(
+            models.Question.mock_module, models.Question.mock_position, models.Question.id
+        )
     if subject is not None:
         query = query.filter(models.Question.subject == subject)
     if grade_level is not None:

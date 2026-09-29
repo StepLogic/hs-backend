@@ -63,6 +63,11 @@ MIGRATIONS = [
     )
     """),
 
+    # Every question query selects these, so they must exist before the code that maps
+    # them serves a request — migrations do not run on deploy.
+    ("questions", "mock_module", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS mock_module VARCHAR"),
+    ("questions", "mock_position", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS mock_position INTEGER"),
+
     # /auth/register reads this on every sign-up, so it has to exist before alembic runs.
     ("invite_codes", "create_table", """
     CREATE TABLE IF NOT EXISTS invite_codes (

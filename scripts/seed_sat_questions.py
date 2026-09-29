@@ -14,6 +14,12 @@ from app.database import SessionLocal
 from app import models
 
 
+# fullmock sections in the order the source returns them: each section's first module,
+# then the harder second module, with the easier second modules last. Read off the
+# sections' difficulty mix, and confirmed against the question counts (27 / 22).
+SECTION_MODULES = ("rw1", "rw2_hard", "math1", "math2_hard", "rw2_easy", "math2_easy")
+
+
 def map_difficulty(src: str) -> str:
     if not src:
         return "medium"
@@ -85,6 +91,13 @@ def transform_and_insert(db: Session, questions_data: list[dict]):
                 review_status="published",
                 difficulty=difficulty,
                 source_test_id=source_test_id,
+                # Without these a mock cannot be played module by module.
+                mock_module=(
+                    SECTION_MODULES[q["_section_idx"]]
+                    if source_test_id.startswith("fullmock-") and "_section_idx" in q
+                    else None
+                ),
+                mock_position=q.get("_position") if source_test_id.startswith("fullmock-") else None,
             )
             db.add(db_question)
             success += 1

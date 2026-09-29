@@ -30,9 +30,10 @@ def extract_questions(data, source_test_id):
         if len(data) > 0 and isinstance(data[0], list):
             # fullmock format: list of sections, each section is list of questions
             for section_idx, section in enumerate(data):
-                for q in section:
+                for position, q in enumerate(section):
                     q["_source_test_id"] = source_test_id
                     q["_section_idx"] = section_idx
+                    q["_position"] = position
                     questions.append(q)
         elif len(data) > 0 and isinstance(data[0], dict):
             # test format: flat list of questions
