@@ -37,13 +37,6 @@ def claim(db: Session, code: Optional[str]) -> Optional[models.InviteCode]:
     return db.query(models.InviteCode).filter(models.InviteCode.code == code).one()
 
 
-def is_available(db: Session, code: Optional[str]) -> bool:
-    code = normalize(code)
-    return bool(code) and db.query(models.InviteCode).filter(
-        models.InviteCode.code == code, models.InviteCode.used_at.is_(None)
-    ).first() is not None
-
-
 @router.get("/", response_model=list[schemas.InviteCodeResponse])
 def list_invite_codes(
     db: Session = Depends(get_db),

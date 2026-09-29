@@ -119,8 +119,18 @@ def test_google_new_account_without_code_is_sent_back_to_register(client, monkey
     db.close()
 
 
-def test_google_rejects_a_bad_code_before_leaving_for_google(client, monkeypatch, google):
-    assert _google(client, monkeypatch, "g@x.com", "BADCODE").status_code == 403
+def test_google_new_account_with_a_bad_code_is_sent_back_to_register(client, monkeypatch, google):
+    r = _google(client, monkeypatch, "g@x.com", "BADCODE")
+    assert r.headers["location"].startswith("http://frontend.test/register#error=")
+    assert "invalid" in r.headers["location"]
+
+
+def test_google_existing_account_with_a_spent_code_still_signs_in(client, monkeypatch, google, admin_token):
+    """The sign-up page makes Google users type a code; a returning user may retype theirs."""
+    code = _new_code(client, admin_token)
+    _register(client, "back@x.com", code)
+    r = _google(client, monkeypatch, "back@x.com", code)
+    assert r.headers["location"].startswith("http://frontend.test/login#token=")
 
 
 def test_google_new_account_with_code_claims_it(client, monkeypatch, google, admin_token):

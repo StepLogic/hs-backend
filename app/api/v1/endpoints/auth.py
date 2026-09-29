@@ -317,16 +317,14 @@ def _verify_state(state: Optional[str], cookie_state: Optional[str]) -> dict:
 
 
 @router.get("/google")
-def google_auth(
-    invite_code: Optional[str] = None, db: Session = Depends(get_db)
-) -> JSONResponse:
+def google_auth(invite_code: Optional[str] = None) -> JSONResponse:
     """Initiate Google OAuth sign-in. `invite_code` is only needed for a new account."""
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
-    # Checked here too so a typo fails on the sign-up page, not after the Google round trip.
-    # The callback still claims it atomically; this is only an early answer.
-    if invite_code and not invite_codes.is_available(db, invite_code):
-        raise HTTPException(status_code=403, detail=_INVITE_INVALID)
+    # Not checked here: before Google answers we do not know whether this is a new
+    # account (which needs a valid code) or a returning user (who needs none, and may
+    # retype one they already spent). The callback decides, and sends a refused new
+    # account back to /register with the reason.
 
     state = _issue_state(invite_code)
     params = {
