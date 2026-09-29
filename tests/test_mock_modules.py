@@ -47,3 +47,17 @@ def test_questions_by_source_test_come_back_in_module_order(client, admin_token)
     assert r.status_code == 200
     assert [q["prompt"] for q in r.json()] == ["math1-0", "math1-1", "math2_easy-0", "rw1-0"]
     assert r.json()[0]["mock_module"] == "math1"
+
+
+def test_combined_file_is_regrouped_per_mock_and_section():
+    from scripts.backfill_mock_modules import sections_by_mock
+    flat = [
+        {"_source_test_id": "fullmock-1", "_section_idx": 2, "question": "a"},
+        {"_source_test_id": "fullmock-1", "_section_idx": 0, "question": "b"},
+        {"_source_test_id": "fullmock-1", "_section_idx": 2, "question": "c"},
+        {"_source_test_id": "ps-words-1", "_section_idx": 0, "question": "not a mock"},
+    ]
+    got = sections_by_mock(flat)
+    assert list(got) == ["fullmock-1"]
+    assert [q["question"] for q in got["fullmock-1"][2]] == ["a", "c"]
+    assert [q["question"] for q in got["fullmock-1"][0]] == ["b"]

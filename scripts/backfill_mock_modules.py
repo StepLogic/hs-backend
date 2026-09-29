@@ -8,6 +8,11 @@ section and position and writes mock_module / mock_position.
 
     python scripts/backfill_mock_modules.py fullmock-0 fullmock_0.json          # dry run
     python scripts/backfill_mock_modules.py fullmock-0 fullmock_0.json --apply
+
+or every mock at once from the fetch script's combined output, whose questions each carry
+_source_test_id and _section_idx:
+
+    python scripts/backfill_mock_modules.py --all data/all_sat_questions.json [--apply]
 """
 import json
 import sys
@@ -41,33 +46,54 @@ def plan(rows: list, sections: list) -> dict:
     return out
 
 
+def sections_by_mock(flat: list) -> dict:
+    """The combined file is flat, in fetch order; regroup it into each mock's sections."""
+    mocks: dict = defaultdict(lambda: [[] for _ in SECTION_MODULES])
+    for q in flat:
+        mock = str(q.get("_source_test_id") or "")
+        if mock.startswith("fullmock-"):
+            mocks[mock][q["_section_idx"]].append(q)
+    return dict(mocks)
+
+
+def backfill(db, source_test_id: str, sections: list, apply: bool) -> bool:
+    rows = db.query(models.Question).filter(models.Question.source_test_id == source_test_id).all()
+    mapping = plan(rows, sections)
+    expected = sum(len(s) for s in sections)
+    counts = defaultdict(int)
+    for module, _ in mapping.values():
+        counts[module] += 1
+    ok = len(mapping) == len(rows) == expected
+    print(f"{source_test_id}: {len(rows)} stored, {expected} in file, {len(mapping)} matched "
+          f"{dict(counts)}{'' if ok else '  -> SKIPPED, the file and the table disagree'}")
+    if ok and apply:
+        for row in rows:
+            row.mock_module, row.mock_position = mapping[row.id]
+    return ok
+
+
 def main() -> None:
-    if len(sys.argv) < 3:
+    args = [a for a in sys.argv[1:] if a != "--apply"]
+    apply = "--apply" in sys.argv
+    if len(args) != 2:
         sys.exit(__doc__)
-    source_test_id, path, apply = sys.argv[1], sys.argv[2], "--apply" in sys.argv
-    sections = json.load(open(path))
-    if len(sections) != len(SECTION_MODULES):
-        sys.exit(f"expected {len(SECTION_MODULES)} sections, got {len(sections)}")
+    if args[0] == "--all":
+        todo = sorted(sections_by_mock(json.load(open(args[1]))).items())
+    else:
+        todo = [(args[0], json.load(open(args[1])))]
+    for mock, sections in todo:
+        if len(sections) != len(SECTION_MODULES):
+            sys.exit(f"{mock}: expected {len(SECTION_MODULES)} sections, got {len(sections)}")
 
     db = SessionLocal()
     try:
-        rows = db.query(models.Question).filter(models.Question.source_test_id == source_test_id).all()
-        mapping = plan(rows, sections)
-        expected = sum(len(s) for s in sections)
-        print(f"{source_test_id}: {len(rows)} stored, {expected} in file, {len(mapping)} matched")
-        counts = defaultdict(int)
-        for module, _ in mapping.values():
-            counts[module] += 1
-        print("  per module:", dict(counts))
-        if len(mapping) != len(rows) or len(rows) != expected:
-            sys.exit("  refusing to write a partial mapping — the file and the table disagree")
-        if not apply:
-            print("  dry run; pass --apply to write")
-            return
-        for row in rows:
-            row.mock_module, row.mock_position = mapping[row.id]
-        db.commit()
-        print("  written")
+        results = [backfill(db, mock, sections, apply) for mock, sections in todo]
+        print(f"{sum(results)}/{len(results)} mocks fully matched")
+        if apply:
+            db.commit()  # one transaction: mismatched mocks were left untouched
+            print("written")
+        else:
+            print("dry run; pass --apply to write")
     finally:
         db.close()
 

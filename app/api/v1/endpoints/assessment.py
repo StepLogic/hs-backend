@@ -79,7 +79,31 @@ def _normalise(value) -> str:
 _OPTION_KEY = re.compile(r"^\s*([A-Za-z])[.)]\s")
 
 
+_DECIMAL = re.compile(r"^-?\d*\.(\d+)$")
+
+
+def _fits_grid_decimal(x: Fraction, expected: str) -> bool:
+    """SAT grid-in rule: a repeating value may be entered rounded or truncated to fill
+    the grid, so the key "2.666" also accepts 8/3, 2.6666 and 2.667 is not required.
+    The key is itself one of those forms; accept any answer that rounds or truncates
+    to it at the key's precision."""
+    m = _DECIMAL.match(expected)
+    if not m:
+        return False
+    k = len(m.group(1))
+    e = Fraction(expected)
+    scale = 10**k
+    truncated = Fraction(int(x * scale), scale)  # int() truncates toward zero
+    rounded = Fraction(round(x * scale), scale)
+    return e in (truncated, rounded)
+
+
 def answers_match(given, expected) -> bool:
+    # A few keys (and some submitted answers) are one-item lists (["4"]); they mean the item.
+    if isinstance(expected, list) and len(expected) == 1:
+        expected = expected[0]
+    if isinstance(given, list) and len(given) == 1:
+        given = given[0]
     # Most of the bank stores the correct answer as a letter ("C") while the options
     # read "C. $x = 45$", and the options are what the student picks.
     key = _OPTION_KEY.match(str(given or ""))
@@ -89,7 +113,8 @@ def answers_match(given, expected) -> bool:
     if a == b:
         return True
     try:
-        return float(Fraction(a)) == float(Fraction(b))
+        x = Fraction(a)
+        return x == Fraction(b) or _fits_grid_decimal(x, b)
     except (ValueError, ZeroDivisionError):
         return False
 

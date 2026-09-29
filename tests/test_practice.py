@@ -128,3 +128,22 @@ def test_practice_submit_grades_on_the_server(client, admin_token):
     })
     assert r.status_code == 200, r.text
     assert r.json()["test_result"]["correct_count"] == 1
+
+
+def test_grid_in_decimals_accept_rounded_or_truncated_entries():
+    from app.api.v1.endpoints.assessment import answers_match
+    assert answers_match("8/3", "2.666")          # exact value truncates to the key
+    assert answers_match("2.6666", "2.666")
+    assert answers_match("-2/3", "-0.6667")       # rounds to the key
+    assert answers_match("1/7", "0.1428")
+    assert answers_match("5/2", "2.5")
+    assert not answers_match("2.4", "2.5")        # a different answer, not a rounding
+    assert not answers_match("2.67", "2.666")     # the SAT wants the grid filled
+    assert not answers_match("3", "2.666")
+
+
+def test_one_item_list_keys_mean_the_item():
+    from app.api.v1.endpoints.assessment import answers_match
+    assert answers_match("4", ["4"])
+    assert not answers_match("5", ["4"])
+    assert answers_match(["A"], ["A"]) and not answers_match(["B"], ["A"])

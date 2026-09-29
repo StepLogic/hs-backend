@@ -81,7 +81,8 @@ def transform_and_insert(db: Session, questions_data: list[dict]):
             db_question = models.Question(
                 subject=subject,
                 grade_level=11,
-                question_type="multiple-choice",
+                # No choices is an SAT grid-in: the student types the answer.
+                question_type="multiple-choice" if options else "fill-in",
                 prompt=prompt,
                 context=context,
                 options=options,
