@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -21,10 +22,15 @@ def read_questions(
     lesson_id: Optional[str] = None,
     unit_id: Optional[str] = None,
     course_id: Optional[str] = None,
+    difficulty: Optional[models.Difficulty] = None,
     is_full_test: Optional[bool] = None,
     unattached: bool = False,
+    # Practice asks for a fresh draw each round; admin lists keep a stable order.
+    shuffle: bool = False,
 ) -> list[models.Question]:
     query = db.query(models.Question)
+    if difficulty is not None:
+        query = query.filter(models.Question.difficulty == difficulty)
     if subject is not None:
         query = query.filter(models.Question.subject == subject)
     if grade_level is not None:
@@ -45,6 +51,10 @@ def read_questions(
         query = query.filter(models.Question.is_full_test == is_full_test)
     if unattached:
         query = query.filter(models.Question.lesson_id.is_(None))
+    if shuffle:
+        # ponytail: ORDER BY random() scans the filtered set; fine at bank sizes in the
+        # low thousands, switch to TABLESAMPLE if it grows past that.
+        query = query.order_by(func.random())
     return query.offset(skip).limit(limit).all()
 
 

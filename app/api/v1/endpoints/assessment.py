@@ -1,5 +1,6 @@
 import math
 import random
+import re
 from fractions import Fraction
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -75,7 +76,15 @@ def _normalise(value) -> str:
     return text.lower()
 
 
+_OPTION_KEY = re.compile(r"^\s*([A-Za-z])[.)]\s")
+
+
 def answers_match(given, expected) -> bool:
+    # Most of the bank stores the correct answer as a letter ("C") while the options
+    # read "C. $x = 45$", and the options are what the student picks.
+    key = _OPTION_KEY.match(str(given or ""))
+    if key and len(str(expected or "").strip()) == 1:
+        return key.group(1).upper() == str(expected).strip().upper()
     a, b = _normalise(given), _normalise(expected)
     if a == b:
         return True

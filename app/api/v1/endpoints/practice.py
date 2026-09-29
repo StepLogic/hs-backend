@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
 from app.api.deps import get_db, get_current_user, get_current_user_optional
+from app.api.v1.endpoints.assessment import answers_match
 from app.srs import score_to_quality, update_mastery
 
 router = APIRouter()
@@ -111,6 +112,13 @@ def next_practice(
 def submit_practice(
     *, db: Session = Depends(get_db), payload: schemas.PracticeSubmit
 ) -> dict:
+    # Grade against the bank rather than trusting the client's is_correct: the client
+    # compared option text to a letter key and marked nearly every right answer wrong.
+    for ans in payload.answers:
+        q = crud.get_question(db, ans.question_id)
+        if q is not None:
+            ans.is_correct = answers_match(ans.answer, q.correct_answer)
+
     # Write user answers and compute scores
     correct_count = sum(1 for a in payload.answers if a.is_correct)
     total = len(payload.answers)
