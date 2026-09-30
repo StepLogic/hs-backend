@@ -95,3 +95,30 @@ def test_course_outline_matches_units_plus_their_lessons(client, admin_token):
     for u in outline:
         per_unit = client.get(f"/api/v1/lessons/unit/{u['id']}").json()
         assert sorted(per_unit, key=lambda l: l["id"]) == sorted(u["lessons"], key=lambda l: l["id"])
+
+
+def test_course_and_unit_filters_include_questions_attached_through_lessons(client, admin_token):
+    from app import models
+    from tests.conftest import TestingSessionLocal
+    admin = {"Authorization": f"Bearer {admin_token}"}
+    course = client.post("/api/v1/courses/", headers=admin, json={
+        "subject": "math", "course_type": "core", "title": "C", "short_title": "C",
+        "description": "d", "icon": "x", "color": "#000", "price": 0, "skills": [],
+        "grade_range": "9-12", "features": [], "image_emoji": "x"}).json()
+    unit = client.post("/api/v1/units/", headers=admin, json={"course_id": course["id"], "title": "U", "slug": "u"}).json()
+    lesson = client.post("/api/v1/lessons/", headers=admin, json={"unit_id": unit["id"], "title": "L", "slug": "l"}).json()
+    db = TestingSessionLocal()
+    def q(prompt, **cols):
+        row = models.Question(subject="math", grade_level=11, question_type="multiple-choice", prompt=prompt,
+                              options=["A. 1"], correct_answer="A", skill="s", explanation="e", **cols)
+        db.add(row); db.flush(); return row
+    q("by course column", course_id=course["id"])
+    linked = q("attached through the lesson only")
+    db.execute(models.lesson_questions.insert().values(lesson_id=lesson["id"], question_id=linked.id))
+    q("somewhere else entirely")
+    db.commit(); db.close()
+
+    by_course = {x["prompt"] for x in client.get("/api/v1/questions/", params={"course_id": course["id"]}).json()}
+    assert by_course == {"by course column", "attached through the lesson only"}
+    by_unit = {x["prompt"] for x in client.get("/api/v1/questions/", params={"unit_id": unit["id"]}).json()}
+    assert by_unit == {"attached through the lesson only"}

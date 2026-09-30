@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -49,10 +49,27 @@ def read_questions(
         query = query.filter(models.Question.review_status == models.ReviewStatus.PUBLISHED)
     if lesson_id is not None:
         query = query.filter(models.Question.lesson_id == lesson_id)
+    # A question belongs to a unit or course by its own columns OR by being attached to
+    # one of its lessons: the SAT Math import attached reused bank questions through
+    # lesson_questions only, so matching the columns alone missed them.
     if unit_id is not None:
-        query = query.filter(models.Question.unit_id == unit_id)
+        unit_lessons = select(models.Lesson.id).where(models.Lesson.unit_id == unit_id)
+        query = query.filter(or_(
+            models.Question.unit_id == unit_id,
+            models.Question.lesson_id.in_(unit_lessons),
+            models.Question.id.in_(select(models.lesson_questions.c.question_id)
+                                   .where(models.lesson_questions.c.lesson_id.in_(unit_lessons))),
+        ))
     if course_id is not None:
-        query = query.filter(models.Question.course_id == course_id)
+        course_units = select(models.Unit.id).where(models.Unit.course_id == course_id)
+        course_lessons = select(models.Lesson.id).where(models.Lesson.unit_id.in_(course_units))
+        query = query.filter(or_(
+            models.Question.course_id == course_id,
+            models.Question.unit_id.in_(course_units),
+            models.Question.lesson_id.in_(course_lessons),
+            models.Question.id.in_(select(models.lesson_questions.c.question_id)
+                                   .where(models.lesson_questions.c.lesson_id.in_(course_lessons))),
+        ))
     if is_full_test is not None:
         query = query.filter(models.Question.is_full_test == is_full_test)
     if unattached:
