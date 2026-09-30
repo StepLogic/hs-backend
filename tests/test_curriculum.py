@@ -122,3 +122,28 @@ def test_course_and_unit_filters_include_questions_attached_through_lessons(clie
     assert by_course == {"by course column", "attached through the lesson only"}
     by_unit = {x["prompt"] for x in client.get("/api/v1/questions/", params={"unit_id": unit["id"]}).json()}
     assert by_unit == {"attached through the lesson only"}
+
+
+def test_detailed_questions_are_staff_only_and_resolve_lesson_links(client, admin_token):
+    from app import models
+    from tests.conftest import TestingSessionLocal
+    admin = {"Authorization": f"Bearer {admin_token}"}
+    assert client.get("/api/v1/questions/detailed").status_code == 401
+    course = client.post("/api/v1/courses/", headers=admin, json={
+        "subject": "math", "course_type": "core", "title": "Detail", "short_title": "D",
+        "description": "d", "icon": "x", "color": "#000", "price": 0, "skills": [],
+        "grade_range": "9-12", "features": [], "image_emoji": "x"}).json()
+    unit = client.post("/api/v1/units/", headers=admin, json={"course_id": course["id"], "title": "Unit A", "slug": "a"}).json()
+    lesson = client.post("/api/v1/lessons/", headers=admin, json={"unit_id": unit["id"], "title": "Lesson A", "slug": "la"}).json()
+    db = TestingSessionLocal()
+    q = models.Question(subject="math", grade_level=11, question_type="multiple-choice", prompt="linked only",
+                        options=["A. 1"], correct_answer="A", skill="s", explanation="e")
+    db.add(q); db.flush()
+    db.execute(models.lesson_questions.insert().values(lesson_id=lesson["id"], question_id=q.id))
+    db.commit(); qid = q.id; db.close()
+
+    rows = {r["id"]: r for r in client.get("/api/v1/questions/detailed", params={"limit": 20000}, headers=admin).json()}
+    r = rows[qid]
+    assert (r["course_title"], r["unit_title"], r["lesson_title"]) == ("Detail", "Unit A", "Lesson A")
+    assert r["lessons"] == [{"id": lesson["id"], "title": "Lesson A"}]
+    assert "pairs" in r and "mock_module" in r

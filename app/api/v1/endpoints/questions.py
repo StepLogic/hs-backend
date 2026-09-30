@@ -85,20 +85,30 @@ def read_questions(
 def read_questions_detailed(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=5000),
+    # High enough for the whole bank (~6,400): the admin page lists every question.
+    limit: int = Query(100, ge=1, le=20000),
+    _staff: models.User = Depends(require_roles("admin", "teacher")),
 ) -> list[dict]:
     """Return questions with their associated course/unit/lesson names."""
-    questions = db.query(models.Question).offset(skip).limit(limit).all()
+    questions = db.query(models.Question).order_by(models.Question.id).offset(skip).limit(limit).all()
 
     # Build lookup tables
     courses = {c.id: c for c in db.query(models.Course).all()}
     units = {u.id: u for u in db.query(models.Unit).all()}
     lessons = {l.id: l for l in db.query(models.Lesson).all()}
+    # Every question's lesson links in one query. Reading q.lessons per question ran one
+    # query each: ~5,000 round trips, 45 s for the admin page.
+    links: dict[str, list[models.Lesson]] = {}
+    for question_id, lesson_id in db.execute(
+        select(models.lesson_questions.c.question_id, models.lesson_questions.c.lesson_id)
+    ):
+        if lesson_id in lessons:
+            links.setdefault(question_id, []).append(lessons[lesson_id])
 
     result = []
     for q in questions:
         # Resolve via many-to-many lessons, falling back to direct lesson_id
-        q_lessons = list(q.lessons) if hasattr(q, 'lessons') else []
+        q_lessons = links.get(q.id, [])
         if not q_lessons and q.lesson_id and q.lesson_id in lessons:
             q_lessons = [lessons[q.lesson_id]]
 
@@ -120,6 +130,8 @@ def read_questions_detailed(
             "prompt": q.prompt,
             "context": q.context,
             "options": q.options,
+            "pairs": q.pairs,
+            "items": q.items,
             "correct_answer": q.correct_answer,
             "skill": q.skill,
             "explanation": q.explanation,
@@ -127,6 +139,8 @@ def read_questions_detailed(
             "review_status": q.review_status.value if q.review_status else None,
             "difficulty": q.difficulty.value if q.difficulty else None,
             "source_test_id": q.source_test_id,
+            "mock_module": q.mock_module,
+            "mock_position": q.mock_position,
             "lesson_id": q.lesson_id,
             "unit_id": unit_id,
             "course_id": course_id,

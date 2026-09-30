@@ -2,6 +2,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.api.v1.api import api_router
 from app.config import settings
@@ -24,6 +25,8 @@ def on_startup() -> None:
         print(f"Migration warning: {e}")
 
 
+# JSON compresses ~5-8x; the admin question list alone is ~10 MB uncompressed.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
     # A wildcard origin and credentials cannot be combined — the browser rejects the
