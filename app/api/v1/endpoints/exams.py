@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_db, require_roles, get_current_user, owned_student
 
 router = APIRouter()
 
@@ -36,7 +36,8 @@ def read_blueprints(
 
 @router.post("/blueprints", response_model=schemas.ExamBlueprintResponse, status_code=201)
 def create_blueprint(
-    *, db: Session = Depends(get_db), blueprint_in: schemas.ExamBlueprintCreate
+    *, db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_roles("admin")), blueprint_in: schemas.ExamBlueprintCreate
 ) -> models.ExamBlueprint:
     return crud.create_exam_blueprint(db, blueprint_in)
 
@@ -45,9 +46,11 @@ def create_blueprint(
 def start_exam(
     *,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
     student_id: str = Query(...),
     blueprint_id: str = Query(...),
 ) -> dict:
+    owned_student(db, student_id, current_user)
     blueprint = crud.get_exam_blueprint(db, blueprint_id)
     if not blueprint:
         raise HTTPException(status_code=404, detail="Blueprint not found")
@@ -109,6 +112,7 @@ def start_exam(
 def submit_exam(
     *,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
     result_id: str,
     answers: list[schemas.PracticeAnswer],
     elapsed_sec: int = Body(...),
@@ -116,6 +120,7 @@ def submit_exam(
     test_result = crud.get_test_result(db, result_id)
     if not test_result:
         raise HTTPException(status_code=404, detail="Test result not found")
+    owned_student(db, test_result.student_id, current_user)
 
     correct_count = sum(1 for a in answers if a.is_correct)
     total = len(answers)

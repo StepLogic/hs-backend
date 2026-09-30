@@ -58,3 +58,16 @@ def require_roles(*roles: str):
             raise HTTPException(status_code=403, detail="Insufficient permissions")
         return current_user
     return checker
+
+
+def owned_student(db: Session, student_id: str, current_user: models.User) -> models.Student:
+    """The student, if the caller may act for them: their own (student/parent), or any
+    student for staff. Endpoints that take a student_id from the request must use this,
+    or anyone can write to anyone's record."""
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if current_user.role in (models.Role.STUDENT, models.Role.PARENT):
+        if str(student.owner_user_id) != str(current_user.id):
+            raise HTTPException(status_code=403, detail="Not authorized to access this student")
+    return student

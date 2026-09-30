@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_db, require_roles
 
 router = APIRouter()
 
@@ -50,14 +50,16 @@ def read_lesson(lesson_id: str, db: Session = Depends(get_db)) -> models.Lesson:
 
 @router.post("/", response_model=schemas.LessonResponse, status_code=201)
 def create_lesson(
-    *, db: Session = Depends(get_db), lesson_in: schemas.LessonCreate
+    *, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")), lesson_in: schemas.LessonCreate
 ) -> models.Lesson:
     return crud.create_lesson(db, lesson_in)
 
 
 @router.put("/{lesson_id}", response_model=schemas.LessonResponse)
 def update_lesson(
-    *, lesson_id: str, db: Session = Depends(get_db), lesson_in: schemas.LessonUpdate
+    *, lesson_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")), lesson_in: schemas.LessonUpdate
 ) -> models.Lesson:
     lesson = crud.update_lesson(db, lesson_id, lesson_in)
     if not lesson:
@@ -66,7 +68,8 @@ def update_lesson(
 
 
 @router.delete("/{lesson_id}")
-def delete_lesson(lesson_id: str, db: Session = Depends(get_db)) -> dict[str, bool]:
+def delete_lesson(lesson_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher"))) -> dict[str, bool]:
     success = crud.delete_lesson(db, lesson_id)
     if not success:
         raise HTTPException(status_code=404, detail="Lesson not found")

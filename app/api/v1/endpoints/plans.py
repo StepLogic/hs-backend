@@ -5,15 +5,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_user, owned_student
 
 router = APIRouter()
 
 
 @router.post("", response_model=schemas.StudyPlanResponse, status_code=201)
 def create_plan(
-    *, db: Session = Depends(get_db), plan_in: schemas.StudyPlanCreate
+    *, db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user), plan_in: schemas.StudyPlanCreate
 ) -> models.StudyPlan:
+    owned_student(db, plan_in.student_id, current_user)
     return crud.create_study_plan(db, plan_in)
 
 
@@ -38,7 +40,12 @@ def update_plan_item(
     item_id: str,
     item_update: schemas.StudyPlanItemUpdate,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ) -> models.StudyPlanItem:
+    plan = db.query(models.StudyPlan).filter(models.StudyPlan.id == plan_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    owned_student(db, plan.student_id, current_user)
     item = crud.update_study_plan_item(db, plan_id, item_id, item_update)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -47,8 +54,10 @@ def update_plan_item(
 
 @router.post("/generate", response_model=schemas.StudyPlanResponse, status_code=201)
 def generate_plan(
-    *, db: Session = Depends(get_db), req: schemas.PlanGenerateRequest
+    *, db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user), req: schemas.PlanGenerateRequest
 ) -> models.StudyPlan:
+    owned_student(db, req.student_id, current_user)
     plan = crud.generate_study_plan(
         db, req.student_id, req.target_exam, req.target_exam_date
     )

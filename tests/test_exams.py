@@ -2,6 +2,7 @@ import pytest
 
 
 def test_exam_start_submit(client, admin_token):
+    client.headers["Authorization"] = f"Bearer {admin_token}"  # content writes are staff-only
     # Create blueprint
     r = client.post("/api/v1/exams/blueprints", json={
         "exam_type": "sat",

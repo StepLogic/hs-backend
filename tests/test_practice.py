@@ -28,7 +28,8 @@ def test_practice_next_prefers_weak_skills(client, admin_token):
     # Register and create student
     reg = client.post("/api/v1/auth/register", json={"email": "practice@example.com", "password": "secret123", "role": "student"})
     token = reg.json()["access_token"]
-    student_id = reg.json()["user_id"]
+    hdr = {"Authorization": f"Bearer {token}"}
+    student_id = client.get("/api/v1/students/", headers=hdr).json()[0]["id"]
 
     # Create questions for two skills
     q1 = _create_question(client, "algebra", "easy", admin_token)
@@ -45,7 +46,7 @@ def test_practice_next_prefers_weak_skills(client, admin_token):
 
     # Answer first question correctly
     q = questions[0]
-    r2 = client.post("/api/v1/practice/submit", json={
+    r2 = client.post("/api/v1/practice/submit", headers=hdr, json={
         "student_id": student_id,
         "subject": "math",
         "answers": [{"question_id": q["id"], "answer": "A", "is_correct": True, "time_spent": 20}],
@@ -117,7 +118,8 @@ def test_questions_filter_by_difficulty(client, admin_token):
 def test_practice_submit_grades_on_the_server(client, admin_token):
     qid = _lettered(client, admin_token, "medium")
     reg = client.post("/api/v1/auth/register", json={"email": "grade@example.com", "password": "secret123"})
-    student_id = reg.json()["user_id"]
+    client.headers["Authorization"] = f"Bearer {reg.json()['access_token']}"
+    student_id = client.get("/api/v1/students/").json()[0]["id"]
     r = client.post("/api/v1/practice/submit", json={
         "student_id": student_id, "subject": "math",
         # the client's own verdicts are the wrong way round on purpose
@@ -156,7 +158,7 @@ def test_practice_history_lists_a_students_answers_newest_first(client, admin_to
     hdr = {"Authorization": f"Bearer {token}"}
     student_id = client.get("/api/v1/students/", headers=hdr).json()[0]["id"]
     for answer in ("A. $x = 35$", "C. $x = 45$"):
-        client.post("/api/v1/practice/submit", json={
+        client.post("/api/v1/practice/submit", headers=hdr, json={
             "student_id": student_id, "subject": "math",
             "answers": [{"question_id": qid, "answer": answer, "is_correct": False, "time_spent": 12}],
         })

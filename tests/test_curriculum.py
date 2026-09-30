@@ -2,6 +2,7 @@ import pytest
 
 
 def test_learning_path_prereq_lock(client, admin_token):
+    client.headers["Authorization"] = f"Bearer {admin_token}"  # content writes are staff-only
     # Create course, unit, lessons
     r = client.post("/api/v1/courses/", json={
         "subject": "math",

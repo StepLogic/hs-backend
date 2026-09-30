@@ -21,14 +21,16 @@ def read_skills(
 
 @router.post("/", response_model=schemas.SkillTaxonomyResponse, status_code=201)
 def create_skill(
-    *, db: Session = Depends(get_db), skill_in: schemas.SkillTaxonomyCreate
+    *, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")), skill_in: schemas.SkillTaxonomyCreate
 ) -> models.SkillTaxonomy:
     return crud.create_skill_taxonomy(db, skill_in)
 
 
 @router.delete("/{skill_id}")
 def delete_skill(
-    skill_id: str, db: Session = Depends(get_db)
+    skill_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher"))
 ) -> dict[str, bool]:
     success = crud.delete_skill_taxonomy(db, skill_id)
     if not success:

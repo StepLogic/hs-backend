@@ -3,6 +3,7 @@ from datetime import date, timedelta
 
 
 def test_study_plan_crud(client, admin_token):
+    client.headers["Authorization"] = f"Bearer {admin_token}"  # content writes are staff-only
     # Create student
     rs = client.post("/api/v1/students/", json={"name": "Plan Student", "grade_level": 10}, headers={"Authorization": f"Bearer {admin_token}"})
     assert rs.status_code == 201
@@ -54,6 +55,7 @@ def test_study_plan_crud(client, admin_token):
 
 
 def test_generate_plan(client, admin_token):
+    client.headers["Authorization"] = f"Bearer {admin_token}"  # content writes are staff-only
     # Create student and diagnostic
     rs = client.post("/api/v1/students/", json={"name": "Gen Student", "grade_level": 11}, headers={"Authorization": f"Bearer {admin_token}"})
     student_id = rs.json()["id"]

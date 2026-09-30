@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_db, require_roles
 
 router = APIRouter()
 
@@ -22,14 +22,16 @@ def read_unit(unit_id: str, db: Session = Depends(get_db)) -> models.Unit:
 
 @router.post("/", response_model=schemas.UnitResponse, status_code=201)
 def create_unit(
-    *, db: Session = Depends(get_db), unit_in: schemas.UnitCreate
+    *, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")), unit_in: schemas.UnitCreate
 ) -> models.Unit:
     return crud.create_unit(db, unit_in)
 
 
 @router.put("/{unit_id}", response_model=schemas.UnitResponse)
 def update_unit(
-    *, unit_id: str, db: Session = Depends(get_db), unit_in: schemas.UnitUpdate
+    *, unit_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")), unit_in: schemas.UnitUpdate
 ) -> models.Unit:
     unit = crud.update_unit(db, unit_id, unit_in)
     if not unit:
@@ -38,7 +40,8 @@ def update_unit(
 
 
 @router.delete("/{unit_id}")
-def delete_unit(unit_id: str, db: Session = Depends(get_db)) -> dict[str, bool]:
+def delete_unit(unit_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher"))) -> dict[str, bool]:
     success = crud.delete_unit(db, unit_id)
     if not success:
         raise HTTPException(status_code=404, detail="Unit not found")

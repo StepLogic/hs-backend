@@ -4,19 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, owned_student
 
 router = APIRouter()
 
 
-def _owned_student(db: Session, student_id: str, current_user: models.User) -> models.Student:
-    student = db.query(models.Student).filter(models.Student.id == student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-    if current_user.role in (models.Role.STUDENT, models.Role.PARENT):
-        if str(student.owner_user_id) != str(current_user.id):
-            raise HTTPException(status_code=403, detail="Not authorized to access this student")
-    return student
+_owned_student = owned_student
 
 
 def _with_progress(db: Session, goal: models.CourseGoal) -> schemas.CourseGoalResponse:

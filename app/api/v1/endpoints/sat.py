@@ -7,7 +7,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, owned_student
 from app.srs import score_to_quality, update_mastery
 
 router = APIRouter()
@@ -84,6 +84,7 @@ def get_assessment(
 def submit_assessment(
     *,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
     student_id: str = Query(...),
     answers: list[schemas.PracticeAnswer] = Body(...),
 ) -> dict:
@@ -94,6 +95,7 @@ def submit_assessment(
     3. Creates enrollment in SAT Math Prep course
     4. Returns curated lesson order: weakest skills first
     """
+    owned_student(db, student_id, current_user)
     course = _get_sat_course(db)
 
     if not answers:

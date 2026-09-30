@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_db, require_roles
 
 router = APIRouter()
 answers_router = APIRouter()
@@ -34,7 +34,8 @@ def read_test_result(
 
 @router.post("/", response_model=schemas.TestResultResponse, status_code=201)
 def create_test_result(
-    *, db: Session = Depends(get_db), result_in: schemas.TestResultCreate
+    *, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")), result_in: schemas.TestResultCreate
 ) -> models.TestResult:
     return crud.create_test_result(db, result_in)
 
@@ -44,6 +45,7 @@ def update_test_result(
     *,
     result_id: str,
     db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")),
     result_in: schemas.TestResultUpdate,
 ) -> models.TestResult:
     result = crud.update_test_result(db, result_id, result_in)
@@ -54,7 +56,8 @@ def update_test_result(
 
 @router.delete("/{result_id}")
 def delete_test_result(
-    result_id: str, db: Session = Depends(get_db)
+    result_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher"))
 ) -> dict[str, bool]:
     success = crud.delete_test_result(db, result_id)
     if not success:
@@ -88,7 +91,8 @@ def read_user_answer(
 
 @answers_router.post("/", response_model=schemas.UserAnswerResponse, status_code=201)
 def create_user_answer(
-    *, db: Session = Depends(get_db), answer_in: schemas.UserAnswerCreate
+    *, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")), answer_in: schemas.UserAnswerCreate
 ) -> models.UserAnswer:
     return crud.create_user_answer(db, answer_in)
 
@@ -98,6 +102,7 @@ def update_user_answer(
     *,
     answer_id: str,
     db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")),
     answer_in: schemas.UserAnswerUpdate,
 ) -> models.UserAnswer:
     answer = crud.update_user_answer(db, answer_id, answer_in)
@@ -108,7 +113,8 @@ def update_user_answer(
 
 @answers_router.delete("/{answer_id}")
 def delete_user_answer(
-    answer_id: str, db: Session = Depends(get_db)
+    answer_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher"))
 ) -> dict[str, bool]:
     success = crud.delete_user_answer(db, answer_id)
     if not success:

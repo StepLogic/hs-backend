@@ -6,9 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db, get_current_user, get_current_user_optional
+from app.api.deps import get_db, get_current_user, get_current_user_optional, owned_student as _owned_student
 from app.api.v1.endpoints.assessment import answers_match
-from app.api.v1.endpoints.goals import _owned_student
 from app.srs import score_to_quality, update_mastery
 
 router = APIRouter()
@@ -158,8 +157,12 @@ def practice_history(
 
 @router.post("/submit", response_model=schemas.PracticeSubmitResponse)
 def submit_practice(
-    *, db: Session = Depends(get_db), payload: schemas.PracticeSubmit
+    *,
+    db: Session = Depends(get_db),
+    payload: schemas.PracticeSubmit,
+    current_user: models.User = Depends(get_current_user),
 ) -> dict:
+    _owned_student(db, payload.student_id, current_user)
     # Grade against the bank rather than trusting the client's is_correct: the client
     # compared option text to a letter key and marked nearly every right answer wrong.
     for ans in payload.answers:

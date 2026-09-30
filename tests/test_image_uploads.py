@@ -38,7 +38,8 @@ def test_update_student_profile_image(client: TestClient, admin_token: str):
     assert r.json()["profile_image_url"] == "https://hs-platform.s3.us-east-005.backblazeb2.com/uploads/x/grace.png"
 
 
-def test_create_course_persists_banner_image(client: TestClient):
+def test_create_course_persists_banner_image(client: TestClient, admin_token):
+    client.headers["Authorization"] = f"Bearer {admin_token}"  # content writes are staff-only
     r = client.post(
         "/api/v1/courses/",
         json={

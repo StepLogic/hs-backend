@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user, get_db, owned_student
 
 router = APIRouter()
 
@@ -17,15 +17,22 @@ def read_enrollments(
 
 @router.post("/", response_model=schemas.EnrollmentResponse, status_code=201)
 def create_enrollment(
-    *, db: Session = Depends(get_db), enrollment_in: schemas.EnrollmentCreate
+    *, db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user), enrollment_in: schemas.EnrollmentCreate
 ) -> models.Enrollment:
+    owned_student(db, enrollment_in.student_id, current_user)
     return crud.create_enrollment(db, enrollment_in)
 
 
 @router.put("/{enrollment_id}", response_model=schemas.EnrollmentResponse)
 def update_enrollment(
-    *, enrollment_id: str, db: Session = Depends(get_db), enrollment_in: schemas.EnrollmentUpdate
+    *, enrollment_id: str, db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user), enrollment_in: schemas.EnrollmentUpdate
 ) -> models.Enrollment:
+    existing = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+    owned_student(db, existing.student_id, current_user)
     enrollment = crud.update_enrollment(db, enrollment_id, enrollment_in)
     if not enrollment:
         raise HTTPException(status_code=404, detail="Enrollment not found")

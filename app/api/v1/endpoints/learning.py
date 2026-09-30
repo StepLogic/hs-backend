@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_user, owned_student
 
 router = APIRouter()
 
@@ -62,8 +62,10 @@ def learning_path(
     return result
 @router.post("/progress", response_model=schemas.LessonProgressResponse, status_code=201)
 def upsert_progress(
-    *, db: Session = Depends(get_db), progress_in: schemas.LessonProgressCreate
+    *, db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user), progress_in: schemas.LessonProgressCreate
 ) -> models.LessonProgress:
+    owned_student(db, progress_in.student_id, current_user)
     from app.cache import delete as cache_delete
     # Invalidate learning path cache for this student
     cache_delete(f"learning:path:{progress_in.student_id}:*")

@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_db, require_roles
 
 router = APIRouter()
 
@@ -145,7 +145,8 @@ def read_question(question_id: str, db: Session = Depends(get_db)) -> models.Que
 
 @router.post("/", response_model=schemas.QuestionResponse, status_code=201)
 def create_question(
-    *, db: Session = Depends(get_db), question_in: schemas.QuestionCreate
+    *, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")), question_in: schemas.QuestionCreate
 ) -> models.Question:
     return crud.create_question(db, question_in)
 
@@ -155,6 +156,7 @@ def update_question(
     *,
     question_id: str,
     db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")),
     question_in: schemas.QuestionUpdate,
 ) -> models.Question:
     question = crud.update_question(db, question_id, question_in)
@@ -165,7 +167,8 @@ def update_question(
 
 @router.delete("/{question_id}")
 def delete_question(
-    question_id: str, db: Session = Depends(get_db)
+    question_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher"))
 ) -> dict[str, bool]:
     success = crud.delete_question(db, question_id)
     if not success:

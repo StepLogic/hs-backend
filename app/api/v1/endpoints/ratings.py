@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_user, owned_student
 
 router = APIRouter()
 
@@ -54,11 +54,11 @@ def read_rating(
 def upsert_rating(
     *,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
     rating_in: schemas.RatingCreate,
 ) -> dict:
     """One rating per student per target — rating again replaces the old score."""
-    if db.query(models.Student).filter(models.Student.id == rating_in.student_id).first() is None:
-        raise HTTPException(status_code=404, detail="Student not found")
+    owned_student(db, rating_in.student_id, current_user)
 
     target = models.Course if rating_in.target_type == "course" else models.Lesson
     if db.query(target).filter(target.id == rating_in.target_id).first() is None:

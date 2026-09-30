@@ -33,7 +33,8 @@ def test_unrated_course_has_no_score(client):
     assert course["rating"] is None and course["review_count"] == 0
 
 
-def test_ratings_average_and_surface_on_the_course(client):
+def test_ratings_average_and_surface_on_the_course(client, admin_token):
+    client.headers["Authorization"] = f"Bearer {admin_token}"  # content writes are staff-only
     course_id, (a, b) = _course_and_students(2)
     for student, stars in ((a, 5), (b, 4)):
         r = client.post("/api/v1/ratings/", json={
@@ -49,7 +50,8 @@ def test_ratings_average_and_surface_on_the_course(client):
     assert course["rating"] == 4.5 and course["review_count"] == 2
 
 
-def test_rerating_replaces_rather_than_adds(client):
+def test_rerating_replaces_rather_than_adds(client, admin_token):
+    client.headers["Authorization"] = f"Bearer {admin_token}"  # content writes are staff-only
     course_id, (a, _) = _course_and_students(2)
     body = {"student_id": a, "target_type": "course", "target_id": course_id, "stars": 2}
     client.post("/api/v1/ratings/", json=body)
@@ -57,7 +59,8 @@ def test_rerating_replaces_rather_than_adds(client):
     assert out["count"] == 1 and out["average"] == 5.0 and out["my_stars"] == 5
 
 
-def test_bad_input_is_rejected(client):
+def test_bad_input_is_rejected(client, admin_token):
+    client.headers["Authorization"] = f"Bearer {admin_token}"  # content writes are staff-only
     course_id, (a, _) = _course_and_students(2)
     base = {"student_id": a, "target_type": "course", "target_id": course_id}
     assert client.post("/api/v1/ratings/", json={**base, "stars": 6}).status_code == 422
