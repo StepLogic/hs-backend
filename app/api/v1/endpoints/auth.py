@@ -178,13 +178,13 @@ def _password_fingerprint(password_hash: str) -> str:
     return hashlib.sha256(password_hash.encode()).hexdigest()[:16]
 
 
-def _issue_reset_token(user: models.User) -> str:
+def _issue_reset_token(user: models.User, ttl_seconds: int = _RESET_TTL_SECONDS) -> str:
     now = datetime.now(timezone.utc)
     return jwt.encode(
         {
             "sub": str(user.id),
             "iat": now,
-            "exp": now + timedelta(seconds=_RESET_TTL_SECONDS),
+            "exp": now + timedelta(seconds=ttl_seconds),
             "purpose": "password-reset",
             "pwh": _password_fingerprint(user.password_hash or ""),
         },
@@ -210,6 +210,38 @@ def request_password_reset(
             logger.warning("Password reset email not sent (%s)", result.get("reason"))
             if settings.DEBUG:
                 logger.warning("Password reset link for %s: %s", user.email, url)
+
+
+# An admin hands this link to the student themselves: there is no email service to
+# send it, so the self-serve "forgot password" flow is hidden. Long enough to reach
+# the student; still single-use, since the token dies when the password changes.
+_ADMIN_RESET_TTL_SECONDS = 24 * 3600
+
+
+@router.post("/password-reset/link", response_model=schemas.PasswordResetLink)
+def admin_password_reset_link(
+    body: schemas.PasswordResetLinkRequest,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_roles("admin")),
+) -> dict:
+    student = db.query(models.Student).filter(models.Student.id == body.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    user = crud.get_user(db, str(student.owner_user_id)) if student.owner_user_id else None
+    if not user:
+        raise HTTPException(status_code=404, detail="This student has no login account")
+    # Google-created accounts have no password to reset (password_hash is ""), and
+    # confirm refuses a token for them, so a link would only fail on the student.
+    if not user.password_hash:
+        raise HTTPException(
+            status_code=400, detail="This account signs in with Google and has no password to reset"
+        )
+    token = _issue_reset_token(user, _ADMIN_RESET_TTL_SECONDS)
+    return {
+        "url": f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={urllib.parse.quote(token)}",
+        "email": user.email,
+        "expires_at": datetime.now(timezone.utc) + timedelta(seconds=_ADMIN_RESET_TTL_SECONDS),
+    }
 
 
 @router.post("/password-reset/confirm", status_code=204)

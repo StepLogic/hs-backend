@@ -213,6 +213,14 @@ class Student(Base):
 
     test_results = relationship("TestResult", back_populates="student", cascade="all, delete-orphan")
     owner = relationship("User", back_populates="owned_students")
+
+    @property
+    def login_method(self):
+        """How the owning account signs in: "password", "google" (no password is ever
+        set for Google-created accounts), or None when the student has no login."""
+        if self.owner is None:
+            return None
+        return "password" if self.owner.password_hash else "google"
     enrollments = relationship("Enrollment", back_populates="student", cascade="all, delete-orphan")
     lesson_progress = relationship("LessonProgress", back_populates="student", cascade="all, delete-orphan")
     skill_masteries = relationship("SkillMastery", back_populates="student", cascade="all, delete-orphan")

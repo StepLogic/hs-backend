@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app import crud, models, schemas
 from app.api.deps import get_db, get_current_user
@@ -26,7 +26,13 @@ def read_students(
     limit: int = Query(100, ge=1, le=1000),
     current_user: models.User = Depends(get_current_user),
 ) -> list[models.Student]:
-    return _scope_students_query(db, current_user).offset(skip).limit(limit).all()
+    return (
+        _scope_students_query(db, current_user)
+        .options(joinedload(models.Student.owner))  # login_method reads it for every row
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 @router.get("/{student_id}", response_model=schemas.StudentResponse)

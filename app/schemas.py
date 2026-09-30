@@ -211,6 +211,7 @@ class StudentUpdate(BaseModel):
 class StudentResponse(StudentBase):
     id: str
     created_at: datetime
+    login_method: Optional[str] = None  # "password" | "google" | None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -486,6 +487,16 @@ class PasswordChange(BaseModel):
 
 class PasswordResetRequest(BaseModel):
     email: EmailStr
+
+
+class PasswordResetLinkRequest(BaseModel):
+    student_id: str
+
+
+class PasswordResetLink(BaseModel):
+    url: str
+    email: str
+    expires_at: datetime
 
 
 class PasswordResetConfirm(BaseModel):

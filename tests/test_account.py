@@ -363,3 +363,53 @@ def test_reset_enforces_password_length(client):
         ).status_code
         == 422
     )
+
+
+def _student_and_login(client, email="reset-me@test.com"):
+    token = client.post("/api/v1/auth/register", json={"email": email, "password": "oldpass123", "name": "R"}).json()["access_token"]
+    return client.get("/api/v1/students/", headers=_auth(token)).json()[0]["id"]
+
+
+def test_admin_reset_link_lets_the_student_set_a_new_password(client, admin_token):
+    student_id = _student_and_login(client)
+    assert client.post("/api/v1/auth/password-reset/link", json={"student_id": student_id}).status_code == 401
+    r = client.post("/api/v1/auth/password-reset/link", json={"student_id": student_id}, headers=_auth(admin_token))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["email"] == "reset-me@test.com" and "/reset-password?token=" in body["url"]
+
+    import urllib.parse
+    token = urllib.parse.unquote(body["url"].split("token=", 1)[1])
+    assert client.post("/api/v1/auth/password-reset/confirm", json={"token": token, "new_password": "newpass456"}).status_code == 204
+    assert client.post("/api/v1/auth/login", json={"email": "reset-me@test.com", "password": "newpass456"}).status_code == 200
+    # single use: the same link does nothing the second time
+    assert client.post("/api/v1/auth/password-reset/confirm", json={"token": token, "new_password": "again789x"}).status_code == 400
+
+
+def test_admin_reset_link_is_admin_only_and_refuses_google_accounts(client, admin_token):
+    student_id = _student_and_login(client, "someone@test.com")
+    other = client.post("/api/v1/auth/register", json={"email": "student2@test.com", "password": "secret123"}).json()["access_token"]
+    assert client.post("/api/v1/auth/password-reset/link", json={"student_id": student_id}, headers=_auth(other)).status_code == 403
+
+    from app import models
+    from tests.conftest import TestingSessionLocal
+    db = TestingSessionLocal()
+    user = db.query(models.User).filter(models.User.email == "someone@test.com").first()
+    user.password_hash = ""   # how a Google-created account is stored
+    db.commit(); db.close()
+    r = client.post("/api/v1/auth/password-reset/link", json={"student_id": student_id}, headers=_auth(admin_token))
+    assert r.status_code == 400 and "Google" in r.json()["detail"]
+
+
+def test_student_record_says_how_its_account_signs_in(client, admin_token):
+    student_id = _student_and_login(client, "pw@test.com")
+    admin = _auth(admin_token)
+    assert client.get(f"/api/v1/students/{student_id}", headers=admin).json()["login_method"] == "password"
+    from app import models
+    from tests.conftest import TestingSessionLocal
+    db = TestingSessionLocal()
+    db.query(models.User).filter(models.User.email == "pw@test.com").first().password_hash = ""
+    db.commit(); db.close()
+    assert client.get(f"/api/v1/students/{student_id}", headers=admin).json()["login_method"] == "google"
+    listed = {s["id"]: s["login_method"] for s in client.get("/api/v1/students/", headers=admin).json()}
+    assert listed[student_id] == "google"
