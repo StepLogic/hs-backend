@@ -12,6 +12,26 @@ def read_units_by_course(course_id: str, db: Session = Depends(get_db)) -> list[
     return crud.get_units_by_course(db, course_id)
 
 
+@router.get("/course/{course_id}/outline", response_model=list[schemas.UnitWithLessons])
+def read_course_outline(course_id: str, db: Session = Depends(get_db)) -> list[dict]:
+    """Every unit with its lessons, in two queries. Pages used to fetch the unit list
+    and then each unit's lessons separately: 21 requests for SAT Math, and the SAT
+    pages made them one after another."""
+    units = crud.get_units_by_course(db, course_id)
+    by_unit: dict[str, list[models.Lesson]] = {u.id: [] for u in units}
+    for lesson in (
+        db.query(models.Lesson)
+        .filter(models.Lesson.unit_id.in_(list(by_unit)))
+        .order_by(models.Lesson.order_index)
+        .all()
+    ):
+        by_unit[lesson.unit_id].append(lesson)
+    return [
+        {**schemas.UnitResponse.model_validate(u).model_dump(), "lessons": by_unit[u.id]}
+        for u in units
+    ]
+
+
 @router.get("/{unit_id}", response_model=schemas.UnitResponse)
 def read_unit(unit_id: str, db: Session = Depends(get_db)) -> models.Unit:
     unit = crud.get_unit(db, unit_id)

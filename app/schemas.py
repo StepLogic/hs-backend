@@ -352,6 +352,11 @@ class LessonResponse(LessonBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UnitWithLessons(UnitResponse):
+    """A unit and its lessons, ordered: a whole course outline in one response."""
+    lessons: list[LessonResponse] = []
+
+
 # ─── Enrollment schemas ───
 class EnrollmentBase(BaseModel):
     student_id: str

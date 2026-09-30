@@ -73,3 +73,25 @@ def test_learning_path_prereq_lock(client, admin_token):
     r = client.get(f"/api/v1/learning/path?student_id={student_id}&course_id={course_id}")
     path = r.json()
     assert path[0]["lessons"][1]["locked"] == False
+
+
+def test_course_outline_matches_units_plus_their_lessons(client, admin_token):
+    admin = {"Authorization": f"Bearer {admin_token}"}
+    course = client.post("/api/v1/courses/", headers=admin, json={
+        "subject": "math", "course_type": "core", "title": "Outline", "short_title": "O",
+        "description": "d", "icon": "x", "color": "#000", "price": 0, "skills": [],
+        "grade_range": "9-12", "features": [], "image_emoji": "x"}).json()
+    units = [client.post("/api/v1/units/", headers=admin, json={
+        "course_id": course["id"], "title": f"U{i}", "slug": f"u{i}", "order_index": i}).json() for i in (2, 1)]
+    for u in units:
+        for j in (1, 0):
+            client.post("/api/v1/lessons/", headers=admin, json={
+                "unit_id": u["id"], "title": f"{u['title']}-L{j}", "slug": f"{u['slug']}-l{j}", "order_index": j})
+
+    outline = client.get(f"/api/v1/units/course/{course['id']}/outline").json()   # public, like the old calls
+    assert [u["title"] for u in outline] == ["U1", "U2"]
+    assert [l["title"] for l in outline[0]["lessons"]] == ["U1-L0", "U1-L1"]
+    # same records the per-unit endpoint returns
+    for u in outline:
+        per_unit = client.get(f"/api/v1/lessons/unit/{u['id']}").json()
+        assert sorted(per_unit, key=lambda l: l["id"]) == sorted(u["lessons"], key=lambda l: l["id"])
