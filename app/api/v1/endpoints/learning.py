@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 
 from app import crud, models, schemas
 from app.api.deps import get_db, get_current_user, owned_student
@@ -19,18 +19,31 @@ def learning_path(
     if cached is not None:
         return cached
 
+    # Three queries for the whole course. This used to run one lessons query per unit and
+    # one or two progress queries per lesson: ~400 round trips for SAT Math's 206 lessons,
+    # 8-9 s per call, which practice and the course page both wait on.
     units = crud.get_units_by_course(db, course_id)
+    lessons_by_unit: dict[str, list[models.Lesson]] = {u.id: [] for u in units}
+    for lesson in (
+        db.query(models.Lesson)
+        .options(defer(models.Lesson.rating), defer(models.Lesson.review_count))  # unused here
+        .filter(models.Lesson.unit_id.in_(list(lessons_by_unit)))
+        .order_by(models.Lesson.order_index)
+        .all()
+    ):
+        lessons_by_unit[lesson.unit_id].append(lesson)
+    progress_by_lesson = {
+        p.lesson_id: p
+        for p in db.query(models.LessonProgress).filter(models.LessonProgress.student_id == student_id)
+    }
     result = []
     for unit in units:
-        lessons = crud.get_lessons_by_unit(db, unit.id)
         lesson_data = []
-        for lesson in lessons:
-            progress = crud.get_lesson_progress_by_student_lesson(db, student_id, lesson.id)
+        for lesson in lessons_by_unit[unit.id]:
+            progress = progress_by_lesson.get(lesson.id)
             locked = False
             if lesson.prerequisite_lesson_id:
-                prereq_progress = crud.get_lesson_progress_by_student_lesson(
-                    db, student_id, lesson.prerequisite_lesson_id
-                )
+                prereq_progress = progress_by_lesson.get(lesson.prerequisite_lesson_id)
                 if not prereq_progress or prereq_progress.status != models.LessonProgressStatus.COMPLETED:
                     locked = True
             lesson_data.append({
