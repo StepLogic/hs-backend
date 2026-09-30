@@ -147,3 +147,28 @@ def test_one_item_list_keys_mean_the_item():
     assert answers_match("4", ["4"])
     assert not answers_match("5", ["4"])
     assert answers_match(["A"], ["A"]) and not answers_match(["B"], ["A"])
+
+
+def test_practice_history_lists_a_students_answers_newest_first(client, admin_token):
+    qid = _lettered(client, admin_token, "medium")
+    reg = client.post("/api/v1/auth/register", json={"email": "hist@example.com", "password": "secret123"})
+    token, user_id = reg.json()["access_token"], reg.json()["user_id"]
+    hdr = {"Authorization": f"Bearer {token}"}
+    student_id = client.get("/api/v1/students/", headers=hdr).json()[0]["id"]
+    for answer in ("A. $x = 35$", "C. $x = 45$"):
+        client.post("/api/v1/practice/submit", json={
+            "student_id": student_id, "subject": "math",
+            "answers": [{"question_id": qid, "answer": answer, "is_correct": False, "time_spent": 12}],
+        })
+    r = client.get("/api/v1/practice/history", params={"student_id": student_id, "size": 1}, headers=hdr)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["total"] == 2 and body["pages"] == 2 and len(body["items"]) == 1
+    item = body["items"][0]
+    assert item["question"]["prompt"] == "Solve" and item["time_spent"] == 12
+
+    # someone else's student is off limits
+    other = client.post("/api/v1/auth/register", json={"email": "nosy@example.com", "password": "secret123"})
+    r = client.get("/api/v1/practice/history", params={"student_id": student_id},
+                   headers={"Authorization": f"Bearer {other.json()['access_token']}"})
+    assert r.status_code == 403

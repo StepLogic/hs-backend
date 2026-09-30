@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime
 from typing import Optional
 
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.api.deps import get_db, get_current_user, get_current_user_optional
 from app.api.v1.endpoints.assessment import answers_match
+from app.api.v1.endpoints.goals import _owned_student
 from app.srs import score_to_quality, update_mastery
 
 router = APIRouter()
@@ -106,6 +108,52 @@ def next_practice(
             break
 
     return result
+
+
+@router.get("/history")
+def practice_history(
+    student_id: str = Query(...),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> dict:
+    """A student's answered questions, newest first. The dashboard and the practice
+    history page both call this; it did not exist, so both were empty."""
+    _owned_student(db, student_id, current_user)
+    base = (
+        db.query(models.UserAnswer, models.TestResult.created_at)
+        .join(models.TestResult, models.UserAnswer.test_result_id == models.TestResult.id)
+        .filter(models.TestResult.student_id == student_id)
+    )
+    total = base.count()
+    rows = (
+        base.order_by(models.TestResult.created_at.desc(), models.UserAnswer.id)
+        .offset((page - 1) * size)
+        .limit(size)
+        .all()
+    )
+    prompts = dict(
+        db.query(models.Question.id, models.Question.prompt)
+        .filter(models.Question.id.in_({ua.question_id for ua, _ in rows}))
+        .all()
+    )
+    items = [
+        {
+            "id": ua.id,
+            "question_id": ua.question_id,
+            "student_id": student_id,
+            "answer": ua.answer if isinstance(ua.answer, str) else json.dumps(ua.answer),
+            "is_correct": ua.is_correct,
+            "time_spent": ua.time_spent,
+            "created_at": created_at.isoformat(),
+            "question": {"id": ua.question_id, "prompt": prompts[ua.question_id]}
+            if ua.question_id in prompts
+            else None,
+        }
+        for ua, created_at in rows
+    ]
+    return {"items": items, "total": total, "page": page, "pages": -(-total // size)}
 
 
 @router.post("/submit", response_model=schemas.PracticeSubmitResponse)
