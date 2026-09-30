@@ -29,7 +29,6 @@ def create_user(db: Session, user: schemas.UserCreate, password_hash: str) -> mo
     return db_user
 
 
-
 # ─── Questions ───
 
 def get_question(db: Session, question_id: str) -> Optional[models.Question]:
@@ -493,9 +492,6 @@ def update_enrollment(
 
 
 # ─── LessonProgress ───
-
-def get_lesson_progress(db: Session, progress_id: str) -> models.LessonProgress | None:
-    return db.query(models.LessonProgress).filter(models.LessonProgress.id == progress_id).first()
 
 
 def get_lesson_progress_by_student_lesson(
