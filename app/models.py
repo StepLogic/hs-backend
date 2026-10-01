@@ -104,6 +104,11 @@ class Question(Base):
     # existed (the import dropped the source's section index).
     mock_module = Column(String, nullable=True)
     mock_position = Column(Integer, nullable=True)
+    # A figure the question cannot be answered without: an image (with a text
+    # description for screen readers) or a data table {"headers": [...], "rows": [[...]]}.
+    image_url = Column(String, nullable=True)
+    image_alt = Column(Text, nullable=True)
+    figure_table = Column(JSON, nullable=True)
     lesson_id = Column(String, ForeignKey("lessons.id"), nullable=True)
     unit_id = Column(String, ForeignKey("units.id"), nullable=True)
     course_id = Column(String, ForeignKey("courses.id"), nullable=True)

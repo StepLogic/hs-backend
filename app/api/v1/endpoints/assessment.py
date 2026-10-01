@@ -196,6 +196,9 @@ def start_assessment(
                     skill=q.skill,
                     difficulty=q.difficulty.value if q.difficulty else "medium",
                     unit_tag=tag,
+                    image_url=q.image_url,
+                    image_alt=q.image_alt,
+                    figure_table=q.figure_table,
                 )
             )
 

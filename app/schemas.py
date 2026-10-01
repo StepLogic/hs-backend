@@ -72,6 +72,9 @@ class QuestionBase(BaseModel):
     source_test_id: Optional[str] = None
     mock_module: Optional[str] = None
     mock_position: Optional[int] = None
+    image_url: Optional[str] = None
+    image_alt: Optional[str] = None
+    figure_table: Optional[dict[str, Any]] = None
     lesson_id: Optional[str] = None
     unit_id: Optional[str] = None
     course_id: Optional[str] = None
@@ -97,6 +100,9 @@ class QuestionUpdate(BaseModel):
     review_status: Optional[ReviewStatus] = None
     difficulty: Optional[Difficulty] = None
     source_test_id: Optional[str] = None
+    image_url: Optional[str] = None
+    image_alt: Optional[str] = None
+    figure_table: Optional[dict[str, Any]] = None
     lesson_id: Optional[str] = None
     unit_id: Optional[str] = None
     course_id: Optional[str] = None
@@ -819,6 +825,9 @@ class AssessmentQuestion(BaseModel):
     skill: str
     difficulty: str
     unit_tag: str
+    image_url: Optional[str] = None
+    image_alt: Optional[str] = None
+    figure_table: Optional[dict[str, Any]] = None
 
 
 class AssessmentStartResponse(BaseModel):

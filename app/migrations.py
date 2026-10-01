@@ -67,6 +67,9 @@ MIGRATIONS = [
     # them serves a request — migrations do not run on deploy.
     ("questions", "mock_module", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS mock_module VARCHAR"),
     ("questions", "mock_position", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS mock_position INTEGER"),
+    ("questions", "image_url", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS image_url VARCHAR"),
+    ("questions", "image_alt", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS image_alt TEXT"),
+    ("questions", "figure_table", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS figure_table JSON"),
 
     # /auth/register reads this on every sign-up, so it has to exist before alembic runs.
     ("invite_codes", "create_table", """
