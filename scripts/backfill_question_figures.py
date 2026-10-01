@@ -7,8 +7,10 @@ kept none of them, so graph and table questions came through unanswerable. This 
 each stored question back to the scrape, copies its image to our B2 bucket, and writes
 image_url / image_alt / figure_table.
 
-    python scripts/backfill_question_figures.py data/all_sat_questions.json          # dry run
-    python scripts/backfill_question_figures.py data/all_sat_questions.json --apply
+    python scripts/backfill_question_figures.py            # dry run
+    python scripts/backfill_question_figures.py --apply
+
+Reads data/all_sat_questions.json unless another scrape file is given.
 
 Images are cached in data/sat_images/, so a re-run downloads nothing it already has.
 """
@@ -60,9 +62,10 @@ def fetch(name: str) -> bytes:
 def main() -> None:
     args = [a for a in sys.argv[1:] if a != "--apply"]
     apply = "--apply" in sys.argv
-    if len(args) != 1:
+    if len(args) > 1:
         sys.exit(__doc__)
-    wanted = figures(json.load(open(args[0])))
+    src = args[0] if args else Path(__file__).parent.parent / "data" / "all_sat_questions.json"
+    wanted = figures(json.load(open(src)))
     print(f"{len(wanted)} questions in the scrape have a figure")
 
     db = SessionLocal()
