@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, owned_student, require_roles
 
 router = APIRouter()
 
@@ -48,6 +48,7 @@ def submit_essay(
     current_user: models.User = Depends(get_current_user),
     submission_in: schemas.WritingSubmissionCreate,
 ) -> models.WritingSubmission:
+    owned_student(db, submission_in.student_id, current_user)
     return crud.create_writing_submission(db, submission_in)
 
 
@@ -57,6 +58,7 @@ def list_essays(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ) -> list[models.WritingSubmission]:
+    owned_student(db, student_id, current_user)
     return crud.get_writing_submissions_by_student(db, student_id)
 
 
@@ -64,7 +66,7 @@ def list_essays(
 def grade_essay(
     submission_id: str,
     db: Session = Depends(get_db),
-    _teacher: models.User = Depends(get_current_user),
+    _teacher: models.User = Depends(require_roles("admin", "teacher")),
 ) -> models.WritingSubmission:
     sub = crud.get_writing_submission(db, submission_id)
     if not sub:
@@ -96,4 +98,5 @@ def get_essay(
     sub = crud.get_writing_submission(db, submission_id)
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
+    owned_student(db, sub.student_id, current_user)
     return sub

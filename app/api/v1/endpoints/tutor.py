@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, owned_student
 
 router = APIRouter()
 
@@ -38,10 +38,13 @@ def tutor_chat(
     message: str,
     subject: str | None = None,
 ) -> dict:
-    # Fetch or create session
+    owned_student(db, student_id, current_user)
+    # Fetch or create session; a session id only continues a session of this student.
     chat_session = None
     if session_id:
         chat_session = crud.get_chat_session(db, session_id)
+        if chat_session and str(chat_session.student_id) != str(student_id):
+            raise HTTPException(status_code=403, detail="Not your session")
     if not chat_session:
         chat_session = crud.create_chat_session(
             db,
@@ -86,6 +89,7 @@ def chat_history(
     session = crud.get_chat_session(db, session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    owned_student(db, session.student_id, current_user)
     messages = crud.get_chat_messages(db, session_id)
     return {
         "session_id": session_id,

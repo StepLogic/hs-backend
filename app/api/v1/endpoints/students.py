@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 
 from app import crud, models, schemas
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, owned_student
 
 router = APIRouter()
 
@@ -96,9 +96,7 @@ def delete_student(
     student = crud.get_student(db, student_id)
     if student is None:
         raise HTTPException(status_code=404, detail="Student not found")
-    if current_user.role == models.Role.PARENT:
-        if str(student.owner_user_id) != str(current_user.id):
-            raise HTTPException(status_code=403, detail="Not authorized")
+    owned_student(db, student_id, current_user)
     success = crud.delete_student(db, student_id)
     if not success:
         raise HTTPException(status_code=404, detail="Student not found")

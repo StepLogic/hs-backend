@@ -18,7 +18,7 @@ def get_transcript(
         raise HTTPException(status_code=404, detail="Student not found")
 
     # Access control: owner, parent of owner, teacher, admin
-    if current_user.role == models.Role.STUDENT and str(student.owner_user_id) != str(current_user.id):
+    if current_user.role in (models.Role.STUDENT, models.Role.PARENT) and str(student.owner_user_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
 
     # Enrollments with completion %

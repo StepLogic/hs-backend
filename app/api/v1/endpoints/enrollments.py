@@ -11,7 +11,9 @@ router = APIRouter()
 def read_enrollments(
     student_id: str = Query(...),
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ) -> list[models.Enrollment]:
+    owned_student(db, student_id, current_user)
     return crud.get_enrollments_by_student(db, student_id)
 
 

@@ -264,12 +264,14 @@ def get_curated_path(
     course_id: str,
     student_id: str,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ) -> dict:
     """Return curated learning path for a student, sorted by weakest skills first.
 
     Uses current SkillMastery scores to order lessons. Lessons with lower mastery
     appear first. Does not respect prerequisites — this is the adaptive order.
     """
+    owned_student(db, student_id, current_user)
     all_lessons = (
         db.query(models.Lesson)
         .join(models.Unit)

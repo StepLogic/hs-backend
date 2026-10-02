@@ -1,10 +1,13 @@
 """AI personalization endpoints."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app import ai_service
 
-router = APIRouter()
+from app.api.deps import get_current_user
+
+# Each call spends the Ollama quota, so callers must be signed in.
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 class PlanGenerateRequest(BaseModel):

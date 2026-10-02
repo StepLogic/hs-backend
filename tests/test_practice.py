@@ -39,7 +39,7 @@ def test_practice_next_prefers_weak_skills(client, admin_token):
     _seed_skill_taxonomy(client, admin_token, "math", ["algebra", "geometry"])
 
     # Get practice questions
-    r = client.get(f"/api/v1/practice/next?student_id={student_id}&subject=math&grade_level=8&limit=5")
+    r = client.get(f"/api/v1/practice/next?student_id={student_id}&subject=math&grade_level=8&limit=5", headers=hdr)
     assert r.status_code == 200
     questions = r.json()
     assert len(questions) > 0
@@ -73,11 +73,12 @@ def test_practice_respects_published_only(client, admin_token):
     }, headers={"Authorization": f"Bearer {admin_token}"})
 
     reg = client.post("/api/v1/auth/register", json={"email": "draft@example.com", "password": "secret123", "role": "student"})
-    student_id = reg.json()["user_id"]
+    hdr = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+    student_id = client.get("/api/v1/students/", headers=hdr).json()[0]["id"]
 
     _seed_skill_taxonomy(client, admin_token, "math", ["draft_skill"])
 
-    r = client.get(f"/api/v1/practice/next?student_id={student_id}&subject=math&grade_level=8&limit=5")
+    r = client.get(f"/api/v1/practice/next?student_id={student_id}&subject=math&grade_level=8&limit=5", headers=hdr)
     questions = r.json()
     for q in questions:
         assert q["review_status"] == "published"

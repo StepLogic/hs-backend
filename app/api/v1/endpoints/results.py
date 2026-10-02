@@ -18,13 +18,15 @@ def read_test_results(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     student_id: Optional[str] = None,
+    _staff: models.User = Depends(require_roles("admin", "teacher")),
 ) -> list[models.TestResult]:
     return crud.get_test_results(db, skip=skip, limit=limit, student_id=student_id)
 
 
 @router.get("/{result_id}", response_model=schemas.TestResultResponse)
 def read_test_result(
-    result_id: str, db: Session = Depends(get_db)
+    result_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")),
 ) -> models.TestResult:
     result = crud.get_test_result(db, result_id)
     if result is None:
@@ -73,6 +75,7 @@ def read_user_answers(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     test_result_id: Optional[str] = None,
+    _staff: models.User = Depends(require_roles("admin", "teacher")),
 ) -> list[models.UserAnswer]:
     return crud.get_user_answers(
         db, skip=skip, limit=limit, test_result_id=test_result_id
@@ -81,7 +84,8 @@ def read_user_answers(
 
 @answers_router.get("/{answer_id}", response_model=schemas.UserAnswerResponse)
 def read_user_answer(
-    answer_id: str, db: Session = Depends(get_db)
+    answer_id: str, db: Session = Depends(get_db),
+    _staff: models.User = Depends(require_roles("admin", "teacher")),
 ) -> models.UserAnswer:
     answer = crud.get_user_answer(db, answer_id)
     if answer is None:

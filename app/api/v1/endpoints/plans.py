@@ -21,16 +21,22 @@ def create_plan(
 
 @router.get("/student/{student_id}", response_model=list[schemas.StudyPlanResponse])
 def read_plans_by_student(
-    student_id: str, db: Session = Depends(get_db)
+    student_id: str, db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ) -> list[models.StudyPlan]:
+    owned_student(db, student_id, current_user)
     return crud.get_study_plans_by_student(db, student_id)
 
 
 @router.get("/{plan_id}", response_model=schemas.StudyPlanResponse)
-def read_plan(plan_id: str, db: Session = Depends(get_db)) -> models.StudyPlan:
+def read_plan(
+    plan_id: str, db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> models.StudyPlan:
     plan = crud.get_study_plan(db, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
+    owned_student(db, plan.student_id, current_user)
     return plan
 
 

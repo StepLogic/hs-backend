@@ -82,6 +82,6 @@ def test_generate_plan(client, admin_token):
     assert len(plan["items"]) >= 1
 
 
-def test_plan_not_found(client):
-    r = client.get("/api/v1/plans/nonexistent-id")
+def test_plan_not_found(client, admin_token):
+    r = client.get("/api/v1/plans/nonexistent-id", headers={"Authorization": f"Bearer {admin_token}"})
     assert r.status_code == 404

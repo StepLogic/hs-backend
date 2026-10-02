@@ -12,7 +12,9 @@ def learning_path(
     student_id: str,
     course_id: str,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ) -> list[dict]:
+    owned_student(db, student_id, current_user)
     from app.cache import get as cache_get, set as cache_set
     cache_key = f"learning:path:{student_id}:{course_id}"
     cached = cache_get(cache_key)

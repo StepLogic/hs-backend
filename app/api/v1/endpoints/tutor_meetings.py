@@ -40,7 +40,7 @@ def create_meeting(
     current_user: models.User = Depends(get_current_user),
 ) -> models.TutorMeeting:
     # Students may only create meetings for students they own
-    if current_user.role == models.Role.STUDENT:
+    if current_user.role in (models.Role.STUDENT, models.Role.PARENT):
         if not _student_belongs_to_user(db, meeting_in.student_id, current_user.id):
             raise HTTPException(status_code=403, detail="Can only request meetings for your own student profile")
     return crud.create_tutor_meeting(db, meeting_in)
@@ -105,7 +105,7 @@ def update_meeting(
         raise HTTPException(status_code=404, detail="Meeting not found")
 
     # Students can only update their own meetings, and only limited fields (notes, cancel)
-    if current_user.role == models.Role.STUDENT:
+    if current_user.role in (models.Role.STUDENT, models.Role.PARENT):
         if not _authorize_meeting_access(db, meeting, current_user):
             raise HTTPException(status_code=403, detail="Not authorized")
         # Students cannot assign tutors or change status to scheduled

@@ -29,7 +29,9 @@ def next_practice(
     lesson_id: Optional[str] = Query(None),
     limit: int = Query(10, ge=1, le=50),
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ) -> list[models.Question]:
+    _owned_student(db, student_id, current_user)
     # Build skill filter
     target_skills = None
     if lesson_id:

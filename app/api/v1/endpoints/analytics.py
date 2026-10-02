@@ -4,7 +4,7 @@ from sqlalchemy import func
 from datetime import datetime, timedelta
 
 from app import models
-from app.api.deps import get_db, get_current_user, require_roles
+from app.api.deps import get_db, get_current_user, owned_student, require_roles
 
 router = APIRouter()
 
@@ -65,8 +65,9 @@ def overview(
 def student_strengths(
     student_id: str,
     db: Session = Depends(get_db),
-    _user = Depends(get_current_user),
+    user: models.User = Depends(get_current_user),
 ) -> dict:
+    owned_student(db, student_id, user)
     rows = (
         db.query(models.SkillMastery)
         .filter(models.SkillMastery.student_id == student_id)
@@ -87,8 +88,9 @@ def student_strengths(
 def student_progress(
     student_id: str,
     db: Session = Depends(get_db),
-    _user = Depends(get_current_user),
+    user: models.User = Depends(get_current_user),
 ) -> dict:
+    owned_student(db, student_id, user)
     since = datetime.utcnow() - timedelta(days=30)
 
     lp_rows = (
