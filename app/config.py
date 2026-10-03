@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     # New accounts need an admin-issued invite code (issued once someone has paid).
     # Only turn this off to open registration to everyone.
     REGISTRATION_INVITE_REQUIRED: bool = True
+    # With a key, AI features run on Ollama Cloud; without one, on a local Ollama.
+    OLLAMA_CLOUD_API_KEY: str = ""
+    OLLAMA_CLOUD_MODEL: str = "gemma4:31b-cloud"
     class Config:
         env_file = ".env"
         extra = "ignore"

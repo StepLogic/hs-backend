@@ -5,14 +5,23 @@ from typing import Optional
 
 import httpx
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-MODEL = os.getenv("OLLAMA_MODEL", "gemma3:latest")
-TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "30"))
+from app.config import settings
+
+# Ollama Cloud speaks the same API as a local Ollama, plus a bearer key.
+if settings.OLLAMA_CLOUD_API_KEY:
+    OLLAMA_URL = "https://ollama.com"
+    MODEL = settings.OLLAMA_CLOUD_MODEL
+    HEADERS = {"Authorization": f"Bearer {settings.OLLAMA_CLOUD_API_KEY}"}
+else:
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    MODEL = os.getenv("OLLAMA_MODEL", "gemma3:latest")
+    HEADERS = {}
+TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "60"))
 
 
 async def _prompt(system: str, user: str) -> str:
     """Send a prompt to OLLAMA and return the response."""
-    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT, headers=HEADERS) as client:
         res = await client.post(
             f"{OLLAMA_URL}/api/generate",
             json={"model": MODEL, "prompt": f"{system}\n\n{user}", "stream": False},
@@ -24,7 +33,7 @@ async def _prompt(system: str, user: str) -> str:
 async def is_available() -> bool:
     """Check if OLLAMA is reachable."""
     try:
-        async with httpx.AsyncClient(timeout=3) as client:
+        async with httpx.AsyncClient(timeout=5, headers=HEADERS) as client:
             res = await client.get(f"{OLLAMA_URL}/api/tags")
             return res.is_success
     except Exception:

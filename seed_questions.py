@@ -11,7 +11,7 @@ BACKEND_URL = os.getenv("BACKEND_URL", "https://hs-platform-oboac.ondigitalocean
 
 # --- Cloud LLM config ---
 # Set ONE of: OLLAMA_CLOUD_API_KEY, GROQ_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY
-OLLAMA_CLOUD_API_KEY = os.getenv("OLLAMA_CLOUD_API_KEY", "e3c5eaf7f2714e9b8cabb9449ed93823.ZCmNdvpuLKvNhKcky4qg9Gj_")
+OLLAMA_CLOUD_API_KEY = os.getenv("OLLAMA_CLOUD_API_KEY", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
