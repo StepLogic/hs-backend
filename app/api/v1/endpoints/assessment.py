@@ -339,7 +339,8 @@ def next_assessment_question(
 
     exhausted: set[str] = set()
     if len(payload.answers) < ADAPTIVE_MAX_TOTAL:
-        for tag in tags:
+        # Fewest answers first (stable: ties keep unit order) so the cap can't starve later tags.
+        for tag in sorted(tags, key=lambda t: len(by_tag[t])):
             results = by_tag[tag]
             if _settled(results):
                 continue

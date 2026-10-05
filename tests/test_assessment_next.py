@@ -1,4 +1,4 @@
-def _course(client, admin_token, per_skill=6):
+def _course(client, admin_token, per_skill=6, tag_names=("algebra", "geometry")):
     from tests.conftest import TestingSessionLocal
     from sqlalchemy import text
     db = TestingSessionLocal()
@@ -11,7 +11,7 @@ def _course(client, admin_token, per_skill=6):
         "subject": "math", "course_type": "core", "title": "Adaptive", "short_title": "A",
         "description": "d", "icon": "x", "color": "#000", "price": 0, "skills": [],
         "grade_range": "9-12", "features": [], "image_emoji": "x"}, headers=hdr).json()["id"]
-    for i, tag in enumerate(["algebra", "geometry"]):
+    for i, tag in enumerate(tag_names):
         client.post("/api/v1/units/", json={"course_id": cid, "title": tag, "slug": tag,
                     "order_index": i, "description": tag}, headers=hdr)
         for j in range(per_skill):
@@ -92,3 +92,14 @@ def test_next_other_student_403(client, admin_token):
     hdr = {"Authorization": f"Bearer {other.json()['access_token']}"}
     r = client.post(f"/api/v1/courses/{cid}/assessment/next", headers=hdr, json={"student_id": sid, "answers": []})
     assert r.status_code == 403
+
+
+def test_many_tags_all_get_asked_before_any_third_question(client, admin_token):
+    tags = tuple(f"tag{i}" for i in range(10))
+    cid, hdr, sid = _course(client, admin_token, tag_names=tags)
+    asked, body = _run(client, cid, hdr, sid, lambda q: "A. yes")
+    order = [q["unit_tag"] for q in asked]
+    assert set(order) == set(tags)
+    third = next((i for i in range(len(order)) if order[:i + 1].count(order[i]) == 3), len(order))
+    assert set(order[:third]) == set(tags)
+    assert body["done"]
