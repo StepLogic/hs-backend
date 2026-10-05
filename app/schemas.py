@@ -843,6 +843,8 @@ class AssessmentQuestion(BaseModel):
     skill: str
     difficulty: str
     unit_tag: str
+    # The passage a reading question is about; without it the question is unanswerable.
+    context: Optional[str] = None
     image_url: Optional[str] = None
     image_alt: Optional[str] = None
     figure_table: Optional[dict[str, Any]] = None

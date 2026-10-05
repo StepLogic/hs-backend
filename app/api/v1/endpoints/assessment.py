@@ -34,8 +34,9 @@ def _unit_tag(db: Session, unit: models.Unit) -> str | None:
     for candidate in (unit.title, unit.description):
         if not candidate:
             continue
+        # Two columns, not whole rows: this runs for every unit on every adaptive step.
         if _answerable(
-            db.query(models.Question)
+            db.query(models.Question.question_type, models.Question.options)
             .filter(
                 models.Question.skill == candidate,
                 models.Question.review_status == models.ReviewStatus.PUBLISHED,
@@ -196,6 +197,7 @@ def start_assessment(
                     skill=q.skill,
                     difficulty=q.difficulty.value if q.difficulty else "medium",
                     unit_tag=tag,
+                    context=q.context,
                     image_url=q.image_url,
                     image_alt=q.image_alt,
                     figure_table=q.figure_table,
@@ -305,7 +307,7 @@ def _to_assessment_question(q: models.Question, tag: str) -> schemas.AssessmentQ
         question_type=q.question_type.value if q.question_type else "multiple-choice",
         options=q.options, skill=q.skill,
         difficulty=q.difficulty.value if q.difficulty else "medium",
-        unit_tag=tag, image_url=q.image_url, image_alt=q.image_alt, figure_table=q.figure_table,
+        unit_tag=tag, context=q.context, image_url=q.image_url, image_alt=q.image_alt, figure_table=q.figure_table,
     )
 
 

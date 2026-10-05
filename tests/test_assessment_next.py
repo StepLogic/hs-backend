@@ -17,7 +17,7 @@ def _course(client, admin_token, per_skill=6, tag_names=("algebra", "geometry"))
         for j in range(per_skill):
             client.post("/api/v1/questions/", json={
                 "subject": "math", "grade_level": 10, "question_type": "multiple-choice",
-                "prompt": f"{tag} {j}", "options": ["A. yes", "B. no"], "correct_answer": "A",
+                "prompt": f"{tag} {j}", "context": f"Passage for {tag}", "options": ["A. yes", "B. no"], "correct_answer": "A",
                 "skill": tag, "explanation": "x",
                 "difficulty": ["easy", "medium", "hard"][j % 3]}, headers=hdr)
     reg = client.post("/api/v1/auth/register", json={"email": f"s{per_skill}@example.com", "password": "secret123", "role": "student"})
@@ -47,6 +47,8 @@ def test_two_right_settles_each_tag(client, admin_token):
     assert len(asked) == 4  # 2 per tag
     assert body["settled"] == body["total_tags"] == 2
     assert all(q["difficulty"] != "easy" for q in asked)  # starts medium, steps up
+    # Reading questions are unanswerable without their passage.
+    assert all(q["context"] == f"Passage for {q['unit_tag']}" for q in asked)
 
 
 def test_two_wrong_settles_each_tag(client, admin_token):
