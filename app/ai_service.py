@@ -150,3 +150,17 @@ Return: {{"on_track": ["skill1"], "needs_attention": ["skill2"], "summary": "one
     raw = await _prompt(system, user)
     raw = raw.replace("```json\n", "").replace("```\n", "").replace("```", "").strip()
     return json.loads(raw)
+
+
+async def choose_next(history: list[dict], candidates: list[dict]) -> dict:
+    """Pick the next drill question from a shortlist. Sees skill and difficulty only."""
+    system = (
+        "You are an adaptive tutor choosing the next practice question. Output ONLY JSON "
+        '{"question_id": "<one of the candidate ids>", "reason": "<under 90 chars, to the student>"}.'
+    )
+    past = "\n".join(f"- {h['skill']} ({h['difficulty']}): {'right' if h['correct'] else 'wrong'}" for h in history[-12:]) or "- none yet"
+    cands = "\n".join(f"- id={c['id']} skill={c['skill']} difficulty={c['difficulty']}" for c in candidates)
+    user = f"Answers so far, oldest first:\n{past}\n\nCandidates:\n{cands}\n\nPick the question that best builds this student's mastery."
+    raw = (await _prompt(system, user)).replace("```json", "").replace("```", "").strip()
+    out = json.loads(raw)
+    return {"question_id": str(out["question_id"]), "reason": str(out.get("reason", ""))[:120]}

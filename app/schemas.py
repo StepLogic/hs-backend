@@ -520,6 +520,22 @@ class PracticeAnswer(BaseModel):
     used_hint: bool = False
 
 
+class AiNextTurn(BaseModel):
+    question_id: str
+    correct: bool
+
+
+class AiNextRequest(BaseModel):
+    student_id: str
+    history: list[AiNextTurn] = []
+    candidate_ids: list[str] = Field(min_length=1, max_length=8)
+
+
+class AiNextResponse(BaseModel):
+    question_id: str
+    reason: str
+
+
 class PracticeSubmit(BaseModel):
     student_id: str
     subject: Subject

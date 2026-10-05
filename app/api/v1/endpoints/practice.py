@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
+from app import ai_service, crud, models, schemas
 from app.api.deps import get_db, get_current_user, get_current_user_optional, owned_student as _owned_student
 from app.api.v1.endpoints.assessment import answers_match
 from app.srs import score_to_quality, update_mastery
@@ -261,3 +261,33 @@ def submit_practice(
         "skill_mastery": skill_masteries,
         "lesson_progress": lesson_progress,
     }
+
+
+@router.post("/ai-next", response_model=schemas.AiNextResponse)
+async def ai_next(
+    req: schemas.AiNextRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> schemas.AiNextResponse:
+    """The AI coach's pick from a shortlist the browser already made. Any failure is a
+    502 and the browser keeps its own rule-based pick."""
+    _owned_student(db, req.student_id, current_user)
+    ids = {t.question_id for t in req.history} | set(req.candidate_ids)
+    rows = {q.id: q for q in db.query(models.Question).filter(models.Question.id.in_(ids))}
+
+    def info(qid: str) -> dict:
+        q = rows.get(qid)
+        diff = q.difficulty.value if q and hasattr(q.difficulty, "value") else "medium"
+        return {"id": qid, "skill": q.skill if q else "unknown", "difficulty": diff}
+
+    candidates = [info(c) for c in req.candidate_ids if c in rows]
+    if not candidates:
+        raise HTTPException(status_code=422, detail="No known candidates")
+    history = [{**info(t.question_id), "correct": t.correct} for t in req.history]
+    try:
+        pick = await ai_service.choose_next(history, candidates)
+    except Exception:
+        raise HTTPException(status_code=502, detail="AI coach unavailable")
+    if pick["question_id"] not in {c["id"] for c in candidates}:
+        raise HTTPException(status_code=502, detail="AI coach picked outside the shortlist")
+    return schemas.AiNextResponse(**pick)
