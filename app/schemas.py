@@ -527,7 +527,7 @@ class AiNextTurn(BaseModel):
 
 class AiNextRequest(BaseModel):
     student_id: str
-    history: list[AiNextTurn] = []
+    history: list[AiNextTurn] = Field(default=[], max_length=50)
     candidate_ids: list[str] = Field(min_length=1, max_length=8)
 
 
@@ -861,7 +861,7 @@ class AssessmentNextAnswer(BaseModel):
 
 class AssessmentNextRequest(BaseModel):
     student_id: str
-    answers: list[AssessmentNextAnswer] = []
+    answers: list[AssessmentNextAnswer] = Field(default=[], max_length=60)
 
 
 class AssessmentNextResponse(BaseModel):

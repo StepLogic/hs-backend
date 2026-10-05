@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Optional
 
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from app import ai_service, crud, models, schemas
 from app.api.deps import get_current_user, get_db, require_roles
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -207,15 +209,17 @@ async def question_hint(
         raise HTTPException(status_code=404, detail="Question not found")
     if q.hint:
         return {"hint": q.hint}
+    prompt, context, options = q.prompt, q.context, q.options
+    correct, key, explanation = q.correct_answer, _key(q.correct_answer), q.explanation or ""
+    db.close()  # release the pooled connection before the slow AI call
     for _ in range(2):  # one retry when the first hint leaks the answer
         try:
-            hint = await ai_service.generate_hint(
-                q.prompt, q.context, q.options, _key(q.correct_answer), q.explanation or ""
-            )
-        except Exception:
+            hint = await ai_service.generate_hint(prompt, context, options, key, explanation)
+        except Exception as e:
+            logger.warning("hint generation failed: %s", type(e).__name__)
             break
-        if hint and not answer_leaks(hint, q.options, q.correct_answer):
-            q.hint = hint
+        if hint and not answer_leaks(hint, options, correct):
+            db.query(models.Question).filter(models.Question.id == question_id).update({"hint": hint})
             db.commit()
             return {"hint": hint}
     raise HTTPException(status_code=503, detail="No hint available right now")

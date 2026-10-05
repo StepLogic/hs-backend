@@ -65,3 +65,11 @@ def test_ai_next_needs_candidates(client, admin_token):
     r = client.post("/api/v1/practice/ai-next", headers=hdr, json={
         "student_id": sid, "history": [], "candidate_ids": []})
     assert r.status_code == 422
+
+
+def test_ai_next_oversized_history_is_422(client, admin_token):
+    hdr, sid, ids = _setup(client, admin_token)
+    r = client.post("/api/v1/practice/ai-next", headers=hdr, json={
+        "student_id": sid, "history": [{"question_id": ids[0], "correct": True}] * 51,
+        "candidate_ids": [ids[0]]})
+    assert r.status_code == 422

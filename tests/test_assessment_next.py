@@ -103,3 +103,10 @@ def test_many_tags_all_get_asked_before_any_third_question(client, admin_token):
     third = next((i for i in range(len(order)) if order[:i + 1].count(order[i]) == 3), len(order))
     assert set(order[:third]) == set(tags)
     assert body["done"]
+
+
+def test_next_oversized_answers_422(client, admin_token):
+    cid, hdr, sid = _course(client, admin_token)
+    r = client.post(f"/api/v1/courses/{cid}/assessment/next", headers=hdr,
+                    json={"student_id": sid, "answers": [{"question_id": "x", "answer": "A"}] * 61})
+    assert r.status_code == 422

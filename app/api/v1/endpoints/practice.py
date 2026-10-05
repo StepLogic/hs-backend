@@ -1,3 +1,4 @@
+import logging
 import json
 from datetime import date, datetime
 from typing import Optional
@@ -10,6 +11,7 @@ from app.api.deps import get_db, get_current_user, get_current_user_optional, ow
 from app.api.v1.endpoints.assessment import answers_match
 from app.srs import score_to_quality, update_mastery
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -284,9 +286,11 @@ async def ai_next(
     if not candidates:
         raise HTTPException(status_code=422, detail="No known candidates")
     history = [{**info(t.question_id), "correct": t.correct} for t in req.history]
+    db.close()  # release the pooled connection before the slow AI call
     try:
         pick = await ai_service.choose_next(history, candidates)
-    except Exception:
+    except Exception as e:
+        logger.warning("ai-next failed: %s", type(e).__name__)
         raise HTTPException(status_code=502, detail="AI coach unavailable")
     if pick["question_id"] not in {c["id"] for c in candidates}:
         raise HTTPException(status_code=502, detail="AI coach picked outside the shortlist")

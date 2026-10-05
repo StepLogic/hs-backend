@@ -19,9 +19,9 @@ else:
 TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "60"))
 
 
-async def _prompt(system: str, user: str) -> str:
+async def _prompt(system: str, user: str, timeout: float = TIMEOUT) -> str:
     """Send a prompt to OLLAMA and return the response."""
-    async with httpx.AsyncClient(timeout=TIMEOUT, headers=HEADERS) as client:
+    async with httpx.AsyncClient(timeout=timeout, headers=HEADERS) as client:
         res = await client.post(
             f"{OLLAMA_URL}/api/generate",
             json={"model": MODEL, "prompt": f"{system}\n\n{user}", "stream": False},
@@ -161,6 +161,6 @@ async def choose_next(history: list[dict], candidates: list[dict]) -> dict:
     past = "\n".join(f"- {h['skill']} ({h['difficulty']}): {'right' if h['correct'] else 'wrong'}" for h in history[-12:]) or "- none yet"
     cands = "\n".join(f"- id={c['id']} skill={c['skill']} difficulty={c['difficulty']}" for c in candidates)
     user = f"Answers so far, oldest first:\n{past}\n\nCandidates:\n{cands}\n\nPick the question that best builds this student's mastery."
-    raw = (await _prompt(system, user)).replace("```json", "").replace("```", "").strip()
+    raw = (await _prompt(system, user, timeout=5)).replace("```json", "").replace("```", "").strip()
     out = json.loads(raw)
     return {"question_id": str(out["question_id"]), "reason": str(out.get("reason", ""))[:120]}
