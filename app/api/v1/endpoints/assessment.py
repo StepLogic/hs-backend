@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, owned_student
 
 router = APIRouter()
 
@@ -281,3 +281,89 @@ def submit_assessment(
         total_correct=total_correct,
         total_questions=total_questions,
     )
+
+
+ADAPTIVE_MAX_PER_TAG = 4
+ADAPTIVE_MAX_TOTAL = 30
+_LEVELS = [models.Difficulty.EASY, models.Difficulty.MEDIUM, models.Difficulty.HARD]
+
+
+def _lvl(d: models.Difficulty | None) -> models.Difficulty:
+    return d or models.Difficulty.MEDIUM  # untagged questions count as medium
+
+
+def _settled(results: list[tuple[bool, models.Difficulty]]) -> bool:
+    """2 right at medium or harder, 2 wrong, or the per-tag cap."""
+    right = sum(1 for ok, d in results if ok and d != models.Difficulty.EASY)
+    wrong = sum(1 for ok, _ in results if not ok)
+    return right >= 2 or wrong >= 2 or len(results) >= ADAPTIVE_MAX_PER_TAG
+
+
+def _to_assessment_question(q: models.Question, tag: str) -> schemas.AssessmentQuestion:
+    return schemas.AssessmentQuestion(
+        id=q.id, prompt=q.prompt,
+        question_type=q.question_type.value if q.question_type else "multiple-choice",
+        options=q.options, skill=q.skill,
+        difficulty=q.difficulty.value if q.difficulty else "medium",
+        unit_tag=tag, image_url=q.image_url, image_alt=q.image_alt, figure_table=q.figure_table,
+    )
+
+
+@router.post("/courses/{course_id}/assessment/next", response_model=schemas.AssessmentNextResponse)
+def next_assessment_question(
+    course_id: str,
+    payload: schemas.AssessmentNextRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> schemas.AssessmentNextResponse:
+    """Stateless adaptive placement: grade what was answered, settle each skill tag as
+    soon as it is clear, and serve the next question from the first unsettled tag."""
+    if not db.query(models.Course).filter(models.Course.id == course_id).first():
+        raise HTTPException(status_code=404, detail="Course not found")
+    owned_student(db, payload.student_id, current_user)
+    units = (db.query(models.Unit).filter(models.Unit.course_id == course_id)
+             .order_by(models.Unit.order_index).all())
+    tags: list[str] = []
+    for unit in units:
+        tag = _unit_tag(db, unit)
+        if tag and tag not in tags:
+            tags.append(tag)
+
+    asked_ids = [a.question_id for a in payload.answers]
+    asked = {q.id: q for q in db.query(models.Question).filter(models.Question.id.in_(asked_ids))}
+    by_tag: dict[str, list[tuple[bool, models.Difficulty]]] = {t: [] for t in tags}
+    for a in payload.answers:
+        q = asked.get(a.question_id)
+        if q and q.skill in by_tag:
+            by_tag[q.skill].append((answers_match(a.answer, q.correct_answer), q.difficulty))
+
+    exhausted: set[str] = set()
+    if len(payload.answers) < ADAPTIVE_MAX_TOTAL:
+        for tag in tags:
+            results = by_tag[tag]
+            if _settled(results):
+                continue
+            if results:
+                ok, last = results[-1]
+                i = _LEVELS.index(_lvl(last)) + (1 if ok else -1)
+                level = _LEVELS[max(0, min(2, i))]
+            else:
+                level = models.Difficulty.MEDIUM
+            pool = _answerable(
+                db.query(models.Question).filter(
+                    models.Question.skill == tag,
+                    models.Question.review_status == models.ReviewStatus.PUBLISHED,
+                    models.Question.id.notin_(asked_ids or [""]),
+                ).limit(200).all()
+            )
+            if not pool:
+                exhausted.add(tag)  # nothing left to ask: treat as settled
+                continue
+            # Nearest difficulty to the target, random within it.
+            pool.sort(key=lambda q: (abs(_LEVELS.index(_lvl(q.difficulty)) - _LEVELS.index(level)), random.random()))
+            settled = sum(1 for t in tags if _settled(by_tag[t]) or t in exhausted)
+            return schemas.AssessmentNextResponse(
+                done=False, question=_to_assessment_question(pool[0], tag),
+                settled=settled, total_tags=len(tags),
+            )
+    return schemas.AssessmentNextResponse(done=True, question=None, settled=len(tags), total_tags=len(tags))

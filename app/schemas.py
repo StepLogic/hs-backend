@@ -854,6 +854,23 @@ class AssessmentStartResponse(BaseModel):
     questions: list[AssessmentQuestion]
 
 
+class AssessmentNextAnswer(BaseModel):
+    question_id: str
+    answer: Any
+
+
+class AssessmentNextRequest(BaseModel):
+    student_id: str
+    answers: list[AssessmentNextAnswer] = []
+
+
+class AssessmentNextResponse(BaseModel):
+    done: bool
+    question: Optional[AssessmentQuestion] = None
+    settled: int
+    total_tags: int
+
+
 class AssessmentAnswer(BaseModel):
     question_id: str
     answer: Any
