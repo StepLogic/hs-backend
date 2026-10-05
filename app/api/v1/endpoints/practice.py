@@ -211,6 +211,7 @@ def submit_practice(
             answer=ans.answer,
             is_correct=ans.is_correct,
             time_spent=ans.time_spent,
+            used_hint=ans.used_hint,
         )
         crud.create_user_answer(db, ua)
 

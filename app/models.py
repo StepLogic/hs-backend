@@ -343,6 +343,8 @@ class UserAnswer(Base):
     answer = Column(JSON, nullable=False)
     is_correct = Column(Boolean, nullable=False)
     time_spent = Column(Integer, nullable=False)
+    # The student opened the AI hint before answering. Recorded, not yet scored.
+    used_hint = Column(Boolean, nullable=False, default=False, server_default="false")
 
     test_result = relationship("TestResult", back_populates="user_answers")
 

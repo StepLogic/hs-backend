@@ -271,6 +271,7 @@ class UserAnswerBase(BaseModel):
     answer: Any
     is_correct: bool
     time_spent: int
+    used_hint: bool = False
 
 
 class UserAnswerCreate(UserAnswerBase):
@@ -516,6 +517,7 @@ class PracticeAnswer(BaseModel):
     answer: Any
     is_correct: bool
     time_spent: int
+    used_hint: bool = False
 
 
 class PracticeSubmit(BaseModel):

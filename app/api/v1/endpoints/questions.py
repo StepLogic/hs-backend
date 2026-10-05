@@ -1,11 +1,12 @@
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
-from app.api.deps import get_db, require_roles
+from app import ai_service, crud, models, schemas
+from app.api.deps import get_current_user, get_db, require_roles
 
 router = APIRouter()
 
@@ -167,6 +168,57 @@ def read_source_tests(db: Session = Depends(get_db)) -> list[dict]:
     ).group_by(models.Question.source_test_id).order_by(models.Question.source_test_id).all()
     return [{"source_test_id": row[0], "count": row[1]} for row in rows]
 
+
+
+def _key(answer) -> str:
+    if isinstance(answer, list) and len(answer) == 1:
+        answer = answer[0]
+    return str(answer or "").strip()
+
+
+def answer_leaks(hint: str, options: Optional[list[str]], answer) -> bool:
+    """True when the hint gives the answer away: names the keyed choice, quotes its
+    text, or states a grid-in value."""
+    text = hint.lower()
+    key = _key(answer)
+    if options and len(key) == 1 and key.isalpha():
+        letter = key.lower()
+        if re.search(rf"\b(answer|choice|option)\s*(is\s*)?\(?{letter}\)?(\b|\.)", text) or f"({letter})" in text:
+            return True
+        for opt in options:
+            m = re.match(r"^\s*([A-Za-z])[.)]\s*(.+)$", str(opt))
+            if m and m.group(1).lower() == letter:
+                body = m.group(2).strip().lower().replace("$", "")
+                if len(body) >= 1 and re.search(rf"(?<![\w.]){re.escape(body)}(?![\w.])", text.replace("$", "")):
+                    return True
+        return False
+    return bool(key) and re.search(rf"(?<![\w.]){re.escape(key.lower())}(?![\w.])", text) is not None
+
+
+@router.post("/{question_id}/hint")
+async def question_hint(
+    question_id: str,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(get_current_user),
+) -> dict:
+    """Generated once per question by the AI, then served from questions.hint."""
+    q = crud.get_question(db, question_id)
+    if q is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+    if q.hint:
+        return {"hint": q.hint}
+    for _ in range(2):  # one retry when the first hint leaks the answer
+        try:
+            hint = await ai_service.generate_hint(
+                q.prompt, q.context, q.options, _key(q.correct_answer), q.explanation or ""
+            )
+        except Exception:
+            break
+        if hint and not answer_leaks(hint, q.options, q.correct_answer):
+            q.hint = hint
+            db.commit()
+            return {"hint": hint}
+    raise HTTPException(status_code=503, detail="No hint available right now")
 
 
 @router.get("/{question_id}", response_model=schemas.QuestionResponse)

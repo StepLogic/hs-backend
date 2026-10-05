@@ -107,6 +107,31 @@ Give brief, specific feedback."""
     return await _prompt(system, user)
 
 
+async def generate_hint(
+    prompt: str,
+    context: Optional[str],
+    options: Optional[list[str]],
+    answer: str,
+    explanation: str,
+) -> str:
+    """One nudge for a stuck student. It is told the answer so it can aim the hint,
+    and forbidden to say it; the caller still checks the output for leaks."""
+    system = (
+        "You are a patient SAT tutor. Write ONE hint of at most two sentences that points "
+        "the student at the method or the key clue. Never state the answer, never name or "
+        "eliminate an answer choice, never compute the final value. Plain text, no markdown."
+    )
+    parts = []
+    if context:
+        parts.append(f"Passage:\n{context[:2000]}")
+    parts.append(f"Question: {prompt}")
+    if options:
+        parts.append("Choices:\n" + "\n".join(options))
+    parts.append(f"Correct answer (do NOT reveal): {answer}")
+    parts.append(f"Worked explanation (do NOT reveal): {explanation[:1500]}")
+    return (await _prompt(system, "\n\n".join(parts))).strip().strip('"')
+
+
 async def predict_performance(
     skill_history: list[dict],
 ) -> dict:
