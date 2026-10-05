@@ -183,16 +183,16 @@ def answer_leaks(hint: str, options: Optional[list[str]], answer) -> bool:
     key = _key(answer)
     if options and len(key) == 1 and key.isalpha():
         letter = key.lower()
-        if re.search(rf"\b(answer|choice|option)\s*(is\s*)?\(?{letter}\)?(\b|\.)", text) or f"({letter})" in text:
+        if re.search(rf"\b(answer|choice|option)\s*(is\s*|[:\-\u2013\u2014]\s*)?\(?{letter}\)?(\b|\.)", text) or f"({letter})" in text:
             return True
         for opt in options:
             m = re.match(r"^\s*([A-Za-z])[.)]\s*(.+)$", str(opt))
             if m and m.group(1).lower() == letter:
                 body = m.group(2).strip().lower().replace("$", "")
-                if len(body) >= 1 and re.search(rf"(?<![\w.]){re.escape(body)}(?![\w.])", text.replace("$", "")):
+                if len(body) >= 1 and re.search(rf"(?<![\w])(?<!\d\.){re.escape(body)}(?![\w])(?!\.\d)", text.replace("$", "")):
                     return True
         return False
-    return bool(key) and re.search(rf"(?<![\w.]){re.escape(key.lower())}(?![\w.])", text) is not None
+    return bool(key) and re.search(rf"(?<![\w])(?<!\d\.){re.escape(key.lower())}(?![\w])(?!\.\d)", text) is not None
 
 
 @router.post("/{question_id}/hint")

@@ -65,3 +65,7 @@ def test_answer_leaks():
     assert not answer_leaks("Divide both sides by 2.", opts, "B")
     assert answer_leaks("x equals 2.5", None, "2.5")              # grid-in
     assert not answer_leaks("Think about halving.", None, "2.5")
+    assert answer_leaks("It comes out to 5.", opts, "B")
+    assert answer_leaks("x equals 2.5.", None, "2.5")
+    assert answer_leaks("Answer: B", opts, "B")
+    assert not answer_leaks("Use 12.55 as the rate.", None, "2.5")
