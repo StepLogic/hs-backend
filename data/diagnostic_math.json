@@ -3,6 +3,13 @@
   "subject": "math",
   "questions": [
     {
+      "skill": "Foundations & Review",
+      "difficulty": "easy",
+      "prompt": "Can you leverage your algebra and Desmos skills to excel on the SAT Math? This is what this test is about! Type 1 as the answer to begin.",
+      "correct_answer": "1",
+      "explanation": "Type 1 to begin the diagnostic."
+    },
+    {
       "skill": "Linear Equations in One Variable",
       "difficulty": "medium",
       "prompt": "What is the solution to the given equation?",
