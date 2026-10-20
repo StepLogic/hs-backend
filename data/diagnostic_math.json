@@ -1,0 +1,426 @@
+{
+  "source_test_id": "diagnostic-math",
+  "subject": "math",
+  "questions": [
+    {
+      "skill": "Linear Equations in One Variable",
+      "difficulty": "medium",
+      "prompt": "What is the solution to the given equation?",
+      "correct_answer": "1/20",
+      "explanation": "Distribute: $\\dfrac{3}{2} - 3y = \\dfrac{3}{5} + 15y$. Then $\\dfrac{3}{2} - \\dfrac{3}{5} = 18y$, so $\\dfrac{9}{10} = 18y$ and $y = \\dfrac{1}{20}$ (0.05).",
+      "context": "$3\\left(\\dfrac{1}{2} - y\\right) = \\dfrac{3}{5} + 15y$"
+    },
+    {
+      "skill": "Linear Equations in One Variable",
+      "difficulty": "medium",
+      "prompt": "In the equation above, $c$ and $d$ are constants. If the equation has infinitely many solutions for $x$, what is the value of $d$?",
+      "correct_answer": "3",
+      "explanation": "Infinitely many solutions means both sides are identical: $cx + cd = 8x + 24$, so $c = 8$ and $8d = 24$, giving $d = 3$.",
+      "context": "$c(x + d) = 8x + 24$"
+    },
+    {
+      "skill": "Linear Equations in One Variable",
+      "difficulty": "medium",
+      "prompt": "In the equation above, $a$ is a constant. If no value of $x$ satisfies the equation, what is the value of $a$?",
+      "correct_answer": "4",
+      "explanation": "The right side simplifies to $8x + 10$. No solution means equal slopes with different constants: $2a = 8$, so $a = 4$ (and $-15 \\ne 10$).",
+      "context": "$2ax - 15 = 3(x + 5) + 5(x - 1)$"
+    },
+    {
+      "skill": "System of Two Linear Equations",
+      "difficulty": "easy",
+      "prompt": "What is the value of $7x - 3y$?",
+      "correct_answer": "20",
+      "explanation": "Add the two equations: $(5x - y) + (2x - 2y) = 11 + 9$, so $7x - 3y = 20$.",
+      "context": "$5x - y = 11$\n$2x - 2y = 9$"
+    },
+    {
+      "skill": "System of Two Linear Equations",
+      "difficulty": "medium",
+      "prompt": "In the system of equations above, $a$ and $b$ are constants. If the system has no solution, what is the value of $ab$?",
+      "correct_answer": "4",
+      "explanation": "No solution means the lines are parallel: the coefficients are proportional, $\\dfrac{a}{2} = \\dfrac{2}{b}$, so $ab = 4$ (while $\\dfrac{12}{13}$ breaks the proportion, so the lines are distinct).",
+      "context": "$ax + 2y = 12$\n$2x + by = 13$"
+    },
+    {
+      "skill": "Nonlinear Equations",
+      "difficulty": "hard",
+      "prompt": "What is the solution to the given equation?",
+      "options": [
+        "A. $k = -\\dfrac{3}{5}$",
+        "B. $k = \\dfrac{3}{5}$",
+        "C. $k = \\dfrac{5}{3}$",
+        "D. No solution"
+      ],
+      "correct_answer": "D",
+      "explanation": "Multiply by $2(5k - 3)$: $2(9k - 6) + (7k - 3) = 10k - 6$, so $15k = 9$ and $k = \\dfrac{3}{5}$. But $k = \\dfrac{3}{5}$ makes both denominators zero, so it is extraneous: there is no solution.",
+      "context": "$\\dfrac{9k - 6}{5k - 3} + \\dfrac{7k - 3}{10k - 6} = 1$"
+    },
+    {
+      "skill": "Linear Equations in Two Variables",
+      "difficulty": "easy",
+      "prompt": "To edit a manuscript, Miguel charges \\$50 for the first 2 hours and \\$20 per hour after the first 2 hours. Which of the following expresses the amount, $C$, in dollars, Miguel charges if it takes him $x$ hours to edit a manuscript, where $x > 2$?",
+      "options": [
+        "A. $C = 20x$",
+        "B. $C = 20x + 10$",
+        "C. $C = 20x + 50$",
+        "D. $C = 20x + 90$"
+      ],
+      "correct_answer": "B",
+      "explanation": "$C = 50 + 20(x - 2) = 20x + 10$."
+    },
+    {
+      "skill": "Linear Functions",
+      "difficulty": "medium",
+      "prompt": "For the linear function $f$, the table shows three values of $x$ and their corresponding values of $f(x)$. If $h(x) = f(x) - 13$, which equation defines $h$?",
+      "figure_table": {
+        "headers": [
+          "x",
+          "f(x)"
+        ],
+        "rows": [
+          [
+            "−4",
+            "0"
+          ],
+          [
+            "−19/5",
+            "1"
+          ],
+          [
+            "−18/5",
+            "2"
+          ]
+        ]
+      },
+      "options": [
+        "A. $h(x) = 5x - 4$",
+        "B. $h(x) = 5x + 7$",
+        "C. $h(x) = 5x + 9$",
+        "D. $h(x) = 5x + 20$"
+      ],
+      "correct_answer": "B",
+      "explanation": "Each increase of $\\dfrac{1}{5}$ in $x$ raises $f(x)$ by 1, so the slope is 5. With $f(-4) = 0$, $f(x) = 5(x + 4) = 5x + 20$, so $h(x) = 5x + 20 - 13 = 5x + 7$."
+    },
+    {
+      "skill": "Linear Equations in Two Variables",
+      "difficulty": "hard",
+      "prompt": "The table shows three values of $x$ and their corresponding values of $y$, where $s$ is a constant. There is a linear relationship between $x$ and $y$. Which of the following equations represents this relationship?",
+      "figure_table": {
+        "headers": [
+          "x",
+          "y"
+        ],
+        "rows": [
+          [
+            "−2s",
+            "24"
+          ],
+          [
+            "−s",
+            "21"
+          ],
+          [
+            "s",
+            "15"
+          ]
+        ]
+      },
+      "options": [
+        "A. $sx + 3y = 18s$",
+        "B. $3x + sy = 18s$",
+        "C. $3x + sy = 18$",
+        "D. $sx + 3y = 18$"
+      ],
+      "correct_answer": "B",
+      "explanation": "From $x = -2s$ to $x = -s$, $y$ drops by 3, so the slope is $-\\dfrac{3}{s}$. Using $(s, 15)$: $15 = -3 + b$, so $b = 18$ and $y = -\\dfrac{3}{s}x + 18$. Multiply by $s$: $3x + sy = 18s$."
+    },
+    {
+      "skill": "Linear Functions",
+      "difficulty": "medium",
+      "prompt": "A line $L$ passes through the point $(1, -2)$ and is perpendicular to $y = -\\dfrac{1}{3}x + 4$. If the equation of line $L$ is $y = ax + k$, what is the value of $a \\div k$?",
+      "correct_answer": "-3/5",
+      "explanation": "The perpendicular slope is $a = 3$. Through $(1, -2)$: $-2 = 3 + k$, so $k = -5$, and $a \\div k = -\\dfrac{3}{5}$ (−0.6)."
+    },
+    {
+      "skill": "Linear Inequalities",
+      "difficulty": "medium",
+      "prompt": "In which of the graphs shown does the shaded region represent the solution set in the $xy$-plane to the system of inequalities?",
+      "image_url": "/diagnostic/math-12-options.jpg",
+      "image_alt": "Four graphs labelled A to D, each showing the lines y = -3x + 3 and y = 2x - 2 crossing at (1, 0). A shades the region to the right of both lines; B shades the region above both lines; C shades the region to the left of both lines; D shades the region below both lines.",
+      "options": [
+        "A. Graph A",
+        "B. Graph B",
+        "C. Graph C",
+        "D. Graph D"
+      ],
+      "correct_answer": "A",
+      "explanation": "The solution must lie above $y = -3x + 3$ and below $y = 2x - 2$. Test $(3, 0)$: $0 \\ge -6$ and $0 \\le 4$, both true, so the solution is the region to the right of both lines: graph A.",
+      "context": "$y \\ge -3x + 3$\n$y \\le 2x - 2$"
+    },
+    {
+      "skill": "Linear Inequalities",
+      "difficulty": "medium",
+      "prompt": "In the $xy$-plane, if $(0, 0)$ is a solution to the system of inequalities above, which of the following relationships between $a$ and $k$ must be true?",
+      "options": [
+        "A. $a > k$",
+        "B. $k > a$",
+        "C. $a = k$",
+        "D. $k = -a$"
+      ],
+      "correct_answer": "A",
+      "explanation": "Substituting $(0, 0)$ gives $0 < a$ and $0 > k$, so $a$ is positive and $k$ is negative: $a > k$.",
+      "context": "$y - 3x < a$\n$2x - 7y > k$"
+    },
+    {
+      "skill": "Linear Functions",
+      "difficulty": "easy",
+      "prompt": "Consider the line $y = bx + m$, where $b$ and $m$ are constants. This line is parallel to the line $y = -2x - 4$ and shares the same $y$-intercept as the line $y = -x + 6$. What is the value of $m - b$?",
+      "correct_answer": "8",
+      "explanation": "Parallel means $b = -2$; the shared $y$-intercept means $m = 6$. So $m - b = 6 - (-2) = 8$."
+    },
+    {
+      "skill": "Nonlinear Functions",
+      "difficulty": "hard",
+      "prompt": "The table shows three values of $x$ and their corresponding values of $g(x)$, where $g(x) = \\dfrac{f(x)}{x + 3}$ and $f$ is a linear function. What is the $y$-intercept of the graph of $y = f(x)$ in the $xy$-plane?",
+      "figure_table": {
+        "headers": [
+          "x",
+          "g(x)"
+        ],
+        "rows": [
+          [
+            "−27",
+            "3"
+          ],
+          [
+            "−9",
+            "0"
+          ],
+          [
+            "21",
+            "5"
+          ]
+        ]
+      },
+      "options": [
+        "A. $(0, 36)$",
+        "B. $(0, 12)$",
+        "C. $(0, 4)$",
+        "D. $(0, -9)$"
+      ],
+      "correct_answer": "A",
+      "explanation": "$f(x) = g(x)(x + 3)$, so $f(-9) = 0$ and $f(21) = 5 \\cdot 24 = 120$. The slope is $\\dfrac{120}{30} = 4$, so $f(x) = 4(x + 9)$ and $f(0) = 36$."
+    },
+    {
+      "skill": "Percentages",
+      "difficulty": "easy",
+      "prompt": "If 8 is $8\\%$ of $N$, then what does $N$ equal?",
+      "options": [
+        "A. 1",
+        "B. 8",
+        "C. 10",
+        "D. 80",
+        "E. 100"
+      ],
+      "correct_answer": "E",
+      "explanation": "$0.08N = 8$, so $N = 100$."
+    },
+    {
+      "skill": "Ratios Rates Proportions",
+      "difficulty": "medium",
+      "prompt": "The ratio of $a$ to $b$ is $1 : 3$ and the ratio of $b$ to $c$ is $2 : 5$. What is the ratio $a : b : c$?",
+      "options": [
+        "A. 1:3:5",
+        "B. 2:6:15",
+        "C. 1:6:5",
+        "D. 1:6:15"
+      ],
+      "correct_answer": "B",
+      "explanation": "Make $b$ match: $a : b = 2 : 6$ and $b : c = 6 : 15$, so $a : b : c = 2 : 6 : 15$."
+    },
+    {
+      "skill": "Percentages",
+      "difficulty": "medium",
+      "prompt": "Three numbers, $a$, $b$, and $c$, are all positive. If $b$ is $30\\%$ greater than $a$, and $c$ is $40\\%$ greater than $b$, what is the value of $\\dfrac{c}{a}$?",
+      "correct_answer": "1.82",
+      "explanation": "$b = 1.3a$ and $c = 1.4b = 1.4(1.3a) = 1.82a$, so $\\dfrac{c}{a} = 1.82$."
+    },
+    {
+      "skill": "One Variable Data",
+      "difficulty": "easy",
+      "prompt": "The average of the data above is 71. Find the value of $x$.",
+      "correct_answer": "81",
+      "explanation": "The sum must be $5 \\times 71 = 355$. The other four values add to 274, so $x = 81$.",
+      "context": "72, 56, $x$, 77, 69"
+    },
+    {
+      "skill": "One Variable Data",
+      "difficulty": "medium",
+      "prompt": "The table shows values of $x$ and their corresponding frequencies $f$. The mean of the data represented by this frequency table is 24. What is the value of $p$?",
+      "figure_table": {
+        "headers": [
+          "x",
+          "10",
+          "20",
+          "30",
+          "40"
+        ],
+        "rows": [
+          [
+            "f",
+            "26",
+            "p",
+            "32",
+            "17"
+          ]
+        ]
+      },
+      "correct_answer": "25",
+      "explanation": "Mean $= \\dfrac{260 + 20p + 960 + 680}{75 + p} = 24$, so $1900 + 20p = 1800 + 24p$, giving $p = 25$."
+    },
+    {
+      "skill": "Nonlinear Functions",
+      "difficulty": "medium",
+      "prompt": "The function $g$ is defined by the given equation. For what value of $x$ does $g(x)$ reach its minimum?",
+      "options": [
+        "A. $-40$",
+        "B. $-8$",
+        "C. $-\\dfrac{13}{2}$",
+        "D. $-\\dfrac{3}{2}$"
+      ],
+      "correct_answer": "D",
+      "explanation": "The vertex of a parabola sits midway between its zeros, 5 and −8: $x = \\dfrac{5 + (-8)}{2} = -\\dfrac{3}{2}$.",
+      "context": "$g(x) = (x - 5)(x + 8)$"
+    },
+    {
+      "skill": "Nonlinear Functions",
+      "difficulty": "medium",
+      "prompt": "The function $g$ gives the value, in dollars, of a certain machine after $t$ months of use. If the value of the machine decreases each year by $q\\%$ of its value the preceding year, what is the value of $q$?",
+      "options": [
+        "A. 10",
+        "B. 25",
+        "C. 50",
+        "D. 75"
+      ],
+      "correct_answer": "B",
+      "explanation": "Every 12 months the value is multiplied by 0.75, a 25% decrease per year, so $q = 25$.",
+      "context": "$g(t) = 7{,}200(0.75)^{\\frac{t}{12}}$"
+    },
+    {
+      "skill": "Nonlinear Functions",
+      "difficulty": "hard",
+      "prompt": "Function $g$ is defined by $g(x) = -c^x + d$, where $c$ and $d$ are constants. In the $xy$-plane, the graph of $y = g(x) - 20$ has a $y$-intercept at $\\left(0, -\\dfrac{120}{7}\\right)$. The product of $c$ and $d$ is $\\dfrac{81}{7}$. What is the value of $c$?",
+      "correct_answer": "3",
+      "explanation": "At $x = 0$: $-1 + d - 20 = -\\dfrac{120}{7}$, so $d = \\dfrac{27}{7}$. Then $c \\cdot \\dfrac{27}{7} = \\dfrac{81}{7}$, so $c = 3$."
+    },
+    {
+      "skill": "Right Triangles and Trigonometry",
+      "difficulty": "medium",
+      "prompt": "In triangle $ABC$, $\\cos(A) = \\dfrac{21}{75}$, and angle $B$ is a right angle. What is the value of $\\cos(C)$?",
+      "options": [
+        "A. $\\dfrac{24}{25}$",
+        "B. $\\dfrac{7}{24}$",
+        "C. $\\dfrac{25}{7}$",
+        "D. $-\\dfrac{24}{25}$"
+      ],
+      "correct_answer": "A",
+      "explanation": "$\\cos(A) = \\dfrac{21}{75} = \\dfrac{7}{25}$, so with hypotenuse 25 the sides are 7 and 24. $\\cos(C)$ is the side adjacent to $C$ over the hypotenuse: $\\dfrac{24}{25}$."
+    },
+    {
+      "skill": "Equivalent Expressions",
+      "difficulty": "hard",
+      "prompt": "The expression $4\\sqrt[3]{5^3x^{27}} \\cdot \\sqrt[6]{3^6x}$ is equivalent to $ax^b$, where $a$ and $b$ are positive constants and $x > 1$. What is the value of $a + b$?",
+      "options": [
+        "A. $\\dfrac{7}{9}$",
+        "B. $\\dfrac{415}{6}$",
+        "C. $\\dfrac{6}{217}$",
+        "D. $\\dfrac{9}{7}$"
+      ],
+      "correct_answer": "B",
+      "explanation": "$4\\sqrt[3]{5^3x^{27}} = 20x^9$ and $\\sqrt[6]{3^6x} = 3x^{1/6}$. The product is $60x^{55/6}$, so $a + b = 60 + \\dfrac{55}{6} = \\dfrac{415}{6}$."
+    },
+    {
+      "skill": "System of Two Linear Equations",
+      "difficulty": "easy",
+      "prompt": "A new community center proposal was on the election ballot. A news article mentioned that twice as many people voted in favor of the proposal as those who voted against it. A blog post claimed that 10,000 more people voted in favor of the proposal than against it. Based on this information, how many people voted against the proposal?",
+      "options": [
+        "A. 5,000",
+        "B. 10,000",
+        "C. 15,000",
+        "D. 20,000"
+      ],
+      "correct_answer": "B",
+      "explanation": "Let $a$ be the votes against. Then $2a - a = 10{,}000$, so $a = 10{,}000$ (and 20,000 voted in favor)."
+    },
+    {
+      "skill": "One Variable Data",
+      "difficulty": "easy",
+      "prompt": "The dot plot represents the 15 values in data set B. Data set C is created by adding 10 to each of the values in data set B. Which of the following correctly compares the medians and the ranges of data sets B and C?",
+      "image_url": "/diagnostic/math-27-dot-plot.jpg",
+      "image_alt": "Dot plot for data set B with 15 values: three at 20, four at 21, three at 22, two at 23, two at 24, and one at 25.",
+      "options": [
+        "A. The median of data set C is equal to the median of data set B, and the range of data set C is equal to the range of data set B.",
+        "B. The median of data set C is equal to the median of data set B, and the range of data set C is greater than the range of data set B.",
+        "C. The median of data set C is greater than the median of data set B, and the range of data set C is equal to the range of data set B.",
+        "D. The median of data set C is greater than the median of data set B, and the range of data set C is greater than the range of data set B."
+      ],
+      "correct_answer": "C",
+      "explanation": "Adding 10 to every value shifts the median up by 10 but leaves the spread unchanged, so the range stays the same."
+    },
+    {
+      "skill": "Circles",
+      "difficulty": "medium",
+      "prompt": "The equation $(x - 3)^2 + (y + 2)^2 = 36$ represents circle $C$. Circle $D$ is obtained by shifting circle $C$ up 4 units in the $xy$-plane, and the radius of circle $D$ is one-third that of circle $C$. Which of the following equations represents circle $D$?",
+      "options": [
+        "A. $(x - 3)^2 + (y - 2)^2 = \\dfrac{6}{3}$",
+        "B. $(x - 3)^2 + (y - 2)^2 = \\dfrac{36}{9}$",
+        "C. $(x + 3)^2 + (y + 6)^2 = \\dfrac{36}{3}$",
+        "D. $(x - 3)^2 + (y - 2)^2 = \\dfrac{36}{3}$"
+      ],
+      "correct_answer": "B",
+      "explanation": "The center moves from $(3, -2)$ to $(3, 2)$. The radius goes from 6 to 2, so $r^2 = 4 = \\dfrac{36}{9}$."
+    },
+    {
+      "skill": "Linear Functions",
+      "difficulty": "easy",
+      "prompt": "The ceiling height, $h$, in feet, for a particular room in a house a distance of $d$ feet from the west wall is given by the equation above. In order for the ceiling height to decrease by 1 foot, how much does the distance from the west wall change, in feet?",
+      "options": [
+        "A. 0.125",
+        "B. 8",
+        "C. 11.2",
+        "D. 89.6"
+      ],
+      "correct_answer": "B",
+      "explanation": "Height falls 0.125 ft per foot of distance, so a 1-foot drop takes $\\dfrac{1}{0.125} = 8$ feet.",
+      "context": "$h = 11.2 - 0.125d$"
+    },
+    {
+      "skill": "Nonlinear Functions",
+      "difficulty": "medium",
+      "prompt": "The equation above models the total number of downloads, in thousands, $D$, of a mobile game $q$ quarter years after it officially launches. Based on the model, which of the following statements is true?",
+      "options": [
+        "A. The number of total downloads increases by 16% each year.",
+        "B. The number of total downloads increases by 64% each year.",
+        "C. The number of total downloads increases by 16% each quarter year.",
+        "D. The number of total downloads increases by 64% each quarter year."
+      ],
+      "correct_answer": "A",
+      "explanation": "The exponent $\\dfrac{q}{4}$ grows by 1 every 4 quarters (one year), and each time $D$ is multiplied by 1.16: a 16% increase per year.",
+      "context": "$D = 32(1.16)^{\\frac{q}{4}}$"
+    },
+    {
+      "skill": "One Variable Data",
+      "difficulty": "medium",
+      "prompt": "A store lists the prices of 40 smartphones. To estimate after-tax prices, the store multiplies each listed price by 1.05 to include a 5% sales tax. Which statement must be true about the distribution of after-tax prices compared with the distribution of listed prices?",
+      "options": [
+        "A. The median price increases by \\$5.",
+        "B. The range is unchanged.",
+        "C. The mean price increases by 5%.",
+        "D. The standard deviation decreases by 5%."
+      ],
+      "correct_answer": "C",
+      "explanation": "Multiplying every value by 1.05 multiplies the mean, median, range and standard deviation by 1.05. So the mean rises by 5%; the range and standard deviation grow, and the median rises by 5%, not a flat \\$5."
+    }
+  ]
+}

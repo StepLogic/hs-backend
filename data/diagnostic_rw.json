@@ -1,0 +1,301 @@
+{
+  "source_test_id": "diagnostic-rw",
+  "subject": "english_language_arts",
+  "questions": [
+    {
+      "skill": "Form, Structure, and Sense", "difficulty": "easy",
+      "context": "Everyone in most psychiatric circles ______ that daily exercise can enhance mental well-being.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. agree", "B. agrees", "C. have agreed", "D. were agreeing"],
+      "correct_answer": "B",
+      "explanation": "\"Everyone\" is singular and the sentence states a present fact, so it takes the singular present-tense verb \"agrees.\""
+    },
+    {
+      "skill": "Form, Structure, and Sense", "difficulty": "easy",
+      "context": "Alexandre Dumas's 19th century novel The Three Musketeers ______ dramatic adventure stories about the French royal guard two centuries earlier.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. tell", "B. are telling", "C. were telling", "D. tells"],
+      "correct_answer": "D",
+      "explanation": "The subject is the singular novel, and a book's content is described in the present tense: \"tells.\""
+    },
+    {
+      "skill": "Boundaries", "difficulty": "medium",
+      "context": "The Tantaquidgeon Museum in Uncasville, Connecticut, was founded in 1931 with the goal of showcasing the culture and history of the Mohegan ______ today, nearly a century later, it is the oldest Native-owned and Native-operated museum in the United States.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. Tribe, and", "B. Tribe and", "C. Tribe,", "D. Tribe"],
+      "correct_answer": "A",
+      "explanation": "Two independent clauses are joined here, which takes a comma plus a coordinating conjunction: \"Tribe, and.\" A comma alone is a splice, and no punctuation is a run-on."
+    },
+    {
+      "skill": "Boundaries", "difficulty": "medium",
+      "context": "Though Paul Revere is best known today for his \"midnight ride\" during the American ______ was famous in his own day as a prosperous silversmith and businessman.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. Revolution; he", "B. Revolution, but Revere", "C. Revolution, he", "D. Revolution he"],
+      "correct_answer": "C",
+      "explanation": "An introductory dependent clause (\"Though ... Revolution\") is joined to the main clause with a comma. A semicolon or \"but\" would be wrong after \"Though.\""
+    },
+    {
+      "skill": "Boundaries", "difficulty": "medium",
+      "context": "______ founded the Green Belt Movement in 1977, encouraging Kenyan women to plant millions of trees while also promoting environmental conservation, democratic participation, and greater economic opportunities for local communities.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": [
+        "A. Wangari Maathai a Kenyan environmentalist and political activist",
+        "B. Wangari Maathai, a Kenyan environmentalist and political activist,",
+        "C. Wangari Maathai, a Kenyan environmentalist and political activist",
+        "D. Wangari Maathai a Kenyan environmentalist and political activist,"
+      ],
+      "correct_answer": "B",
+      "explanation": "\"A Kenyan environmentalist and political activist\" is a nonessential appositive that renames Maathai, so it needs a comma on both sides."
+    },
+    {
+      "skill": "Boundaries", "difficulty": "medium",
+      "context": "Among the many writers who helped introduce African literature to a worldwide audience, ______ published Things Fall Apart in 1958, portraying the social and political disruptions that accompanied British colonial expansion in southeastern Nigeria.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": [
+        "A. the Nigerian novelist, Chinua Achebe,",
+        "B. the Nigerian novelist Chinua Achebe",
+        "C. the Nigerian novelist, Chinua Achebe",
+        "D. the Nigerian novelist Chinua Achebe,"
+      ],
+      "correct_answer": "B",
+      "explanation": "\"Chinua Achebe\" is an essential appositive: it identifies which Nigerian novelist. Essential appositives take no commas, and no comma belongs between the subject and its verb \"published.\""
+    },
+    {
+      "skill": "Words In Context", "difficulty": "hard",
+      "context": "Rejecting the premise that the literary magazine Ebony and Topaz (1927) should present a unified vision of Black American identity, editor Charles S. Johnson fostered his contributors' diverse perspectives by promoting their authorial autonomy. Johnson's self-effacement diverged from the editorial stances of W.E.B. Du Bois and Alain Locke, whose decisions for their publications were more ______.",
+      "prompt": "Which choice completes the text with the most logical and precise word or phrase?",
+      "options": ["A. ambiguous", "B. dogmatic", "C. proficient", "D. unpretentious"],
+      "correct_answer": "B",
+      "explanation": "Du Bois and Locke are contrasted with Johnson's open, self-effacing approach, so their decisions were more \"dogmatic\": rigid and imposed."
+    },
+    {
+      "skill": "Words In Context", "difficulty": "easy",
+      "context": "In contrast to Charles S. Johnson's approach of encouraging varied expressions in Ebony and Topaz (1927), W.E.B. Du Bois and Alain Locke's editorial methods were characterized by a more ______ approach.",
+      "prompt": "Which word best completes the sentence?",
+      "options": ["A. flexible", "B. rigid", "C. indifferent", "D. lenient"],
+      "correct_answer": "B",
+      "explanation": "\"In contrast to\" encouraging varied expression signals the opposite quality: \"rigid.\""
+    },
+    {
+      "skill": "Cross-Text Connections", "difficulty": "hard",
+      "context": "Text 1\nLike the work of Ralph Ellison before her, Toni Morrison's novels feature scenes in which characters deliver sermons of such length and verbal dexterity that for a time, the text exchanges the formal parameters of fiction for those of oral literature. Given the many other echoes of Ellison in Morrison's novels, both in structure and prose style, these scenes suggest Ellison's direct influence on Morrison.\n\nText 2\nIn their destabilizing effect on literary form, the sermons in Morrison's works recall those in Ellison's. Yet literature by Black Americans abounds in moments where interpolated speech erodes the division between oral and written forms that literature in English has traditionally observed. Morrison's use of the sermon is attributable not only to the influence of Ellison but also to a community-wide strategy of resistance to externally imposed literary conventions.",
+      "prompt": "Based on the texts, how would the author of Text 2 most likely characterize the claim in Text 1 that these scenes suggest Ellison's direct influence on Morrison?",
+      "options": [
+        "A. As failing to consider Ellison's and Morrison's equivalent uses of the sermon within the wider cultural context in which they wrote",
+        "B. As being indebted to the tradition of resisting literary conventions that privilege written forms, such as novels, over sermons and other oral forms",
+        "C. As disregarding points of structural and stylistic divergence between the works of Ellison and those of Morrison",
+        "D. As misunderstanding the function of sermons in novels by Black American writers other than Ellison and Morrison"
+      ],
+      "correct_answer": "A",
+      "explanation": "Text 2 agrees the sermons are alike but traces Morrison's use to a wider community-wide tradition, not only to Ellison. So Text 1's claim overlooks that wider cultural context."
+    },
+    {
+      "skill": "Cross-Text Connections", "difficulty": "medium",
+      "context": "Text 1\nIn the 1980s, Japanese real estate experienced one of the most remarkable price bubbles in history. Prices became so high that the parkland around Tokyo's Imperial Palace was estimated to be more valuable than all land in California combined. The cause was simple: the Japanese government kept interest rates on loans too low, nearly eliminating the risk of borrowing money to purchase property and thereby encouraging a mad rush of buyers chasing a limited amount of real estate.\n\nText 2\nWhile interest-rate policy played an important role in the Japanese real estate bubble, so did the tax system. The tax on owning real estate was relatively low, whereas the tax on real estate transactions was very high. This caused people to hold onto real estate rather than sell it, and, when they did sell, to do so at extremely high prices so that they could still make a profit after paying the transaction tax.",
+      "prompt": "Based on the texts, how would the author of Text 2 most likely respond to Text 1's claim that the cause of the bubble was simple?",
+      "options": [
+        "A. By claiming that the author of Text 1 is right about why the bubble occurred but overstates the consequences of the bubble",
+        "B. By arguing that the author of Text 1 correctly identifies a significant factor in the bubble but neglects another important factor",
+        "C. By pointing out that there is little evidence to support the idea that the factor identified by the author of Text 1 played a part in the bubble",
+        "D. By asserting that the author of Text 1 has conflated the cause of the bubble with an effect of the bubble"
+      ],
+      "correct_answer": "B",
+      "explanation": "Text 2 grants that interest-rate policy \"played an important role\" but adds the tax system as a second cause that Text 1 leaves out."
+    },
+    {
+      "skill": "Command of Evidence (Quantitative)", "difficulty": "medium",
+      "image_url": "/diagnostic/rw-11-urban-population.jpg",
+      "image_alt": "Line graph of the percent of population living in cities, 1970 to 2020. Japan rises from about 72% to about 92%, France from about 71% to about 81%, Algeria from about 40% to about 74%, and Nigeria from about 18% to about 52%.",
+      "context": "The share of the world's population living in cities has increased dramatically since 1970, but this change has not been uniform. France and Japan, for example, were already heavily urbanized in 1970, with 70% or more of the population living in cities. The main contributors to the world's urbanization since 1970 have been countries like Algeria, whose population went from ______.",
+      "prompt": "Which choice most effectively uses data from the graph to complete the assertion?",
+      "options": [
+        "A. less than 20% urban in 1970 to more than 50% urban in 2020.",
+        "B. around 50% urban in 1970 to around 90% urban in 2020.",
+        "C. around 40% urban in 1970 to more than 70% urban in 2020.",
+        "D. less than 40% urban in 1970 to around 90% urban in 2020."
+      ],
+      "correct_answer": "C",
+      "explanation": "Algeria's line starts near 40% in 1970 and ends above 70% in 2020. Choice A describes Nigeria, not Algeria."
+    },
+    {
+      "skill": "Command of Evidence (Quantitative)", "difficulty": "easy",
+      "image_url": "/diagnostic/rw-12-investigative-articles.jpg",
+      "image_alt": "Line graph of investigative articles published in the Albuquerque Journal, 2010 to 2019: about 1,050 in 2010, rising to about 1,600 in 2013, falling to about 800 in 2016, about 1,100 in 2017, and about 450 in 2019.",
+      "context": "Investigative journalists research and report about fraud, corruption, public hazards, and more. The graph shows the number of investigative articles published in the Albuquerque Journal newspaper from 2010 to 2019. According to an analyst, although the number of investigative articles published in this newspaper has varied significantly over the period shown, the number overall has fallen since 2010.",
+      "prompt": "Which choice most effectively uses data from the graph to justify the analyst's claim?",
+      "options": [
+        "A. The greatest annual number of investigative articles published in the newspaper during the period shown is approximately 1,000 in 2017.",
+        "B. The newspaper published approximately 1,000 investigative articles in 2010 and approximately 1,600 in 2013.",
+        "C. The smallest annual number of investigative articles published in the newspaper during the period shown is approximately 1,600 in 2013.",
+        "D. The newspaper published approximately 1,000 investigative articles in 2010 and approximately 500 in 2019."
+      ],
+      "correct_answer": "D",
+      "explanation": "The claim is that the number fell since 2010; comparing about 1,000 in 2010 with about 500 in 2019 shows exactly that. A and C misread the graph, and B shows a rise."
+    },
+    {
+      "skill": "Command of Evidence", "difficulty": "medium",
+      "context": "The pH level of lake water, which indicates how acidic or basic the water is, can be influenced by a variety of factors, including acid rain, rock and mineral erosion, and air pollution. Researchers in Alabama hypothesized that recent fluctuations in the pH of the water in Guntersville Lake are attributable to another source: agricultural chemicals that have been entering the lake through runoff.",
+      "prompt": "Which finding, if true, would most directly support the researchers' hypothesis?",
+      "options": [
+        "A. The pH levels of otherwise similar lakes in Alabama that do not receive as much runoff from farmland as Guntersville Lake does fluctuated less than the pH of Guntersville Lake did in the same period.",
+        "B. The pH levels of other lakes in Alabama that are near Guntersville Lake tended to be lower than that of Guntersville Lake regardless of the degree of fluctuation in the pH of Guntersville Lake.",
+        "C. The amount of agricultural runoff entering Guntersville Lake steadily decreased during the period in which the lake's pH level fluctuated, while the composition of that runoff remained largely unchanged.",
+        "D. Both air pollution and agricultural runoff in the vicinity of Guntersville Lake increased during the period in which the pH of Guntersville Lake fluctuated."
+      ],
+      "correct_answer": "A",
+      "explanation": "Comparable lakes with less farm runoff fluctuating less isolates runoff as the difference. D cannot separate runoff from air pollution."
+    },
+    {
+      "skill": "Command of Evidence", "difficulty": "medium",
+      "context": "A 2019 study published in Nature Ecology & Evolution looked at data from more than 1,500 species of birds, mammals, and fish in order to determine whether their rate of evolutionary change was linked to species survival. The study found that while some species did evolve faster than others, there was no clear relationship between evolutionary rate and survival. Instead, the researchers concluded that in many cases, a species can thrive as long as it is able to remain \"as good as\" or \"just a little bit better\" than more quickly-evolving competitors.",
+      "prompt": "Which finding, if true, would most directly support the researchers' conclusion?",
+      "options": [
+        "A. Endangered and extinct species displayed a significantly slower evolutionary rate than other species.",
+        "B. Evolutionary rate only impacted species survival when adaptations were linked to environmental pressures.",
+        "C. Successful species tended to remain more successful than their competitors over time, regardless of evolutionary rate.",
+        "D. Invasive species that overtook competitors tended to exhibit a higher evolutionary rate than other species."
+      ],
+      "correct_answer": "C",
+      "explanation": "The conclusion is that staying competitive, not evolving fast, drives survival. C shows success persisting regardless of evolutionary rate; A and D tie success to rate."
+    },
+    {
+      "skill": "Rhetorical Synthesis", "difficulty": "medium",
+      "context": "While researching a topic, a student has taken the following notes:\n• The ancient Arab dhow was a sailing vessel distinguishable by its triangular sails and stitched hull construction.\n• Dhows were used primarily for trade along the coasts of Arab, South Asian, and East African countries.\n• Contemporary shipbuilders in Oman use a mix of modern and traditional materials to build replicas of ancient dhows.\n• Most of the materials used are traditional.\n• Replica hulls are stitched together using the same traditional coconut palm fiber rope used on the hulls of ancient dhows.",
+      "prompt": "The student wants to make a generalization about the materials used in dhow replicas. Which choice most effectively uses relevant information from the notes to accomplish this goal?",
+      "options": [
+        "A. A traditional material that was used to stitch together the hulls of ancient dhows, coconut palm fiber rope is still used by shipbuilders.",
+        "B. The ancient Arab dhow was a sailing vessel used primarily for trade and distinguishable by its triangular sails.",
+        "C. Although most materials used in dhow replicas are traditional, some modern materials are used.",
+        "D. Contemporary shipbuilders in Oman build replicas of the dhow, which was an ancient sailing vessel with a stitched hull construction."
+      ],
+      "correct_answer": "C",
+      "explanation": "A generalization covers the materials as a whole. C summarizes the mix of mostly traditional and some modern materials; A gives one specific material."
+    },
+    {
+      "skill": "Boundaries", "difficulty": "medium",
+      "context": "Although many ancient civilizations developed writing ______ the Phoenician alphabet is considered the ancestor of most modern alphabets. This system of 22 letters spread throughout the Mediterranean and eventually evolved into Greek, Latin, and Arabic scripts.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. systems—", "B. systems", "C. systems,", "D. systems;"],
+      "correct_answer": "C",
+      "explanation": "An introductory dependent clause beginning with \"Although\" is separated from the main clause by a comma."
+    },
+    {
+      "skill": "Boundaries", "difficulty": "easy",
+      "context": "The human eye is capable of distinguishing millions of different colors. This remarkable ability depends on three types of cone ______ red-sensitive, green-sensitive, and blue-sensitive cells in the retina.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. cells:", "B. cells,", "C. cells;", "D. cells"],
+      "correct_answer": "A",
+      "explanation": "A colon introduces the list that names the three types of cone cells."
+    },
+    {
+      "skill": "Boundaries", "difficulty": "medium",
+      "context": "The Hubble Space Telescope orbits above Earth's atmosphere, which distorts and blocks certain types of light. This elevated position allows the telescope to capture images with unprecedented ______ thus, astronomers have been able to observe galaxies billions of light-years away with remarkable detail.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. clarity;", "B. clarity,", "C. clarity", "D. clarity:"],
+      "correct_answer": "A",
+      "explanation": "\"Thus\" begins a new independent clause; a conjunctive adverb joining two clauses needs a semicolon before it, not a comma."
+    },
+    {
+      "skill": "Boundaries", "difficulty": "medium",
+      "context": "The invention of the compass revolutionized navigation by allowing sailors to determine direction without relying on the stars. Chinese inventors developed this tool around the 11th ______ it quickly spread along trade routes to Europe and the Middle East.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. century", "B. century,", "C. century; and", "D. century;"],
+      "correct_answer": "D",
+      "explanation": "Two independent clauses with no conjunction are joined by a semicolon. A comma alone is a comma splice; \"; and\" is redundant."
+    },
+    {
+      "skill": "Boundaries", "difficulty": "medium",
+      "context": "Monarch butterflies undertake one of the longest migrations in the insect world. Each fall, millions of these butterflies travel from Canada and the United States to central ______ so the same individuals never make the round trip twice.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. Mexico", "B. Mexico;", "C. Mexico so", "D. Mexico,"],
+      "correct_answer": "D",
+      "explanation": "Two independent clauses joined by the coordinating conjunction \"so\" take a comma before it."
+    },
+    {
+      "skill": "Form, Structure, and Sense", "difficulty": "hard",
+      "context": "In their 2023 book No Politics but Class Politics, political theorists Adolph Reed Jr. and Walter Benn Michaels argue that identity-based frameworks have displaced class as the organizing principle of labor politics in the United States, a displacement they maintain no longer serves democratic interests. ______ polemic contends that identitarian policies, when decoupled from economic critique, function less as challenges to inequality than as mechanisms for managing it.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": ["A. Reed and Michaels's", "B. Reed's and Michaels's", "C. Reed's and Michaels", "D. Reed and Michaels'"],
+      "correct_answer": "A",
+      "explanation": "They share one polemic, so joint possession marks only the last name: \"Reed and Michaels's.\""
+    },
+    {
+      "skill": "Boundaries", "difficulty": "hard",
+      "context": "The 1952 papers by mid-twentieth-century Cambridge ______ presented a quantitative description of how electrical signals propagate along nerve fibers via voltage-dependent shifts in membrane permeability.",
+      "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": [
+        "A. neurophysiologists: Alan Hodgkin and Andrew Huxley,",
+        "B. neurophysiologists Alan Hodgkin and Andrew Huxley",
+        "C. neurophysiologists Alan Hodgkin, and Andrew Huxley,",
+        "D. neurophysiologists, Alan Hodgkin and Andrew Huxley,"
+      ],
+      "correct_answer": "B",
+      "explanation": "The names are an essential appositive identifying which neurophysiologists, so no commas; and no punctuation belongs between the subject (\"papers by ...\") and the verb \"presented.\""
+    },
+    {
+      "skill": "Inferences", "difficulty": "medium",
+      "context": "Researchers Suchithra Rajendran and Maximillian Pophiger modeled varying levels of passenger redistribution from short-haul flights (flights of 50 to 210 minutes, from takeoff to landing) to high-speed rail trips. Planes travel faster than trains, but air travel typically requires 3 hours of lead time for security, baggage handling, and boarding that rail travel doesn't, so short-haul routes take similar amounts of time by air and by rail. However, the model suggests that as rail passenger volumes approach current capacity limits, long lead times emerge. Therefore, for rail to remain a viable alternative to short-haul flights, ______",
+      "prompt": "Which choice most logically completes the text?",
+      "options": [
+        "A. rail systems should offer fewer long-haul routes and airlines should offer more long-haul routes.",
+        "B. rail systems may need to schedule additional trains for these routes.",
+        "C. security, baggage handling, and boarding procedures used by airlines may need to be implemented for rail systems.",
+        "D. passengers who travel by rail for these routes will need to accept that lead times will be similar to those for air travel."
+      ],
+      "correct_answer": "B",
+      "explanation": "Lead times grow as trains near capacity, so adding trains (more capacity) keeps rail's time advantage. D would erase that advantage."
+    },
+    {
+      "skill": "Inferences", "difficulty": "easy",
+      "context": "A study on the deep-sea brine pools of the Red Sea has revealed unique ecosystems that thrive in extreme conditions. These underwater \"lakes\" are characterized by high salinity and low oxygen levels, conditions that would be inhospitable to most marine life. What's more, sunlight cannot penetrate to the depths of these pools. Hence, photosynthesis is impossible, as photosynthesis converts light, carbon dioxide and water into usable energy. However, researchers have discovered diverse microbial communities that not only survive but flourish in these environments. In lieu of sunlight, these microbes utilize chemical energy sources in a process known as chemosynthesis. Chemosynthesis is particularly suited to the low oxygen and high salinity conditions, as the microbes can utilize both organic and inorganic materials found in the brine to generate energy and sustain life, bypassing the need for oxygen.",
+      "prompt": "What does the text most strongly suggest about chemosynthesis?",
+      "options": [
+        "A. Chemosynthesis allows microbes to generate energy from sunlight, compensating for the lack of oxygen in deep-sea environments.",
+        "B. Chemosynthesis allows microbes to generate energy from sunlight, compensating for the lack of oxygen in deep-sea environments",
+        "C. Chemosynthesis relies on organic compounds dissolved in water, allowing microbes to convert them into usable energy in the presence of abundant oxygen.",
+        "D. Chemosynthesis is a process that does not require sunlight to create usable energy."
+      ],
+      "correct_answer": "D",
+      "explanation": "The microbes use chemosynthesis \"in lieu of sunlight\" where no light reaches, so it does not need sunlight. The pools have low, not abundant, oxygen."
+    },
+    {
+      "skill": "Inferences", "difficulty": "hard",
+      "context": "The most recent iteration of the immersive theater experience Sleep No More, which premiered in New York City in 2011, transforms its performance space—a five-story warehouse—into a 1930s-era hotel. Audience members, who wander through the labyrinthine venue at their own pace and follow the actors as they play out simultaneous, interweaving narrative loops, confront the impossibility of experiencing the production in its entirety. The play's refusal of narrative coherence thus hinges on the sense of spatial fragmentation that the venue's immense and intricate layout generates.",
+      "prompt": "What does the text most strongly suggest about Sleep No More's use of its performance space?",
+      "options": [
+        "A. The production's dependence on a particular performance environment would likely make it difficult to reproduce exactly in a different theatrical space.",
+        "B. Audience members who navigate the space according to a recommended itinerary will likely have a better grasp of the play's narrative than audience members who depart from that itinerary.",
+        "C. The choice of a New York City venue likely enabled the play's creators to experiment with the use of theatrical space in a way that venues from earlier productions could not.",
+        "D. Audience members likely find the experience of the play disappointing because they generally cannot make their way through the entire venue."
+      ],
+      "correct_answer": "A",
+      "explanation": "The play's effect \"hinges on\" this venue's specific immense, intricate layout, so it would be hard to recreate exactly elsewhere."
+    },
+    {
+      "skill": "Command of Evidence", "difficulty": "easy",
+      "context": "Urban planners have experimented with mixed-income housing developments as an alternative to concentrated public housing. Economist Dr. Raj Chetty has been studying how neighborhood characteristics affect economic mobility. His research examines outcomes for children who grew up in different housing environments. Chetty hypothesizes that children from low-income families who live in mixed-income developments achieve better economic outcomes because exposure to higher-income neighbors provides access to better schools, safer environments, and social networks that facilitate upward mobility.",
+      "prompt": "Which finding, if true, would most directly support the economist's hypothesis?",
+      "options": [
+        "A. Property values in neighborhoods with mixed-income developments appreciate at rates comparable to surrounding areas.",
+        "B. Mixed-income housing developments cost approximately 15% more to construct than traditional public housing projects.",
+        "C. Children from low-income families in mixed-income developments were 30% more likely to attend college and earned 25% more as adults than similar children in concentrated poverty neighborhoods.",
+        "D. Residents of mixed-income developments report higher levels of community satisfaction than residents of income-segregated housing."
+      ],
+      "correct_answer": "C",
+      "explanation": "The hypothesis is about children's economic outcomes; only C measures those outcomes (college attendance and adult earnings)."
+    },
+    {
+      "skill": "Command of Evidence", "difficulty": "medium",
+      "context": "The Bluest Eye is a 1970 novel by Toni Morrison. In the novel, Morrison portrays Pecola Breedlove as a young Black girl whose desperate desire for blue eyes reveals how internalized racism and white beauty standards can devastate the psyche of Black children: ______",
+      "prompt": "Which quotation from The Bluest Eye most effectively illustrates the claim?",
+      "options": [
+        "A. \"Quiet as it's kept, there were no marigolds in the fall of 1941.\"",
+        "B. \"It had occurred to Pecola some time ago that if her eyes... were different, that is to say, beautiful, she herself would be different... If she looked different, beautiful, maybe Cholly would be different, and Mrs. Breedlove too.\"",
+        "C. \"We had dropped our seeds in our own little plot of black dirt just as Pecola's father had dropped his seeds in his own plot of black dirt.\"",
+        "D. \"She was ugly. Head full of pretty hair, but Lord she was ugly.\""
+      ],
+      "correct_answer": "B",
+      "explanation": "B shows Pecola believing that different (blue) eyes would make her beautiful and fix her life, which is the internalized beauty standard the claim describes."
+    }
+  ]
+}

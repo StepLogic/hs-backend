@@ -112,3 +112,38 @@ def test_next_oversized_answers_422(client, admin_token):
     r = client.post(f"/api/v1/courses/{cid}/assessment/next", headers=hdr,
                     json={"student_id": sid, "answers": [{"question_id": "x", "answer": "A"}] * 61})
     assert r.status_code == 422
+
+
+def test_fixed_diagnostic_replaces_adaptive(client, admin_token):
+    from tests.conftest import TestingSessionLocal
+    from app import models
+    cid, hdr, sid = _course(client, admin_token)
+    db = TestingSessionLocal()
+    for n, tag in [(2, "geometry"), (1, "algebra"), (3, "algebra")]:  # out of order on purpose
+        db.add(models.Question(
+            id=f"diagnostic-x-{n:02d}", subject="math", grade_level=11, question_type="fill-in",
+            prompt=f"d{n}", correct_answer="1", skill=tag, explanation="x",
+            source_test_id="diagnostic-x", mock_position=n, course_id=cid))
+    db.commit()
+    db.close()
+    asked, body = _run(client, cid, hdr, sid, lambda q: "1")
+    assert [q["prompt"] for q in asked] == ["d1", "d2", "d3"]
+    assert [q["unit_tag"] for q in asked] == ["algebra", "geometry", "algebra"]
+    assert body["fixed"] and body["settled"] == body["total_tags"] == 3
+
+
+def test_diagnostic_data_keys_grade():
+    """Every key in the shipped diagnostics is gradable, in the forms students type."""
+    import json
+    from pathlib import Path
+    from app.api.v1.endpoints.assessment import answers_match
+    for f in ("diagnostic_math.json", "diagnostic_rw.json"):
+        for q in json.loads((Path(__file__).parent.parent / "data" / f).read_text())["questions"]:
+            if q.get("options"):
+                picked = next(o for o in q["options"] if o.startswith(q["correct_answer"] + ". "))
+                assert answers_match(picked, q["correct_answer"])
+                assert not any(answers_match(o, q["correct_answer"]) for o in q["options"] if o != picked)
+            else:
+                assert answers_match(q["correct_answer"], q["correct_answer"])
+    for typed, key in [("0.05", "1/20"), ("-0.6", "-3/5"), ("1.82", "1.82")]:
+        assert answers_match(typed, key)

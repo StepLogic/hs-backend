@@ -323,6 +323,22 @@ def next_assessment_question(
     if not db.query(models.Course).filter(models.Course.id == course_id).first():
         raise HTTPException(status_code=404, detail="Course not found")
     owned_student(db, payload.student_id, current_user)
+
+    # A course with a fixed diagnostic (scripts/seed_diagnostic.py) gets that test,
+    # in order, instead of the adaptive placement below.
+    fixed = (db.query(models.Question)
+             .filter(models.Question.course_id == course_id,
+                     models.Question.source_test_id.like("diagnostic-%"))
+             .order_by(models.Question.mock_position).all())
+    if fixed:
+        answered = {a.question_id for a in payload.answers}
+        left = [q for q in fixed if q.id not in answered]
+        return schemas.AssessmentNextResponse(
+            done=not left,
+            question=_to_assessment_question(left[0], left[0].skill) if left else None,
+            settled=len(fixed) - len(left), total_tags=len(fixed), fixed=True,
+        )
+
     units = (db.query(models.Unit).filter(models.Unit.course_id == course_id)
              .order_by(models.Unit.order_index).all())
     tags: list[str] = []

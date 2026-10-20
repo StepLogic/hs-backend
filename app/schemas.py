@@ -871,6 +871,8 @@ class AssessmentNextResponse(BaseModel):
     question: Optional[AssessmentQuestion] = None
     settled: int
     total_tags: int
+    # A fixed diagnostic: settled/total_tags count questions, not skills.
+    fixed: bool = False
 
 
 class AssessmentAnswer(BaseModel):
