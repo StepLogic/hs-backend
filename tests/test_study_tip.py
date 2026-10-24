@@ -121,3 +121,31 @@ def test_tip_other_student_403(client, admin_token, monkeypatch):
     other = client.post("/api/v1/auth/register", json={"email": "o@example.com", "password": "secret123", "role": "student"})
     hdr = {"Authorization": f"Bearer {other.json()['access_token']}"}
     assert _tip(client, hdr, sid).status_code == 403
+
+
+def test_tip_weakest_excludes_mastered_skills(client, admin_token, monkeypatch):
+    from app.api.v1.endpoints.students import _study_tip_summary
+    from tests.conftest import TestingSessionLocal
+    from app import models
+    hdr, sid, _ = _setup(client, admin_token)
+    db = TestingSessionLocal()
+    db.add(models.SkillMastery(student_id=sid, subject=models.Subject.MATH, skill="slope", mastery_score=90))
+    db.add(models.SkillMastery(student_id=sid, subject=models.Subject.MATH, skill="ratios", mastery_score=40))
+    db.commit()
+    summary = _study_tip_summary(db, sid)
+    db.close()
+    assert [w["skill"] for w in summary["weakest"]] == ["ratios"]
+
+
+def test_tip_stamped_with_latest_result_time(client, admin_token, monkeypatch):
+    from tests.conftest import TestingSessionLocal
+    from app import models
+    from sqlalchemy import func
+    _fake(monkeypatch, [])
+    hdr, sid, qid = _setup(client, admin_token)
+    _drill(client, hdr, sid, qid)
+    _tip(client, hdr, sid)
+    db = TestingSessionLocal()
+    latest = db.query(func.max(models.TestResult.created_at)).filter_by(student_id=sid).scalar()
+    assert db.get(models.Student, sid).study_tip_at == latest
+    db.close()

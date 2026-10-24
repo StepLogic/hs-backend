@@ -377,3 +377,13 @@ def test_submit_assessment_records_result(client: TestClient, admin_token: str):
     assert db.query(m.UserAnswer).filter_by(test_result_id=tr.id).count() == 2
     assert db.query(m.SkillMastery).filter_by(student_id="student-rec").count() >= 1
     db.close()
+
+
+def test_assessment_answers_record_neutral_time(client: TestClient, admin_token: str):
+    from tests.conftest import TestingSessionLocal
+    from app import models as m
+    test_submit_assessment_records_result(client, admin_token)
+    db = TestingSessionLocal()
+    times = {ua.time_spent for ua in db.query(m.UserAnswer).all()}
+    db.close()
+    assert times == {30}

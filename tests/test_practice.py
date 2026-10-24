@@ -240,3 +240,24 @@ def test_progress_trend_excludes_assessment(client, admin_token):
     r = client.get("/api/v1/analytics/student/student-px/progress", headers=hdr)
     assert r.status_code == 200, r.text
     assert len(r.json()["test_scores"]) == 1
+
+
+def test_mastery_keyed_on_question_subject(client, admin_token):
+    from tests.conftest import TestingSessionLocal
+    from app import models
+    hdr = {"Authorization": f"Bearer {admin_token}"}
+    qid = client.post("/api/v1/questions/", json={
+        "subject": "english_language_arts", "grade_level": 10, "question_type": "multiple-choice",
+        "prompt": "E?", "options": ["A. x", "B. y"], "correct_answer": "A",
+        "skill": "grammar", "explanation": "x", "difficulty": "easy"}, headers=hdr).json()["id"]
+    reg = client.post("/api/v1/auth/register", json={"email": "sub@example.com", "password": "secret123", "role": "student"})
+    uh = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+    sid = client.get("/api/v1/students/", headers=uh).json()[0]["id"]
+    r = client.post("/api/v1/practice/submit", headers=uh, json={
+        "student_id": sid, "subject": "math", "source": "drill",
+        "answers": [{"question_id": qid, "answer": "A", "is_correct": True, "time_spent": 20}]})
+    assert r.status_code == 200, r.text
+    db = TestingSessionLocal()
+    rows = db.query(models.SkillMastery).filter_by(student_id=sid, skill="grammar").all()
+    db.close()
+    assert [x.subject.value for x in rows] == ["english_language_arts"]

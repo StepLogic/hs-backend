@@ -134,7 +134,7 @@ def _study_tip_summary(db: Session, student_id: str) -> dict:
         .order_by(models.SkillMastery.mastery_score, models.SkillMastery.skill)
         .all()
     )
-    weakest = skills[:3]
+    weakest = [s for s in skills[:3] if s.mastery_score < 70]
     strongest = [s for s in reversed(skills[3:])][:2]
     week_ago = datetime.utcnow() - timedelta(days=7)
     recent = {"right": 0, "wrong": 0}
@@ -194,7 +194,7 @@ async def read_study_tip(
     if not tip:
         return {"tip": stored}
     db.query(models.Student).filter(models.Student.id == student_id).update(
-        {"study_tip": tip, "study_tip_at": datetime.utcnow()}
+        {"study_tip": tip, "study_tip_at": latest}
     )
     db.commit()
     return {"tip": tip}

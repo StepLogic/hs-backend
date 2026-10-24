@@ -188,7 +188,11 @@ def practice_review(
     )
     by_id = {
         q.id: q
-        for q in db.query(models.Question).filter(models.Question.id.in_([qid for _, qid in missed])).all()
+        for q in db.query(models.Question).filter(
+            models.Question.id.in_([qid for _, qid in missed]),
+            models.Question.review_status == models.ReviewStatus.PUBLISHED,
+            models.Question.question_type.in_((models.QuestionType.MULTIPLE_CHOICE, models.QuestionType.FILL_IN)),
+        ).all()
     }
     due = [by_id[qid] for _, qid in missed if qid in by_id]
     return {"questions": due[:10], "due": len(due)}

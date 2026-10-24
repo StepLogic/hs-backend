@@ -274,9 +274,10 @@ def submit_assessment(
         total_correct += counts["correct"]
         total_questions += counts["total"]
 
+    # time_spent=30: not timed here, and 0 would read as fast recall (+1) in srs.score_to_quality
     record_answers(
         db, payload.student_id, course.subject,
-        [schemas.PracticeAnswer(question_id=a.question_id, answer=a.answer, is_correct=False, time_spent=0)
+        [schemas.PracticeAnswer(question_id=a.question_id, answer=a.answer, is_correct=False, time_spent=30)
          for a in payload.answers],
         "assessment",
     )

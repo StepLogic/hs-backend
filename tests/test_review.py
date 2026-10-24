@@ -86,3 +86,16 @@ def test_review_other_student_403(client, admin_token):
     other = client.post("/api/v1/auth/register", json={"email": "x@example.com", "password": "secret123", "role": "student"})
     hdr = {"Authorization": f"Bearer {other.json()['access_token']}"}
     assert client.get(f"/api/v1/practice/review?student_id={sid}", headers=hdr).status_code == 403
+
+
+def test_review_skips_unpublished_and_unplayable(client, admin_token):
+    hdr, sid, ids = _setup(client, admin_token, 3)
+    db = TestingSessionLocal()
+    db.get(models.Question, ids[0]).review_status = models.ReviewStatus.DRAFT
+    db.get(models.Question, ids[1]).question_type = models.QuestionType.ORDERING
+    db.commit()
+    db.close()
+    for qid in ids:
+        _miss(sid, qid, "lesson", 5)
+    body = _review(client, hdr, sid)
+    assert body["due"] == 1 and body["questions"][0]["id"] == ids[2]

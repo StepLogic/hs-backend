@@ -58,7 +58,6 @@ def record_answers(
 
     # Write UserAnswers and update SkillMastery
     skill_masteries = []
-    subject_val = subject.value if hasattr(subject, "value") else subject
     for ans in answers:
         ua = schemas.UserAnswerCreate(
             test_result_id=test_result.id,
@@ -73,15 +72,16 @@ def record_answers(
         q = crud.get_question(db, ans.question_id)
         if not q:
             continue
+        q_subject = q.subject.value if hasattr(q.subject, "value") else q.subject
         sm = crud.get_skill_mastery_by_student_skill(
-            db, student_id, subject_val, q.skill
+            db, student_id, q_subject, q.skill
         )
         if not sm:
             sm = crud.create_or_update_skill_mastery(
                 db,
                 schemas.SkillMasteryCreate(
                     student_id=student_id,
-                    subject=subject,
+                    subject=q.subject,
                     skill=q.skill,
                     due_date=date.today(),
                 ),

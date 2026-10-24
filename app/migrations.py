@@ -71,6 +71,10 @@ MIGRATIONS = [
     ("questions", "image_alt", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS image_alt TEXT"),
     ("questions", "figure_table", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS figure_table JSON"),
     ("user_answers", "used_hint", "ALTER TABLE user_answers ADD COLUMN IF NOT EXISTS used_hint BOOLEAN NOT NULL DEFAULT FALSE"),
+    ("questions", "wrong_feedback", "ALTER TABLE questions ADD COLUMN IF NOT EXISTS wrong_feedback JSON"),
+    ("students", "study_tip", "ALTER TABLE students ADD COLUMN IF NOT EXISTS study_tip TEXT"),
+    ("students", "study_tip_at", "ALTER TABLE students ADD COLUMN IF NOT EXISTS study_tip_at TIMESTAMP WITHOUT TIME ZONE"),
+    ("test_results", "source", "ALTER TABLE test_results ADD COLUMN IF NOT EXISTS source VARCHAR"),
 
     # /auth/register reads this on every sign-up, so it has to exist before alembic runs.
     ("invite_codes", "create_table", """

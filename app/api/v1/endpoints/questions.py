@@ -253,7 +253,7 @@ async def question_wrong_feedback(
     )
     if letter is None:
         raise HTTPException(status_code=400, detail="Answer is not one of the options")
-    if answers_match(letter, q.correct_answer):
+    if answers_match(letter, q.correct_answer) or answers_match(str(options[ord(letter) - 65]), q.correct_answer):
         raise HTTPException(status_code=400, detail="That answer is correct")
     cached = (q.wrong_feedback or {}).get(letter)
     if cached:

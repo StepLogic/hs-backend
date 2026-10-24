@@ -72,3 +72,12 @@ def test_wrong_feedback_unknown_question_404(client, admin_token):
 def test_wrong_feedback_requires_auth(client, admin_token):
     qid = _question(client, admin_token)
     assert client.post(f"/api/v1/questions/{qid}/wrong-feedback", json={"answer": "A"}).status_code == 401
+
+
+def test_wrong_feedback_key_stored_as_option_text_400(client, admin_token, monkeypatch):
+    calls = []
+    _fake(monkeypatch, calls)
+    qid = _question(client, admin_token, correct_answer="B. 5")
+    assert _post(client, admin_token, qid, "B").status_code == 400
+    assert _post(client, admin_token, qid, "B. 5").status_code == 400
+    assert calls == []
