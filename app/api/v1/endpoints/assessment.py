@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+from app.recording import record_answers
 from app.api.deps import get_db, get_current_user, owned_student
 
 router = APIRouter()
@@ -272,6 +273,13 @@ def submit_assessment(
         ))
         total_correct += counts["correct"]
         total_questions += counts["total"]
+
+    record_answers(
+        db, payload.student_id, course.subject,
+        [schemas.PracticeAnswer(question_id=a.question_id, answer=a.answer, is_correct=False, time_spent=0)
+         for a in payload.answers],
+        "assessment",
+    )
 
     return schemas.AssessmentSubmitResponse(
         assessment_id=f"asmt-{course_id}",

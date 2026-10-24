@@ -339,3 +339,41 @@ def test_full_assessment_to_personalization_flow(client: TestClient, admin_token
     )
     assert r.status_code == 400
     assert "active" in r.json()["detail"].lower()
+
+
+def test_submit_assessment_records_result(client: TestClient, admin_token: str):
+    from tests.conftest import TestingSessionLocal
+    from app import models as m
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    db = TestingSessionLocal()
+    db.add(m.Student(id="student-rec", name="Rec", grade_level=10, owner_user_id="admin-user-001"))
+    db.commit()
+    db.close()
+    r = client.post("/api/v1/courses/", json={
+        "subject": "math", "course_type": "core", "title": "Rec", "short_title": "Rec",
+        "description": "d", "icon": "x", "color": "#000", "price": 0, "skills": [],
+        "grade_range": "9-12", "features": [], "image_emoji": "x",
+    }, headers=headers)
+    course_id = r.json()["id"]
+    ids = []
+    for i in range(2):
+        r = client.post("/api/v1/questions/", json={
+            "subject": "math", "grade_level": 10, "question_type": "multiple-choice",
+            "prompt": f"Rec {i}?", "options": ["A", "B", "C", "D"], "correct_answer": ["A"],
+            "skill": "algebra", "explanation": "x", "difficulty": "medium",
+        }, headers=headers)
+        ids.append(r.json()["id"])
+    r = client.post(f"/api/v1/courses/{course_id}/assessment/submit", json={
+        "student_id": "student-rec",
+        "answers": [
+            {"question_id": ids[0], "answer": ["A"], "skill": "algebra", "unit_tag": "algebra"},
+            {"question_id": ids[1], "answer": ["B"], "skill": "algebra", "unit_tag": "algebra"},
+        ],
+    }, headers=headers)
+    assert r.status_code == 200
+    db = TestingSessionLocal()
+    tr = db.query(m.TestResult).filter_by(student_id="student-rec").one()
+    assert tr.source == "assessment" and tr.total_questions == 2 and tr.correct_count == 1
+    assert db.query(m.UserAnswer).filter_by(test_result_id=tr.id).count() == 2
+    assert db.query(m.SkillMastery).filter_by(student_id="student-rec").count() >= 1
+    db.close()
