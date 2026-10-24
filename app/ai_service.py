@@ -132,6 +132,16 @@ async def generate_hint(
     return (await _prompt(system, "\n\n".join(parts))).strip().strip('"')
 
 
+async def generate_study_tip(summary: dict) -> str:
+    """A short, personal nudge from skill names and counts only; never names or emails."""
+    system = (
+        "You are a friendly SAT tutor. Write at most two sentences to the student, addressed as "
+        "'you'. If a skill is weak, name ONE skill to focus on and give a concrete next step; "
+        "if nothing is weak, encourage them. Plain text, no markdown."
+    )
+    return (await _prompt(system, json.dumps(summary), timeout=15)).strip().strip('"')
+
+
 async def generate_wrong_feedback(
     prompt: str,
     context: Optional[str],
