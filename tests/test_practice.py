@@ -204,3 +204,39 @@ def test_submit_records_source(client, admin_token):
 def test_submit_rejects_unknown_source(client, admin_token):
     hdr, sid, qid = _student_and_question(client, admin_token, "src2@example.com")
     assert _submit(client, hdr, sid, qid, source="quiz").status_code == 422
+
+
+def _assessment_then_drill(client, admin_token, sid):
+    from tests.conftest import TestingSessionLocal
+    from app import models as m
+    hdr = {"Authorization": f"Bearer {admin_token}"}
+    db = TestingSessionLocal()
+    db.add(m.Student(id=sid, name="Ax", grade_level=10, owner_user_id="admin-user-001"))
+    db.commit()
+    db.close()
+    course_id = client.post("/api/v1/courses/", json={
+        "subject": "math", "course_type": "core", "title": "Ax", "short_title": "Ax",
+        "description": "d", "icon": "x", "color": "#000", "price": 0, "skills": [],
+        "grade_range": "9-12", "features": [], "image_emoji": "x",
+    }, headers=hdr).json()["id"]
+    qid = _create_question(client, "algebra", "easy", admin_token)
+    r = client.post(f"/api/v1/courses/{course_id}/assessment/submit", json={
+        "student_id": sid,
+        "answers": [{"question_id": qid, "answer": ["B"], "skill": "algebra", "unit_tag": "algebra"}],
+    }, headers=hdr)
+    assert r.status_code == 200, r.text
+    assert _submit(client, hdr, sid, qid, source="drill").status_code == 200
+    return hdr
+
+
+def test_history_excludes_assessment(client, admin_token):
+    hdr = _assessment_then_drill(client, admin_token, "student-hx")
+    r = client.get("/api/v1/practice/history", params={"student_id": "student-hx"}, headers=hdr)
+    assert r.json()["total"] == 1
+
+
+def test_progress_trend_excludes_assessment(client, admin_token):
+    hdr = _assessment_then_drill(client, admin_token, "student-px")
+    r = client.get("/api/v1/analytics/student/student-px/progress", headers=hdr)
+    assert r.status_code == 200, r.text
+    assert len(r.json()["test_scores"]) == 1

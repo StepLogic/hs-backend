@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from datetime import datetime, timedelta
 
 from app import models
@@ -120,6 +120,7 @@ def student_progress(
         .filter(
             models.TestResult.student_id == student_id,
             models.TestResult.created_at >= since,
+            or_(models.TestResult.source.is_(None), models.TestResult.source != "assessment"),
         )
         .order_by(models.TestResult.created_at.asc())
         .all()

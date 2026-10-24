@@ -4,11 +4,11 @@ from datetime import date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app import ai_service, crud, models, schemas
 from app.api.deps import get_db, get_current_user, get_current_user_optional, owned_student as _owned_student
-from app.api.v1.endpoints.assessment import answers_match
 from app.recording import record_answers
 
 logger = logging.getLogger(__name__)
@@ -127,7 +127,10 @@ def practice_history(
     base = (
         db.query(models.UserAnswer, models.TestResult.created_at)
         .join(models.TestResult, models.UserAnswer.test_result_id == models.TestResult.id)
-        .filter(models.TestResult.student_id == student_id)
+        .filter(
+            models.TestResult.student_id == student_id,
+            or_(models.TestResult.source.is_(None), models.TestResult.source != "assessment"),
+        )
     )
     total = base.count()
     rows = (
