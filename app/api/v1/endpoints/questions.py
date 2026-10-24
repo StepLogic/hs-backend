@@ -7,7 +7,10 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app import ai_service, crud, models, schemas
+from pydantic import BaseModel
+
 from app.api.deps import get_current_user, get_db, require_roles
+from app.api.v1.endpoints.assessment import answers_match
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -223,6 +226,55 @@ async def question_hint(
             db.commit()
             return {"hint": hint}
     raise HTTPException(status_code=503, detail="No hint available right now")
+
+
+class WrongFeedbackIn(BaseModel):
+    answer: str
+
+
+@router.post("/{question_id}/wrong-feedback")
+async def question_wrong_feedback(
+    question_id: str,
+    body: WrongFeedbackIn,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(get_current_user),
+) -> dict:
+    """Why a chosen wrong option is wrong. Generated once per option letter, shared by all students."""
+    q = crud.get_question(db, question_id)
+    if q is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+    options = q.options
+    if q.question_type != "multiple-choice" or not options:
+        raise HTTPException(status_code=400, detail="Only multiple-choice questions")
+    given = body.answer.strip().lower()
+    letter = next(
+        (chr(65 + i) for i, o in enumerate(options) if given in (str(o).strip().lower(), chr(97 + i))),
+        None,
+    )
+    if letter is None:
+        raise HTTPException(status_code=400, detail="Answer is not one of the options")
+    if answers_match(letter, q.correct_answer):
+        raise HTTPException(status_code=400, detail="That answer is correct")
+    cached = (q.wrong_feedback or {}).get(letter)
+    if cached:
+        return {"feedback": cached}
+    prompt, context, correct, explanation = q.prompt, q.context, _key(q.correct_answer), q.explanation or ""
+    chosen = str(options[ord(letter) - 65])
+    db.close()  # release the pooled connection before the slow AI call
+    try:
+        text = await ai_service.generate_wrong_feedback(prompt, context, options, chosen, correct, explanation)
+    except Exception as e:
+        logger.warning("wrong-feedback generation failed: %s", type(e).__name__)
+        text = ""
+    if not text:
+        raise HTTPException(status_code=503, detail="No feedback available right now")
+    # Re-read: another request may have cached a different letter during the AI call.
+    current = db.query(models.Question.wrong_feedback).filter(models.Question.id == question_id).scalar()
+    db.query(models.Question).filter(models.Question.id == question_id).update(
+        {"wrong_feedback": {**(current or {}), letter: text}}
+    )
+    db.commit()
+    return {"feedback": text}
 
 
 @router.get("/{question_id}", response_model=schemas.QuestionResponse)

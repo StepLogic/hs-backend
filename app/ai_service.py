@@ -132,6 +132,31 @@ async def generate_hint(
     return (await _prompt(system, "\n\n".join(parts))).strip().strip('"')
 
 
+async def generate_wrong_feedback(
+    prompt: str,
+    context: Optional[str],
+    options: list[str],
+    chosen: str,
+    correct: str,
+    explanation: str,
+) -> str:
+    """Why one specific wrong choice is wrong. Cached per option by the caller."""
+    system = (
+        "You are a patient SAT tutor. In at most three sentences, explain the specific "
+        "mistake in thinking that leads a student to the chosen option, and why it is wrong. "
+        "You may name the correct answer. Plain text, no markdown."
+    )
+    parts = []
+    if context:
+        parts.append(f"Passage:\n{context[:2000]}")
+    parts.append(f"Question: {prompt}")
+    parts.append("Choices:\n" + "\n".join(options))
+    parts.append(f"Student chose: {chosen}")
+    parts.append(f"Correct answer: {correct}")
+    parts.append(f"Worked explanation: {explanation[:1500]}")
+    return (await _prompt(system, "\n\n".join(parts))).strip().strip('"')
+
+
 async def predict_performance(
     skill_history: list[dict],
 ) -> dict:
