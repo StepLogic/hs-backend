@@ -175,3 +175,32 @@ def test_practice_history_lists_a_students_answers_newest_first(client, admin_to
     r = client.get("/api/v1/practice/history", params={"student_id": student_id},
                    headers={"Authorization": f"Bearer {other.json()['access_token']}"})
     assert r.status_code == 403
+
+
+def _student_and_question(client, admin_token, email):
+    reg = client.post("/api/v1/auth/register", json={"email": email, "password": "secret123", "role": "student"})
+    hdr = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+    sid = client.get("/api/v1/students/", headers=hdr).json()[0]["id"]
+    return hdr, sid, _create_question(client, "algebra", "easy", admin_token)
+
+
+def _submit(client, hdr, sid, qid, **extra):
+    return client.post("/api/v1/practice/submit", headers=hdr, json={
+        "student_id": sid, "subject": "math", **extra,
+        "answers": [{"question_id": qid, "answer": "A", "is_correct": True, "time_spent": 5}]})
+
+
+def test_submit_records_source(client, admin_token):
+    from tests.conftest import TestingSessionLocal
+    from app import models
+    hdr, sid, qid = _student_and_question(client, admin_token, "src1@example.com")
+    r = _submit(client, hdr, sid, qid, source="drill")
+    assert r.status_code == 200
+    db = TestingSessionLocal()
+    assert db.get(models.TestResult, r.json()["test_result"]["id"]).source == "drill"
+    db.close()
+
+
+def test_submit_rejects_unknown_source(client, admin_token):
+    hdr, sid, qid = _student_and_question(client, admin_token, "src2@example.com")
+    assert _submit(client, hdr, sid, qid, source="quiz").status_code == 422

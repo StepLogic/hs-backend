@@ -200,6 +200,7 @@ def submit_practice(
         total_questions=total,
         skill_breakdown={},
         mastery_level=mastery_level,
+        source=payload.source,
     )
     test_result = crud.create_test_result(db, test_result_in)
 

@@ -236,6 +236,7 @@ class TestResultBase(BaseModel):
     timed: bool = False
     time_limit_sec: Optional[int] = None
     section: Optional[str] = None
+    source: Optional[str] = None
 
 
 class TestResultCreate(TestResultBase):
@@ -536,10 +537,14 @@ class AiNextResponse(BaseModel):
     reason: str
 
 
+Source = Literal["assessment", "lesson", "drill", "mock", "review"]
+
+
 class PracticeSubmit(BaseModel):
     student_id: str
     subject: Subject
     lesson_id: Optional[str] = None
+    source: Optional[Source] = None
     answers: list[PracticeAnswer]
 
 

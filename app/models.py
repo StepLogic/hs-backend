@@ -96,6 +96,7 @@ class Question(Base):
     skill = Column(String, nullable=False)
     explanation = Column(Text, nullable=False)
     hint = Column(Text, nullable=True)
+    wrong_feedback = Column(JSON, nullable=True)
     review_status = Column(Enum(ReviewStatus), nullable=False, default=ReviewStatus.PUBLISHED)
     difficulty = Column(Enum(Difficulty), nullable=False, default=Difficulty.MEDIUM)
     source_test_id = Column(String, nullable=True)
@@ -215,6 +216,8 @@ class Student(Base):
     profile_image_url = Column(String, nullable=True)
     guardian_name = Column(String(120), nullable=True)
     guardian_email = Column(String(255), nullable=True)
+    study_tip = Column(Text, nullable=True)
+    study_tip_at = Column(DateTime, nullable=True)
 
     test_results = relationship("TestResult", back_populates="student", cascade="all, delete-orphan")
     owner = relationship("User", back_populates="owned_students")
@@ -328,6 +331,7 @@ class TestResult(Base):
     timed = Column(Boolean, nullable=False, default=False)
     time_limit_sec = Column(Integer, nullable=True)
     section = Column(String, nullable=True)
+    source = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     student = relationship("Student", back_populates="test_results")
