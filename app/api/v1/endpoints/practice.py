@@ -1,6 +1,6 @@
 import logging
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -160,6 +160,38 @@ def practice_history(
         for ua, created_at in rows
     ]
     return {"items": items, "total": total, "page": page, "pages": -(-total // size)}
+
+
+@router.get("/review", response_model=schemas.ReviewResponse)
+def practice_review(
+    student_id: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> dict:
+    """Questions whose latest answer (lesson/drill/review) was wrong at least 2 days ago,
+    oldest miss first, capped at 10. `due` is the uncapped count."""
+    _owned_student(db, student_id, current_user)
+    rows = (
+        db.query(models.UserAnswer, models.TestResult.created_at)
+        .join(models.TestResult, models.UserAnswer.test_result_id == models.TestResult.id)
+        .filter(
+            models.TestResult.student_id == student_id,
+            models.TestResult.source.in_(("lesson", "drill", "review")),
+        )
+        .order_by(models.TestResult.created_at, models.UserAnswer.id)
+        .all()
+    )
+    latest = {ua.question_id: (ua, at) for ua, at in rows}  # later rows overwrite earlier
+    cutoff = datetime.utcnow() - timedelta(days=2)
+    missed = sorted(
+        ((at, qid) for qid, (ua, at) in latest.items() if not ua.is_correct and at <= cutoff)
+    )
+    by_id = {
+        q.id: q
+        for q in db.query(models.Question).filter(models.Question.id.in_([qid for _, qid in missed])).all()
+    }
+    due = [by_id[qid] for _, qid in missed if qid in by_id]
+    return {"questions": due[:10], "due": len(due)}
 
 
 @router.post("/submit", response_model=schemas.PracticeSubmitResponse)

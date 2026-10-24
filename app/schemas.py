@@ -532,6 +532,11 @@ class AiNextRequest(BaseModel):
     candidate_ids: list[str] = Field(min_length=1, max_length=8)
 
 
+class ReviewResponse(BaseModel):
+    questions: list[QuestionResponse]
+    due: int
+
+
 class AiNextResponse(BaseModel):
     question_id: str
     reason: str
