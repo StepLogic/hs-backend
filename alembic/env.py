@@ -45,8 +45,11 @@ target_metadata = Base.metadata
 
 def get_url():
     url = os.getenv("DATABASE_URL", "")
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
+    # Name the driver: SQLAlchemy 2.1 defaults bare postgresql:// to psycopg 3, which
+    # isn't installed (psycopg2-binary is). That took prod down on 2026-10-25.
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            url = "postgresql+psycopg2://" + url[len(prefix):]
     if "sslmode=" not in url:
         separator = "&" if "?" in url else "?"
         url = f"{url}{separator}sslmode=require"
